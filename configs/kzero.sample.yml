@@ -1,0 +1,76 @@
+schema_version: "1.0"
+
+# kzero v1 sample configuration (workloads + Helm + hooks).
+#
+# In scope: ordered pipeline steps (down/up), Helm releases via helm.workspace scripts,
+# and optional custom scripts. This profile targets cluster workloads only, not node lifecycle.
+# Out of scope for v1: cloud CLIs (az/aws/gcloud), node drain/cordon, Talos/k3s OS reset,
+# automatic nodepool scaling.
+#
+# Optional later: if you add node evacuation, that can be a separate pipeline step or hook;
+# it is intentionally omitted here because it is often unnecessary for workload-only resets.
+#
+# Credentials: use env vars or a secret manager; never commit secrets. Viper env prefix: KZERO_
+# (e.g. KZERO_HELM_WORKSPACE, KZERO_NOTIFY_SLACK_WEBHOOK_URL).
+
+cluster:
+  name: "example-cluster"
+  environment: "dev"
+  description: "Reference profile for kzero v1"
+
+# Directory containing <release>.sh install/uninstall scripts and values files for Helm.
+# The release name in pipelines must match the script basename (e.g. kube-prometheus-stack.sh).
+helm:
+  workspace: "./helm-assets"
+
+# Optional label for run metadata (logs, notifications).
+client:
+  id: ""
+
+# Prefer absolute paths for non-interactive runs (cron, systemd). Empty values may fall back to PATH.
+command:
+  helm: "/usr/local/bin/helm"
+  kubectl: "/usr/local/bin/kubectl"
+
+hooks:
+  pre-down: ./hooks/pre-down.sh
+  post-down: ./hooks/post-down.sh
+  pre-up: ./hooks/pre-up.sh
+  post-up: ./hooks/post-up.sh
+  on-error: ./hooks/on-error.sh
+
+notify:
+  slack:
+    enabled: false
+    webhook_url: ""
+  discord:
+    enabled: false
+    webhook_url: ""
+
+pipelines:
+  # Steps: compact strings (<kind>.<namespace>/<name>), maps on up for extra options,
+  # or { custom: <script> }.
+  down:
+    - deployment.argocd/argocd-server
+    - statefulset.database/postgresql
+    - release.monitoring/kube-prometheus-stack
+    - custom: ./hooks/example-custom.sh
+
+  up:
+    - release.monitoring/kube-prometheus-stack
+    - statefulset.database/postgresql:
+        replicas: 3
+        wait_for_ready: true
+        timeout: 10m
+    - deployment.argocd/argocd-server
+
+retry:
+  attempts: 3
+  delay: 8s
+
+run:
+  kubeconfig: ""
+  mode: "dry-run"
+  timeout: 25m
+  worker_concurrency: 8
+  operation_timeout: 45s
