@@ -238,5 +238,27 @@ func validate(cfg *Config) error {
 	if cfg.Pipelines.Down == nil && cfg.Pipelines.Up == nil {
 		return errors.New("pipelines.down or pipelines.up is required")
 	}
+	if err := validateHelmWorkspaceForReleases(cfg); err != nil {
+		return err
+	}
 	return nil
+}
+
+func validateHelmWorkspaceForReleases(cfg *Config) error {
+	if !pipelinesContainRelease(cfg.Pipelines.Down) && !pipelinesContainRelease(cfg.Pipelines.Up) {
+		return nil
+	}
+	if strings.TrimSpace(cfg.Helm.Workspace) == "" {
+		return errors.New("helm.workspace is required when pipelines include release steps")
+	}
+	return nil
+}
+
+func pipelinesContainRelease(steps []PipelineStep) bool {
+	for _, s := range steps {
+		if s.Type == "release" {
+			return true
+		}
+	}
+	return false
 }

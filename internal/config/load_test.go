@@ -112,6 +112,25 @@ run:
 	}
 }
 
+func TestLoadConfig_ReleaseRequiresHelmWorkspace(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - release.monitoring/prom
+run:
+  mode: "live"
+`)
+
+	_, err := Load(path)
+	if err == nil {
+		t.Fatal("expected error for release without helm.workspace")
+	}
+	assertContains(t, err.Error(), "helm.workspace")
+}
+
 func writeTempConfig(t *testing.T, contents string) string {
 	t.Helper()
 

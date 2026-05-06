@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/engine"
 	"github.com/spf13/cobra"
 )
 
@@ -32,10 +33,14 @@ func newAnalyzeCmd() *cobra.Command {
 func newDownCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "down",
-		Short: "Run the configured shutdown pipeline (stub)",
+		Short: "Run the configured shutdown pipeline",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			_, _ = fmt.Fprintln(cmd.OutOrStdout(), "down: not implemented yet")
-			return nil
+			cfg, err := config.Load(cfgFile)
+			if err != nil {
+				return fmt.Errorf("load config: %w", err)
+			}
+			eng := engine.New(cfg, cmd.OutOrStdout())
+			return eng.RunDown(cmd.Context(), cfg)
 		},
 	}
 }
@@ -43,10 +48,14 @@ func newDownCmd() *cobra.Command {
 func newUpCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "up",
-		Short: "Run the configured startup pipeline (stub)",
+		Short: "Run the configured startup pipeline",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			_, _ = fmt.Fprintln(cmd.OutOrStdout(), "up: not implemented yet")
-			return nil
+			cfg, err := config.Load(cfgFile)
+			if err != nil {
+				return fmt.Errorf("load config: %w", err)
+			}
+			eng := engine.New(cfg, cmd.OutOrStdout())
+			return eng.RunUp(cmd.Context(), cfg)
 		},
 	}
 }
@@ -54,10 +63,14 @@ func newUpCmd() *cobra.Command {
 func newResetCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "reset",
-		Short: "Run down then up (stub)",
+		Short: "Run down then up",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			_, _ = fmt.Fprintln(cmd.OutOrStdout(), "reset: not implemented yet")
-			return nil
+			cfg, err := config.Load(cfgFile)
+			if err != nil {
+				return fmt.Errorf("load config: %w", err)
+			}
+			eng := engine.New(cfg, cmd.OutOrStdout())
+			return eng.RunReset(cmd.Context(), cfg)
 		},
 	}
 }
