@@ -25,6 +25,22 @@ This document is the source of truth for behavior and test expectations.
 - Cloud/provider orchestration (`az`, `aws`, `gcloud`, Talos/k3s reset flows).
 - Automatic nodepool scaling.
 
+### Engine design principles
+
+kzero stays **generic** and **configuration-driven**: the engine interprets validated YAML; it does not embed environment-specific playbooks.
+
+**Implementation patterns to prefer:**
+- Phased workflows with explicit ordering (`pre-*`, pipeline steps, `post-*`).
+- Readiness waits and per-step / global timeouts.
+- Bounded parallelism for independent steps (worker pool; cap via config).
+- Safe notifications: optional channels, redact or mask secrets in logs, include run mode and correlation metadata (e.g. `client.id`, cluster name).
+- kubectl and Helm execution with explicit timeouts, structured logs, and retry policy for transient failures.
+
+**Avoid:**
+- Hardcoding product- or tenant-specific resource lists or branching logic in Go; express that in YAML and hooks instead.
+
+**Contract:** This document and the versioned YAML schema (`schema_version`) define observable behavior.
+
 ## 3. Configuration Contract
 
 ## Required top-level keys
