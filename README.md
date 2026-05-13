@@ -32,7 +32,7 @@ Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (an
 
 **Releases** ([GitHub Releases](https://github.com/hrodrig/kzero/releases)) ship standalone **binaries** and archives (**`.tar.gz`** / **`.zip`**), Linux **`.deb`** / **`.rpm`**, **Docker** images on **`ghcr.io/hrodrig/kzero`** (distroless runtime — see **[Install or update](#install-or-update)**), and **Homebrew** when published there. This repository does **not** ship Helm charts as a release artifact. Optional operator-focused extras live in **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)**.
 
-Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md)**. **Diagrams** (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
+Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md)**. **Planned work** (prioritized): **[docs/ROADMAP.md](docs/ROADMAP.md)**. **Diagrams** (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
 
 ## Table of contents
 

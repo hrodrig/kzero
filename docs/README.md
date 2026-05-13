@@ -3,6 +3,7 @@
 | Document | Purpose |
 |----------|---------|
 | [SPECIFICATIONS.md](SPECIFICATIONS.md) | Behavior contract, config shape, and TDD baseline |
+| [ROADMAP.md](ROADMAP.md) | Prioritized planned work and known gaps (in-repo source of truth) |
 | [diagrams.md](diagrams.md) | Mermaid diagrams: CLI vs engine, phase ordering, `reset`, failure path |
 | [demo-kzero.yaml](demo-kzero.yaml) | Minimal YAML used by [demo.tape](demo.tape) (VHS) |
 | [demo.tape](demo.tape) | VHS tape to record [demo.gif](demo.gif) |

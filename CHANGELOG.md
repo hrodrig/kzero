@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.1] - 2026-05-13
+### Added
+
+- **`docs/ROADMAP.md`**: in-repo prioritized roadmap (v1.0.1–v2.0) and status for items already shipped in v0.2.1; linked from **README** and **docs/README**.
+
 
 ### Removed
 
