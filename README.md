@@ -307,8 +307,6 @@ See **`SECURITY.md`** for reporting vulnerabilities.
 
 ## Releases and CI
 
-Aligned with **[pgwd](https://github.com/hrodrig/pgwd)**:
-
 1. Work on **`develop`**; merge to **`main`** when ready.
 2. Before tagging: run **`make release-check`** (requires **Docker**): semver **`VERSION`**, **`make lint`** (gofmt, go vet, **gocyclo** ≤14), **`make test`**, **`make security`** (govulncheck), **`make docker-scan`** (Grype on the image; use **`GRYPE_FAIL_ON`** to tune the gate, default **high**).
 3. On **`main`**: create an annotated tag (e.g. `git tag -a v0.2.0 -m "Release 0.2.0"`) and **`git push origin v0.2.0`**. The **Release** workflow runs **`make release-check`** then **GoReleaser** (binaries + **`ghcr.io/hrodrig/kzero`**).
