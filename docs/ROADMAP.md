@@ -9,20 +9,33 @@ When a roadmap item ships, update **CHANGELOG** and tick or remove the item here
 
 **Last reviewed:** 2026-05-13
 
+### Versioning note
+
+The first **public** releases are **0.2.0** onward (there was no prior `1.0.x` line). Section headings below (**0.3.x**, **0.4.x**, …) are **planned semver bands** for grouping work—not labels for releases that already existed under other numbers.
+
 ---
 
-## v1.0.1 — operator honesty (short horizon)
+## Shipped
+
+| Release | Highlights |
+|---------|------------|
+| **0.2.0** | Initial published release: packaging, CI, core CLI/engine, declarative YAML pipelines. |
+| **0.2.1** | Parse-time allow-list for compact step kinds; **DaemonSet** removed from built-in scalable workloads (documented `custom:` workaround); see [supported workload kinds](SPECIFICATIONS.md#supported-workload-kinds). |
+
+---
+
+## 0.3.x — operator honesty (next)
 
 | # | Item | Status |
 |---|------|--------|
-| 1 | **CLI warnings** at startup for config the v1 engine does not honor: `run.worker_concurrency > 1`, `retry.attempts > 1`, or `notify.{slack,discord}.enabled` (with tests). | Pending |
-| 2 | **Explicit allow-list** for compact pipeline step kinds at parse time so `analyze` rejects what `live` cannot run. | **Done** (v0.2.1) |
+| 1 | **CLI warnings** at startup for config the current engine does not honor: `run.worker_concurrency > 1`, `retry.attempts > 1`, or `notify.{slack,discord}.enabled` (with tests). | Pending |
+| 2 | **Explicit allow-list** for compact pipeline step kinds at parse time so `analyze` rejects what `live` cannot run. | **Done** (0.2.1) |
 | 3 | **Richer `analyze` output**: list normalized steps (reuse existing describe helpers) and flag schema fields that are declared but not implemented. | Pending |
-| 4 | **DaemonSet**: remove from built-in scalable workloads; document workaround (`custom:` + `kubectl patch` nodeSelector, etc.). | **Done** (v0.2.1; see SPEC — [supported workload kinds](SPECIFICATIONS.md#supported-workload-kinds)) |
+| 4 | **DaemonSet**: remove from built-in scalable workloads; document workaround (`custom:` + `kubectl patch` nodeSelector, etc.). | **Done** (0.2.1; SPEC link above). |
 
 ---
 
-## v1.1 — execution engine
+## 0.4.x — execution engine
 
 5. **Retry** with exponential backoff for transient failures (timeouts, connection errors, throttling), wired to `cfg.Retry`.
 6. **Concurrency** via a bounded worker pool from `run.worker_concurrency`, preserving strict YAML order for `down` / `up` unless a future opt-in per-step parallelism is defined.
@@ -31,7 +44,7 @@ When a roadmap item ships, update **CHANGELOG** and tick or remove the item here
 
 ---
 
-## v1.2 — observability and notifications
+## 0.5.x — observability and notifications
 
 9. **`log/slog`** with `--log-format json|text`.
 10. **Secret redaction** in logs (e.g. `Bearer …`, `password=…`) and optional `--no-env-passthrough` for hooks.
@@ -40,7 +53,7 @@ When a roadmap item ships, update **CHANGELOG** and tick or remove the item here
 
 ---
 
-## v1.3 — supply chain and more step types
+## 0.6.x — supply chain and more step types
 
 13. **Cosign signing** and **SBOM** (e.g. Syft) in the GoReleaser pipeline.
 14. **Raise coverage target** (e.g. 85%+) and fold **`make cover-check`** into **`make release-check`** when sustainable.
@@ -48,7 +61,9 @@ When a roadmap item ships, update **CHANGELOG** and tick or remove the item here
 
 ---
 
-## v2.0 — native Kubernetes client path
+## 1.0.0 (future) — native Kubernetes client path
+
+Aspirational **major** when the execution model and config contract are stable enough to commit to long-term compatibility.
 
 16. **`Executor` abstraction** (shell vs native client-go): start with native scale; keep shell for `kubectl wait` / `rollout status` until structured polling exists.
 17. **Stronger dry-run**: server-side dry-run against the API where applicable.

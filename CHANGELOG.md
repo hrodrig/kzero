@@ -9,8 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **`docs/ROADMAP.md`**: in-repo prioritized roadmap (v1.0.1–v2.0) and status for items already shipped in v0.2.1; linked from **README** and **docs/README**.
+- **`docs/ROADMAP.md`**: in-repo prioritized roadmap (semver bands **0.3.x**–**1.0.0 (future)**) plus **Shipped** for **0.2.0** / **0.2.1**; linked from **README** and **docs/README**.
 
+### Changed
+
+- **`docs/ROADMAP.md`**: rename milestone headings from fictional `v1.0.x` / `v2.0` style labels to **0.3.x**–**1.0.0 (future)** bands aligned with public releases starting at **0.2.0**.
+
+## [0.2.1] - 2026-05-13
 
 ### Removed
 
