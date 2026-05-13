@@ -9,8 +9,8 @@ import (
 )
 
 func TestRootCommand_HasExpectedSubcommands(t *testing.T) {
-	t.Parallel()
-
+	// Do not use t.Parallel: newRootCmd binds package-level cfgFile and
+	// registers cobra.OnInitialize, which races under go test -race.
 	cmd := newRootCmd()
 	expected := []string{"analyze", "down", "up", "reset", "version"}
 	for _, name := range expected {
@@ -21,8 +21,6 @@ func TestRootCommand_HasExpectedSubcommands(t *testing.T) {
 }
 
 func TestAnalyze_InvalidConfigExitCode(t *testing.T) {
-	t.Parallel()
-
 	cfgPath := filepath.Join(t.TempDir(), "invalid.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`
 schema_version: "1.0"
