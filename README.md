@@ -338,11 +338,11 @@ Use this when something must happen **between** ordered steps—for example, run
 pipelines:
   down:
     - deployment.app/worker
-    - statefulset.app/etl-state-store:
-        pre: ./hooks/truncate-etljobs.sh
+    - statefulset.data/job-queue:
+        pre: ./hooks/pre-scale-purge.sh
 ```
 
-Here `truncate-etljobs.sh` runs **before** `kubectl scale` for `etl-state-store` (so the pod can still accept `kubectl exec` or similar). Optional `post` runs **after** a successful scale (or other main action for that step).
+Here `pre-scale-purge.sh` runs **before** `kubectl scale` for `job-queue` (so the pod can still accept `kubectl exec` or similar). Optional `post` runs **after** a successful scale (or other main action for that step).
 
 **Custom** step with hooks (same list item, multiple keys):
 
