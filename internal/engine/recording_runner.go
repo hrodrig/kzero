@@ -26,6 +26,9 @@ type RecordedCall struct {
 
 // RunHook implements Runner.
 func (r *RecordingRunner) RunHook(ctx context.Context, cfg *config.Config, label, scriptPath string) error {
+	if scriptPath == "" {
+		return nil
+	}
 	r.Calls = append(r.Calls, RecordedCall{Kind: "hook", Label: label, Path: scriptPath})
 	if err, ok := r.HookErr[label]; ok && err != nil {
 		return err
@@ -35,10 +38,13 @@ func (r *RecordingRunner) RunHook(ctx context.Context, cfg *config.Config, label
 
 // RunPipelineStep implements Runner.
 func (r *RecordingRunner) RunPipelineStep(ctx context.Context, cfg *config.Config, phase Phase, index int, step config.PipelineStep) error {
+	if err := r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "pre"), step.PreStep); err != nil {
+		return err
+	}
 	r.Calls = append(r.Calls, RecordedCall{Kind: "step", Phase: phase, Index: index, Step: step})
 	key := fmt.Sprintf("%s:%d", phase, index)
 	if err, ok := r.StepErr[key]; ok && err != nil {
 		return err
 	}
-	return nil
+	return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
 }

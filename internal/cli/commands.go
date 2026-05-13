@@ -74,3 +74,14 @@ func newResetCmd() *cobra.Command {
 		},
 	}
 }
+
+func newVersionCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "version",
+		Short: "Print version and build metadata",
+		Run: func(cmd *cobra.Command, _ []string) {
+			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "kzero %s\ncommit %s\nbuild %s\nbranch %s\n",
+				Version, Commit, BuildDate, Branch)
+		},
+	}
+}

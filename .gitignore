@@ -11,20 +11,25 @@
 
 !Dockerfile
 !Dockerfile.release
+!GNUmakefile
 !Makefile
 !README.md
 !VERSION
 !LICENSE
 !CHANGELOG.md
 !CONTRIBUTING.md
-!CODE_OF_CONDUCT.md
 !SECURITY.md
 !codecov.yml
-!docker-compose.yml
 !go.mod
 !go.sum
 !configs/
 !configs/**
+
+!contrib/
+!contrib/**
+
+# OpenBSD port: distinfo is generated with makesum in a ports checkout (not in repo)
+contrib/openbsd/port/distinfo
 
 # Source and documentation
 !cmd/
@@ -49,6 +54,9 @@
 
 !/examples/
 !/examples/**
+
+!/tools/
+!/tools/**
 
 !/configs/
 !/configs/**

@@ -1,0 +1,10 @@
+# GoReleaser dockers_v2: copy pre-built linux binary into distroless (no BusyBox).
+# TARGETARCH is set by Docker Buildx per platform (amd64, arm64).
+FROM gcr.io/distroless/static-debian12:nonroot
+ARG TARGETARCH
+LABEL org.opencontainers.image.title="kzero"
+LABEL org.opencontainers.image.description="Declarative Kubernetes workload pipelines"
+LABEL org.opencontainers.image.source="https://github.com/hrodrig/kzero"
+COPY linux/${TARGETARCH}/kzero /usr/local/bin/kzero
+USER nonroot:nonroot
+ENTRYPOINT ["/usr/local/bin/kzero"]

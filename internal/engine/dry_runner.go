@@ -29,14 +29,19 @@ func (r *DryRunner) RunHook(ctx context.Context, cfg *config.Config, label, scri
 
 // RunPipelineStep implements Runner.
 func (r *DryRunner) RunPipelineStep(ctx context.Context, cfg *config.Config, phase Phase, index int, step config.PipelineStep) error {
+	if err := r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "pre"), step.PreStep); err != nil {
+		return err
+	}
 	select {
 	case <-ctx.Done():
 		return fmt.Errorf("step %s[%d]: %w", phase, index, ctx.Err())
 	default:
 	}
 	desc := describeStep(step)
-	_, _ = fmt.Fprintf(r.Out, "[dry-run] pipeline %s step %d: %s\n", phase, index, desc)
-	return nil
+	if _, err := fmt.Fprintf(r.Out, "[dry-run] pipeline %s step %d: %s\n", phase, index, desc); err != nil {
+		return err
+	}
+	return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
 }
 
 func describeStep(step config.PipelineStep) string {

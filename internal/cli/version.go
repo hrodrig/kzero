@@ -1,4 +1,9 @@
 package cli
 
-// Version is set at link time via -ldflags (see Makefile).
-var Version = "dev"
+// Build metadata (overridden via -ldflags from GNUmakefile / GoReleaser).
+var (
+	Version   = "dev"
+	Commit    = "unknown"
+	BuildDate = "unknown"
+	Branch    = "unknown"
+)

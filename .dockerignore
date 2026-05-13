@@ -1,4 +1,9 @@
-.git
-bin
-out
-use-as-reference
+# Small build context (same pattern as pgwd).
+*
+.*
+!go.mod
+!go.sum
+!cmd/
+!cmd/**
+!internal/
+!internal/**

@@ -1,0 +1,8 @@
+kzero is a configuration-first CLI for ordered Kubernetes workload pipelines:
+down, up, and reset from YAML, with phase hooks, optional per-step pre/post
+scripts, kubectl scale targets, Helm release helpers, and custom steps.
+
+This package installs the static binary, license text, and a sample config
+under share/examples/kzero/.
+
+WWW: https://github.com/hrodrig/kzero

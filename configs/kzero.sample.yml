@@ -49,10 +49,13 @@ notify:
 
 pipelines:
   # Steps: compact strings (<kind>.<namespace>/<name>), maps on up for extra options,
-  # or { custom: <script> }.
+  # or { custom: <script> }. Optional per-step hooks (pre/post) run shell scripts immediately
+  # before/after that step's main action (post runs only if the main action succeeds).
   down:
     - deployment.argocd/argocd-server
-    - statefulset.database/postgresql
+    - statefulset.database/postgresql:
+        pre: ./hooks/before-pg-scale.sh
+        post: ./hooks/after-pg-scale.sh
     - release.monitoring/kube-prometheus-stack
     - custom: ./hooks/example-custom.sh
 

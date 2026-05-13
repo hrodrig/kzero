@@ -169,3 +169,148 @@ func envHas(env []string, want string) bool {
 	}
 	return false
 }
+
+func TestLiveRunner_PerStepPreRunsBeforeKubectlWithStepEnv(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	pre := filepath.Join(dir, "pre.sh")
+	if err := os.WriteFile(pre, []byte("#!/bin/sh\necho ok\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	var calls [][]string
+	var envs [][]string
+	r := &LiveRunner{
+		Exec: func(ctx context.Context, argv0 string, args, env []string, d string) ([]byte, error) {
+			calls = append(calls, append([]string{argv0}, args...))
+			envs = append(envs, env)
+			return nil, nil
+		},
+	}
+	cfg := &config.Config{
+		Run:     config.RunConfig{Mode: "live", Kubeconfig: "/tmp/kube"},
+		Command: config.CommandConfig{Kubectl: "/bin/kubectl"},
+	}
+	step := config.PipelineStep{
+		Ref:       "deployment.ns/app",
+		Type:      "deployment",
+		Namespace: "ns",
+		Name:      "app",
+		PreStep:   pre,
+	}
+
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 2, step); err != nil {
+		t.Fatal(err)
+	}
+	if len(calls) != 2 {
+		t.Fatalf("expected pre script + kubectl, got %d: %v", len(calls), calls)
+	}
+	if calls[0][0] != "/bin/sh" || calls[0][1] != pre {
+		t.Fatalf("expected /bin/sh pre script first, got %v", calls[0])
+	}
+	preEnv := envs[0]
+	if !envHas(preEnv, "KZERO_PHASE=down") || !envHas(preEnv, "KZERO_PIPELINE_STEP_INDEX=2") || !envHas(preEnv, "KZERO_STEP_HOOK=pre") {
+		t.Fatalf("missing KZERO_* step-hook env in pre, got %v", preEnv)
+	}
+	if !envHas(preEnv, "KZERO_STEP_REF=deployment.ns/app") {
+		t.Fatalf("missing KZERO_STEP_REF, got %v", preEnv)
+	}
+	want := []string{"/bin/kubectl", "scale", "deployment/app", "-n", "ns", "--replicas", "0"}
+	if !reflect.DeepEqual(calls[1], want) {
+		t.Fatalf("kubectl argv\ngot:  %#v\nwant: %#v", calls[1], want)
+	}
+}
+
+func TestLiveRunner_RunHook_emptyPathNoOp(t *testing.T) {
+	t.Parallel()
+
+	r := &LiveRunner{
+		Exec: func(ctx context.Context, argv0 string, args, env []string, dir string) ([]byte, error) {
+			t.Fatal("Exec should not run for empty hook path")
+			return nil, nil
+		},
+	}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	if err := r.RunHook(context.Background(), cfg, "pre-down", ""); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestLiveRunner_RunHook_invokesSh(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	script := filepath.Join(dir, "hook.sh")
+	if err := os.WriteFile(script, []byte("#!/bin/sh\necho hi\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	var calls [][]string
+	r := &LiveRunner{
+		Exec: func(ctx context.Context, argv0 string, args, env []string, d string) ([]byte, error) {
+			calls = append(calls, append([]string{argv0}, args...))
+			return []byte("out\n"), nil
+		},
+	}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live", Kubeconfig: "/tmp/k"}}
+	if err := r.RunHook(context.Background(), cfg, "pre-down", script); err != nil {
+		t.Fatal(err)
+	}
+	if len(calls) != 1 || calls[0][0] != "/bin/sh" || calls[0][1] != script {
+		t.Fatalf("expected /bin/sh %s, got %v", script, calls)
+	}
+}
+
+func TestLiveRunner_RunMainStep_customScript(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	script := filepath.Join(dir, "custom.sh")
+	if err := os.WriteFile(script, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	var calls [][]string
+	r := &LiveRunner{
+		Exec: func(ctx context.Context, argv0 string, args, env []string, d string) ([]byte, error) {
+			calls = append(calls, append([]string{argv0}, args...))
+			return nil, nil
+		},
+	}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	step := config.PipelineStep{Custom: script}
+
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step); err != nil {
+		t.Fatal(err)
+	}
+	if len(calls) != 1 || calls[0][0] != "/bin/sh" || calls[0][1] != script {
+		t.Fatalf("expected custom via /bin/sh, got %v", calls)
+	}
+}
+
+func TestLiveRunner_RunMainStep_emptyRefErrors(t *testing.T) {
+	t.Parallel()
+
+	r := &LiveRunner{}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	step := config.PipelineStep{Type: "deployment", Namespace: "ns", Name: "x"}
+
+	err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 3, step)
+	if err == nil || !strings.Contains(err.Error(), "empty pipeline step") {
+		t.Fatalf("expected empty ref error, got %v", err)
+	}
+}
+
+func TestLiveRunner_RunMainStep_unsupportedType(t *testing.T) {
+	t.Parallel()
+
+	r := &LiveRunner{}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	step := config.PipelineStep{Ref: "job.batch/x", Type: "job", Namespace: "batch", Name: "x"}
+
+	err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step)
+	if err == nil || !strings.Contains(err.Error(), "unsupported pipeline resource type") {
+		t.Fatalf("expected unsupported type error, got %v", err)
+	}
+}

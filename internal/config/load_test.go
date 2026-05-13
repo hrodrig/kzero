@@ -112,6 +112,74 @@ run:
 	}
 }
 
+func TestLoadConfig_PipelineStepPrePost(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.apps/widget:
+        pre: ./hooks/before-widget.sh
+        post: ./hooks/after-widget.sh
+run:
+  mode: "dry-run"
+`)
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	step := cfg.Pipelines.Down[0]
+	if step.PreStep != "./hooks/before-widget.sh" || step.PostStep != "./hooks/after-widget.sh" {
+		t.Fatalf("unexpected pre/post: %#v", step)
+	}
+}
+
+func TestLoadConfig_CustomStepWithPrePost(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - custom: ./hooks/main.sh
+      pre: ./hooks/pre.sh
+      post: ./hooks/post.sh
+run:
+  mode: "dry-run"
+`)
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	step := cfg.Pipelines.Down[0]
+	if step.Custom != "./hooks/main.sh" || step.PreStep != "./hooks/pre.sh" || step.PostStep != "./hooks/post.sh" {
+		t.Fatalf("unexpected step: %#v", step)
+	}
+}
+
+func TestLoadConfig_CustomStepInvalidExtraKey(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - custom: ./hooks/main.sh
+      replicas: 1
+run:
+  mode: "dry-run"
+`)
+
+	_, err := Load(path)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	assertContains(t, err.Error(), "unsupported key")
+}
+
 func TestLoadConfig_ReleaseRequiresHelmWorkspace(t *testing.T) {
 	t.Parallel()
 
@@ -146,5 +214,66 @@ func assertContains(t *testing.T, got, want string) {
 	t.Helper()
 	if !strings.Contains(got, want) {
 		t.Fatalf("expected %q to contain %q", got, want)
+	}
+}
+
+func TestLoadConfig_readMissingFile(t *testing.T) {
+	t.Parallel()
+	_, err := Load(filepath.Join(t.TempDir(), "nope.yaml"))
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	assertContains(t, err.Error(), "read config")
+}
+
+func TestLoadConfig_runModeInvalid(t *testing.T) {
+	t.Parallel()
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.ns/app
+run:
+  mode: "staging"
+`)
+	_, err := Load(path)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	assertContains(t, err.Error(), "run.mode")
+}
+
+func TestLoadConfig_noPipelineStepsRejected(t *testing.T) {
+	t.Parallel()
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines: {}
+run:
+  mode: "dry-run"
+`)
+	_, err := Load(path)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	assertContains(t, err.Error(), "pipelines")
+}
+
+func TestLoadConfig_daemonsetReference(t *testing.T) {
+	t.Parallel()
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - daemonset.kube-system/some-agent
+run:
+  mode: "dry-run"
+`)
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	step := cfg.Pipelines.Down[0]
+	if step.Type != "daemonset" || step.Namespace != "kube-system" || step.Name != "some-agent" {
+		t.Fatalf("unexpected step: %#v", step)
 	}
 }

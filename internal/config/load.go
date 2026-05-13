@@ -139,19 +139,15 @@ func parseReferenceStep(ref string) (PipelineStep, error) {
 }
 
 func parseMapStep(stepMap map[string]interface{}) (PipelineStep, error) {
+	if _, ok := stepMap["custom"]; ok {
+		return parseCustomMapStep(stepMap)
+	}
+
 	if len(stepMap) != 1 {
 		return PipelineStep{}, errors.New("map step must have exactly one key")
 	}
 
 	for key, value := range stepMap {
-		if key == "custom" {
-			path, ok := value.(string)
-			if !ok || strings.TrimSpace(path) == "" {
-				return PipelineStep{}, errors.New("custom step requires non-empty string path")
-			}
-			return PipelineStep{Custom: path}, nil
-		}
-
 		step, err := parseReferenceStep(key)
 		if err != nil {
 			return PipelineStep{}, err
@@ -171,6 +167,38 @@ func parseMapStep(stepMap map[string]interface{}) (PipelineStep, error) {
 	}
 
 	return PipelineStep{}, errors.New("unreachable map step parser state")
+}
+
+func parseCustomMapStep(stepMap map[string]interface{}) (PipelineStep, error) {
+	customVal, ok := stepMap["custom"]
+	if !ok {
+		return PipelineStep{}, errors.New("custom step requires custom key")
+	}
+	path, ok := customVal.(string)
+	if !ok || strings.TrimSpace(path) == "" {
+		return PipelineStep{}, errors.New("custom step requires non-empty string path")
+	}
+	step := PipelineStep{Custom: strings.TrimSpace(path)}
+	for k, v := range stepMap {
+		if k == "custom" {
+			continue
+		}
+		switch k {
+		case "pre", "post":
+			s, ok := v.(string)
+			if !ok || strings.TrimSpace(s) == "" {
+				return PipelineStep{}, fmt.Errorf("custom step field %q must be a non-empty string", k)
+			}
+			if k == "pre" {
+				step.PreStep = strings.TrimSpace(s)
+			} else {
+				step.PostStep = strings.TrimSpace(s)
+			}
+		default:
+			return PipelineStep{}, fmt.Errorf("unsupported key %q in custom step (allowed: custom, pre, post)", k)
+		}
+	}
+	return step, nil
 }
 
 func applyStepOptions(step *PipelineStep, opts map[string]interface{}) error {
@@ -198,6 +226,16 @@ func applyStepOptions(step *PipelineStep, opts map[string]interface{}) error {
 				return fmt.Errorf("invalid timeout duration: %w", err)
 			}
 			step.Timeout = timeout
+		case "pre", "post":
+			s, ok := v.(string)
+			if !ok || strings.TrimSpace(s) == "" {
+				return fmt.Errorf("%s must be a non-empty string", k)
+			}
+			if k == "pre" {
+				step.PreStep = strings.TrimSpace(s)
+			} else {
+				step.PostStep = strings.TrimSpace(s)
+			}
 		default:
 			return fmt.Errorf("unsupported option %q", k)
 		}

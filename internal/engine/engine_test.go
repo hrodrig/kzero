@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
 
@@ -12,6 +13,51 @@ import (
 
 func stepKey(phase Phase, index int) string {
 	return fmt.Sprintf("%s:%d", phase, index)
+}
+
+func TestNew_liveModeUsesLiveRunner(t *testing.T) {
+	t.Parallel()
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	e := New(cfg, io.Discard)
+	if _, ok := e.Runner.(*LiveRunner); !ok {
+		t.Fatalf("expected LiveRunner, got %T", e.Runner)
+	}
+}
+
+func TestNew_unknownModeFallsBackToDryRunner(t *testing.T) {
+	t.Parallel()
+	cfg := &config.Config{Run: config.RunConfig{Mode: "bogus"}}
+	e := New(cfg, io.Discard)
+	if _, ok := e.Runner.(*DryRunner); !ok {
+		t.Fatalf("expected DryRunner for unknown mode, got %T", e.Runner)
+	}
+}
+
+func TestOnErrorHookFailureWrapsOriginalError(t *testing.T) {
+	t.Parallel()
+
+	stepFail := errors.New("step failed")
+	onErrFail := errors.New("on-error hook failed")
+	rec := &RecordingRunner{
+		StepErr: map[string]error{stepKey(PhaseDown, 0): stepFail},
+		HookErr: map[string]error{"on-error": onErrFail},
+	}
+	eng := &Engine{Runner: rec}
+	cfg := &config.Config{
+		Run:   config.RunConfig{Mode: "dry-run"},
+		Hooks: config.HooksConfig{OnError: "./err.sh"},
+		Pipelines: config.PipelinesConfig{
+			Down: []config.PipelineStep{{Ref: "deployment.ns/a", Type: "deployment", Namespace: "ns", Name: "a"}},
+		},
+	}
+
+	err := eng.RunDown(context.Background(), cfg)
+	if err == nil || !errors.Is(err, stepFail) {
+		t.Fatalf("expected wrapped chain with step error, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "on-error hook") {
+		t.Fatalf("expected on-error hook mention, got %v", err)
+	}
 }
 
 func TestDownOrder_PreStepsPost(t *testing.T) {
@@ -41,6 +87,99 @@ func TestDownOrder_PreStepsPost(t *testing.T) {
 	assertHook(t, rec.Calls[0], "pre-down", "./pre.sh")
 	assertStep(t, rec.Calls[1], PhaseDown, 0)
 	assertHook(t, rec.Calls[2], "post-down", "./post.sh")
+}
+
+func TestDownOrder_PerStepPrePostAroundStep(t *testing.T) {
+	t.Parallel()
+
+	rec := &RecordingRunner{}
+	eng := &Engine{Runner: rec}
+	cfg := &config.Config{
+		Run: config.RunConfig{Mode: "dry-run"},
+		Hooks: config.HooksConfig{
+			PreDown:  "./pre.sh",
+			PostDown: "./post.sh",
+		},
+		Pipelines: config.PipelinesConfig{
+			Down: []config.PipelineStep{
+				{
+					Ref: "deployment.ns/app", Type: "deployment", Namespace: "ns", Name: "app",
+					PreStep: "./step-pre.sh", PostStep: "./step-post.sh",
+				},
+			},
+		},
+	}
+
+	if err := eng.RunDown(context.Background(), cfg); err != nil {
+		t.Fatalf("RunDown: %v", err)
+	}
+	if len(rec.Calls) != 5 {
+		t.Fatalf("expected 5 calls, got %d: %#v", len(rec.Calls), rec.Calls)
+	}
+	assertHook(t, rec.Calls[0], "pre-down", "./pre.sh")
+	assertHook(t, rec.Calls[1], pipelineStepHookLabel(PhaseDown, 0, "pre"), "./step-pre.sh")
+	assertStep(t, rec.Calls[2], PhaseDown, 0)
+	assertHook(t, rec.Calls[3], pipelineStepHookLabel(PhaseDown, 0, "post"), "./step-post.sh")
+	assertHook(t, rec.Calls[4], "post-down", "./post.sh")
+}
+
+func TestFailureInPerStepPreHook_SkipsStepAndGlobalPost(t *testing.T) {
+	t.Parallel()
+
+	preFail := errors.New("step pre failed")
+	rec := &RecordingRunner{
+		HookErr: map[string]error{pipelineStepHookLabel(PhaseDown, 0, "pre"): preFail},
+	}
+	eng := &Engine{Runner: rec}
+	cfg := &config.Config{
+		Run:   config.RunConfig{Mode: "dry-run"},
+		Hooks: config.HooksConfig{PreDown: "./pre.sh", PostDown: "./post.sh", OnError: "./err.sh"},
+		Pipelines: config.PipelinesConfig{
+			Down: []config.PipelineStep{
+				{Ref: "deployment.ns/a", Type: "deployment", Namespace: "ns", Name: "a", PreStep: "./s-pre.sh"},
+			},
+		},
+	}
+
+	err := eng.RunDown(context.Background(), cfg)
+	if err == nil || !errors.Is(err, preFail) {
+		t.Fatalf("expected step pre error, got %v", err)
+	}
+	joined := callLabels(rec.Calls)
+	if strings.Contains(joined, "step:down:0") {
+		t.Fatalf("main step should not run: %s", joined)
+	}
+	if strings.Contains(joined, "hook:post-down") {
+		t.Fatalf("post-down must not run: %s", joined)
+	}
+	if !strings.Contains(joined, "hook:on-error") {
+		t.Fatalf("expected on-error: %s", joined)
+	}
+}
+
+func TestFailureInMainStep_SkipsPerStepPostHook(t *testing.T) {
+	t.Parallel()
+
+	stepFail := errors.New("step failed")
+	rec := &RecordingRunner{
+		StepErr: map[string]error{stepKey(PhaseDown, 0): stepFail},
+	}
+	eng := &Engine{Runner: rec}
+	cfg := &config.Config{
+		Run:   config.RunConfig{Mode: "dry-run"},
+		Hooks: config.HooksConfig{OnError: "./err.sh"},
+		Pipelines: config.PipelinesConfig{
+			Down: []config.PipelineStep{
+				{Ref: "deployment.ns/a", Type: "deployment", Namespace: "ns", Name: "a", PostStep: "./after.sh"},
+			},
+		},
+	}
+
+	_ = eng.RunDown(context.Background(), cfg)
+	joined := callLabels(rec.Calls)
+	if strings.Contains(joined, pipelineStepHookLabel(PhaseDown, 0, "post")) {
+		t.Fatalf("per-step post must not run after step failure, got %s", joined)
+	}
 }
 
 func TestUpOrder_PreStepsPost(t *testing.T) {

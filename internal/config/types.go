@@ -59,11 +59,16 @@ type PipelinesConfig struct {
 }
 
 type PipelineStep struct {
-	Ref          string
-	Type         string
-	Namespace    string
-	Name         string
-	Custom       string
+	Ref       string
+	Type      string
+	Namespace string
+	Name      string
+	Custom    string
+	// PreStep and PostStep are optional shell scripts run immediately before and
+	// after the main step action (scale, release, or custom). Post runs only if
+	// the main action succeeds.
+	PreStep      string `mapstructure:"pre"`
+	PostStep     string `mapstructure:"post"`
 	Replicas     *int
 	WaitForReady bool
 	Timeout      time.Duration

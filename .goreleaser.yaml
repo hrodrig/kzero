@@ -1,0 +1,106 @@
+# GoReleaser for kzero — same flow as pgwd: merge develop → main, tag v0.2.0, push tag (CI runs release).
+# Local: make release-check && make release (on main only).
+# Snapshot: make snapshot → artifacts under dist/
+
+version: 2
+
+project_name: kzero
+
+builds:
+  - id: kzero
+    main: ./cmd/kzero
+    binary: kzero
+    goos:
+      - linux
+      - darwin
+      - windows
+      - freebsd
+      - openbsd
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s
+      - -w
+      - -X github.com/hrodrig/kzero/internal/cli.Version=v{{ .Version }}
+      - -X github.com/hrodrig/kzero/internal/cli.Commit={{ .ShortCommit }}
+      - -X github.com/hrodrig/kzero/internal/cli.BuildDate={{ .Date }}
+      - -X github.com/hrodrig/kzero/internal/cli.Branch={{ .Branch }}
+
+archives:
+  - id: default
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    name_template: "{{ .ProjectName }}_{{ if .IsSnapshot }}v{{ .Version }}{{ else }}{{ .Tag }}{{ end }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - src: LICENSE
+        dst: share/doc/kzero/LICENSE
+      - src: configs/kzero.sample.yml
+        dst: share/examples/kzero/kzero.sample.yml
+
+checksum:
+  name_template: checksums.txt
+
+# .deb / .rpm for Linux (same pattern as pgwd nfpms).
+nfpms:
+  - id: default
+    package_name: kzero
+    scripts:
+      preremove: contrib/deb/prerm.sh
+      postremove: contrib/deb/postrm.sh
+    file_name_template: "{{ .ProjectName }}_{{ if .IsSnapshot }}v{{ .Version }}{{ else }}{{ .Tag }}{{ end }}_{{ .Os }}_{{ .Arch }}"
+    description: Declarative Kubernetes workload shutdown and startup pipelines
+    vendor: "Hermes Rodríguez"
+    homepage: https://github.com/hrodrig/kzero
+    license: MIT
+    formats:
+      - deb
+      - rpm
+    builds:
+      - kzero
+    contents:
+      # Example profile at a fixed path; operators edit after install. config|noreplace on upgrades.
+      - src: configs/kzero.sample.yml
+        dst: /etc/kzero/kzero.yaml
+        type: config|noreplace
+
+snapshot:
+  version_template: "{{ .Env.KZERO_SNAPSHOT_VERSION }}"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^chore:"
+      - "^test:"
+
+release:
+  github:
+    owner: hrodrig
+    name: kzero
+
+# Multi-arch image to ghcr.io (same GITHUB_TOKEN in Actions). Snapshots skip Docker.
+dockers_v2:
+  - disable: "{{ .IsSnapshot }}"
+    sbom: false
+    dockerfile: Dockerfile.release
+    ids:
+      - kzero
+    images:
+      - ghcr.io/hrodrig/kzero
+    tags:
+      - "v{{ .Version }}"
+      - "{{ if not .IsSnapshot }}latest{{ end }}"
+    labels:
+      org.opencontainers.image.title: "kzero"
+      org.opencontainers.image.description: "Declarative Kubernetes workload shutdown and startup pipelines"
+      org.opencontainers.image.source: "https://github.com/hrodrig/kzero"
+      org.opencontainers.image.version: "{{ .Version }}"

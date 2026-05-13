@@ -1,17 +1,14 @@
-VERSION ?= $(shell cat VERSION 2>/dev/null | tr -d '\n')
-LDFLAGS := -X github.com/hrodrig/kzero/internal/cli.Version=$(VERSION)
+# kzero — BSD Make (FreeBSD) stub: forwards to GNU Make.
+# GNU Make reads GNUmakefile before this file on Linux/macOS/CI.
+#
+# On FreeBSD: pkg install gmake   then   make <target>   or   gmake <target>
 
-.PHONY: build lint lint-fix test
-build:
-	go build -trimpath -ldflags "$(LDFLAGS)" -o bin/kzero ./cmd/kzero
+_CHECK := command -v gmake >/dev/null 2>&1 || { echo "This project requires GNU make. On FreeBSD: pkg install gmake"; exit 1; }
 
-lint:
-	test -z "$$(gofmt -s -l . 2>/dev/null)" || (echo "gofmt needed"; exit 1)
-	go vet ./...
+all:
+	@${_CHECK}
+	@gmake help
 
-lint-fix:
-	gofmt -s -w .
-	go vet ./...
-
-test:
-	go test ./...
+.DEFAULT:
+	@${_CHECK}
+	@gmake $@

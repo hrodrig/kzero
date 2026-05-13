@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strconv"
+	"strings"
 
 	"github.com/hrodrig/kzero/internal/config"
 )
@@ -25,6 +27,16 @@ func (r *LiveRunner) RunHook(ctx context.Context, cfg *config.Config, label, scr
 
 // RunPipelineStep implements Runner.
 func (r *LiveRunner) RunPipelineStep(ctx context.Context, cfg *config.Config, phase Phase, index int, step config.PipelineStep) error {
+	if err := r.runPipelineStepHook(ctx, cfg, phase, index, "pre", step.PreStep, step); err != nil {
+		return err
+	}
+	if err := r.runMainPipelineStep(ctx, cfg, phase, index, step); err != nil {
+		return err
+	}
+	return r.runPipelineStepHook(ctx, cfg, phase, index, "post", step.PostStep, step)
+}
+
+func (r *LiveRunner) runMainPipelineStep(ctx context.Context, cfg *config.Config, phase Phase, index int, step config.PipelineStep) error {
 	if step.Custom != "" {
 		return r.execScript(ctx, cfg, fmt.Sprintf("pipeline-%s-%d", phase, index), step.Custom)
 	}
@@ -40,6 +52,45 @@ func (r *LiveRunner) RunPipelineStep(ctx context.Context, cfg *config.Config, ph
 	default:
 		return fmt.Errorf("live: unsupported pipeline resource type %q", step.Type)
 	}
+}
+
+func (r *LiveRunner) runPipelineStepHook(ctx context.Context, cfg *config.Config, phase Phase, index int, hookKind string, scriptPath string, step config.PipelineStep) error {
+	if strings.TrimSpace(scriptPath) == "" {
+		return nil
+	}
+	opCtx, cancel := withOpTimeout(ctx, cfg)
+	defer cancel()
+
+	label := pipelineStepHookLabel(phase, index, hookKind)
+	env := r.stepHookEnv(cfg, phase, index, hookKind, step)
+	out, err := r.runProcess(opCtx, "/bin/sh", []string{scriptPath}, env, ".")
+	r.writeOutput(out)
+	if err != nil {
+		return fmt.Errorf("%s: %w", label, err)
+	}
+	return nil
+}
+
+func (r *LiveRunner) stepHookEnv(cfg *config.Config, phase Phase, index int, hookKind string, step config.PipelineStep) []string {
+	env := r.envFor(cfg)
+	env = append(env,
+		"KZERO_PHASE="+string(phase),
+		"KZERO_PIPELINE_STEP_INDEX="+strconv.Itoa(index),
+		"KZERO_STEP_HOOK="+hookKind,
+	)
+	if step.Ref != "" {
+		env = append(env, "KZERO_STEP_REF="+step.Ref)
+	}
+	if step.Custom != "" {
+		env = append(env, "KZERO_STEP_CUSTOM="+step.Custom)
+	}
+	switch step.Type {
+	case "deployment", "statefulset", "daemonset", "release":
+		env = append(env, "KZERO_STEP_TYPE="+step.Type)
+		env = append(env, "KZERO_STEP_NAMESPACE="+step.Namespace)
+		env = append(env, "KZERO_STEP_NAME="+step.Name)
+	}
+	return env
 }
 
 func (r *LiveRunner) execScript(ctx context.Context, cfg *config.Config, label, scriptPath string) error {

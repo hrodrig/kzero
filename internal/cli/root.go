@@ -37,6 +37,7 @@ so operators can scale workloads and Helm releases in a safe, repeatable way.`,
 		newDownCmd(),
 		newUpCmd(),
 		newResetCmd(),
+		newVersionCmd(),
 	)
 
 	return rootCmd
