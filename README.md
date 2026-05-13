@@ -61,7 +61,7 @@ Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.
 - **Commands**: `analyze`, `down`, `up`, `reset`, `version` (`reset` = full `down` then `up`; if `down` fails, `up` does not run).
 - **Phase hooks**: `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error` (shell script paths).
 - **Per-step hooks** (`pre` / `post`): optional shell scripts for a **single** pipeline step—run immediately before and after that step’s main action; **`post` runs only if the main action succeeds**.
-- **Step types**: compact refs (`deployment.ns/name`, `statefulset.ns/name`, `daemonset.ns/name`), `release.ns/name` (scripts under `helm.workspace`), and `custom: ./script.sh` (with optional sibling `pre` / `post` keys on the same YAML mapping).
+- **Step types**: compact refs (`deployment.ns/name`, `statefulset.ns/name`), `release.ns/name` (scripts under `helm.workspace`), and `custom: ./script.sh` (with optional sibling `pre` / `post` keys on the same YAML mapping). DaemonSet is **not** supported as a built-in kind because `kubectl scale` rejects it (no `/scale` subresource); use a `custom:` step with `kubectl patch` to set a `nodeSelector` that drains the pods.
 - **Run modes**: `dry-run` (plan only, no cluster mutations) and `live`.
 
 **Libraries** (see [`go.mod`](go.mod)): [Cobra](https://github.com/spf13/cobra) **v1.10.2**, [Viper](https://github.com/spf13/viper) **v1.21.0**.
@@ -253,7 +253,7 @@ The engine **does not** retry failed steps yet; keys are part of the contract. S
 ### `pipelines`
 
 - **`down`** and **`up`** are ordered lists. Each item is either:
-  - a **string** step reference: **`deployment.ns/name`**, **`statefulset.ns/name`**, **`daemonset.ns/name`**, **`release.ns/name`**; or
+  - a **string** step reference: **`deployment.ns/name`**, **`statefulset.ns/name`**, **`release.ns/name`** (DaemonSet is not a built-in kind — see [Features](#features)); or
   - a **single-key map** whose key is one of the above **or** **`custom`**, with optional fields beside that key (see below).
 - **`release.*`** steps require **`helm.workspace`** to point at the directory of **`<release>.sh`** scripts (see SPEC and sample).
 

@@ -71,6 +71,38 @@ This subsection documents **observable behavior in the codebase today** (sequent
 2. **`retry.attempts` and `retry.delay`:** Parsed and stored on the loaded `Config`, but the engine **does not** retry failed `kubectl`, `helm`, or hook subprocesses. A failure surfaces immediately; use `hooks.on-error`, external supervisors, or resilient wrapper scripts until retry logic ships.
 3. **`run.worker_concurrency`:** Parsed and stored; the engine **does not** use it to schedule concurrent steps. Operators may keep the key for **forward compatibility** with a future worker pool.
 
+<a id="supported-workload-kinds"></a>
+### Supported workload kinds
+
+Compact step references (`<kind>.<namespace>/<name>`) in `pipelines.down` and `pipelines.up` are validated against an explicit allow-list at config load time. Unsupported kinds are rejected by `kzero analyze` before any live execution.
+
+| Kind | Down action | Up action |
+|------|-------------|-----------|
+| `deployment` | `kubectl scale --replicas=0` | `kubectl scale --replicas=N` (N = step `replicas` or 1; optional `wait_for_ready` → `kubectl rollout status`) |
+| `statefulset` | `kubectl scale --replicas=0` | `kubectl scale --replicas=N` (N = step `replicas` or 1; optional `wait_for_ready` → `kubectl rollout status`) |
+| `release` | `<helm.workspace>/<name>.sh down` | `<helm.workspace>/<name>.sh up` |
+
+`daemonset` is **not** a built-in kind in v1 because the Kubernetes API server does not expose a `/scale` subresource for DaemonSet, so `kubectl scale daemonset/...` returns `Error from server (NotFound): the server could not find the requested resource`. Configs that reference `daemonset.<ns>/<name>` are rejected at parse time.
+
+To drain DaemonSet pods as part of a pipeline, use a `custom:` step that patches a `nodeSelector` no node satisfies, and reverses it on `up`:
+
+```yaml
+pipelines:
+  down:
+    - custom: ./hooks/daemonset-disable.sh
+  up:
+    - custom: ./hooks/daemonset-enable.sh
+```
+
+Where `daemonset-disable.sh` runs something like:
+
+```sh
+kubectl -n kube-system patch daemonset fluent-bit --type=strategic \
+  -p '{"spec":{"template":{"spec":{"nodeSelector":{"kzero.io/disabled":"true"}}}}}'
+```
+
+and `daemonset-enable.sh` removes that nodeSelector key. A future minor release may add a first-class `daemonset` step type built on top of this pattern.
+
 ## Pipeline syntax
 - String step: `<kind>.<namespace>/<name>`
   - Examples:
@@ -107,7 +139,7 @@ If `pre` fails, the main action and `post` for that step do not run; the phase f
 | `KZERO_STEP_HOOK` | `pre` or `post` |
 | `KZERO_STEP_REF` | Set when the step has a compact ref (e.g. `deployment.ns/app`) |
 | `KZERO_STEP_CUSTOM` | Set when the step is a `custom` script path |
-| `KZERO_STEP_TYPE`, `KZERO_STEP_NAMESPACE`, `KZERO_STEP_NAME` | Set for `deployment`, `statefulset`, `daemonset`, and `release` steps |
+| `KZERO_STEP_TYPE`, `KZERO_STEP_NAMESPACE`, `KZERO_STEP_NAME` | Set for `deployment`, `statefulset`, and `release` steps |
 
 Release steps still receive release-specific variables on the **release** script invocation (`KZERO_RELEASE_NAME`, `KZERO_RELEASE_NAMESPACE`, etc., as implemented); per-step hooks use the table above for correlation.
 
