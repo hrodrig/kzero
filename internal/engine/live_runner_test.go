@@ -314,3 +314,30 @@ func TestLiveRunner_RunMainStep_unsupportedType(t *testing.T) {
 		t.Fatalf("expected unsupported type error, got %v", err)
 	}
 }
+
+// TestLiveRunner_DaemonSetUnsupported is defense in depth: config validation
+// already rejects daemonset refs at load time, but a hand-built step that
+// bypasses Load must also fail in live mode rather than invoke kubectl scale
+// (which the API server rejects for DaemonSet — there is no /scale subresource).
+func TestLiveRunner_DaemonSetUnsupported(t *testing.T) {
+	t.Parallel()
+
+	r := &LiveRunner{
+		Exec: func(ctx context.Context, argv0 string, args, env []string, dir string) ([]byte, error) {
+			t.Fatalf("Exec should not run for unsupported daemonset step: %s %v", argv0, args)
+			return nil, nil
+		},
+	}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}, Command: config.CommandConfig{Kubectl: "kubectl"}}
+	step := config.PipelineStep{
+		Ref:       "daemonset.kube-system/fluent-bit",
+		Type:      "daemonset",
+		Namespace: "kube-system",
+		Name:      "fluent-bit",
+	}
+
+	err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step)
+	if err == nil || !strings.Contains(err.Error(), "unsupported pipeline resource type") {
+		t.Fatalf("expected unsupported type error for daemonset, got %v", err)
+	}
+}

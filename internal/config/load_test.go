@@ -258,7 +258,7 @@ run:
 	assertContains(t, err.Error(), "pipelines")
 }
 
-func TestLoadConfig_daemonsetReference(t *testing.T) {
+func TestLoadConfig_DaemonSetKindRejected(t *testing.T) {
 	t.Parallel()
 	path := writeTempConfig(t, `
 schema_version: "1.0"
@@ -268,12 +268,45 @@ pipelines:
 run:
   mode: "dry-run"
 `)
-	cfg, err := Load(path)
-	if err != nil {
-		t.Fatal(err)
+	_, err := Load(path)
+	if err == nil {
+		t.Fatal("expected error for daemonset step kind")
 	}
-	step := cfg.Pipelines.Down[0]
-	if step.Type != "daemonset" || step.Namespace != "kube-system" || step.Name != "some-agent" {
-		t.Fatalf("unexpected step: %#v", step)
+	assertContains(t, err.Error(), `unsupported step kind "daemonset"`)
+	assertContains(t, err.Error(), "nodeSelector")
+}
+
+func TestLoadConfig_UnsupportedKindRejected(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name string
+		ref  string
+		want string
+	}{
+		{name: "cronjob", ref: "cronjob.batch/nightly", want: `unsupported step kind "cronjob"`},
+		{name: "job", ref: "job.batch/migrate", want: `unsupported step kind "job"`},
+		{name: "service", ref: "service.default/api", want: `unsupported step kind "service"`},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - `+tc.ref+`
+run:
+  mode: "dry-run"
+`)
+			_, err := Load(path)
+			if err == nil {
+				t.Fatalf("expected error for %s", tc.ref)
+			}
+			assertContains(t, err.Error(), tc.want)
+			assertContains(t, err.Error(), "supported: deployment, statefulset, release")
+		})
 	}
 }

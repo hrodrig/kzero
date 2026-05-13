@@ -19,7 +19,6 @@ type LiveExec func(ctx context.Context, argv0 string, args, env []string, dir st
 var scalableKinds = map[string]struct{}{
 	"deployment":  {},
 	"statefulset": {},
-	"daemonset":   {},
 }
 
 func kubectlPath(cfg *config.Config) string {

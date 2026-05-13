@@ -14,6 +14,15 @@ const supportedSchemaVersion = "1.0"
 
 var stepRefPattern = regexp.MustCompile(`^([a-z0-9-]+)\.([a-z0-9-]+)/([a-zA-Z0-9._-]+)$`)
 
+// supportedStepKinds are the resource kinds the v1 engine knows how to execute
+// in pipelines.down / pipelines.up. Any other kind is rejected at parse time
+// so analyze surfaces the problem before live mode would.
+var supportedStepKinds = map[string]struct{}{
+	"deployment":  {},
+	"statefulset": {},
+	"release":     {},
+}
+
 type rawConfig struct {
 	SchemaVersion string                 `mapstructure:"schema_version"`
 	Cluster       ClusterConfig          `mapstructure:"cluster"`
@@ -130,9 +139,17 @@ func parseReferenceStep(ref string) (PipelineStep, error) {
 		return PipelineStep{}, fmt.Errorf("invalid step reference %q", ref)
 	}
 
+	kind := matches[1]
+	if _, ok := supportedStepKinds[kind]; !ok {
+		if kind == "daemonset" {
+			return PipelineStep{}, fmt.Errorf(`unsupported step kind "daemonset" in %q: kubectl scale is not supported for DaemonSet; use a custom: step with kubectl patch to set a nodeSelector that drains the pods`, ref)
+		}
+		return PipelineStep{}, fmt.Errorf("unsupported step kind %q in %q (supported: deployment, statefulset, release)", kind, ref)
+	}
+
 	return PipelineStep{
 		Ref:       ref,
-		Type:      matches[1],
+		Type:      kind,
 		Namespace: matches[2],
 		Name:      matches[3],
 	}, nil

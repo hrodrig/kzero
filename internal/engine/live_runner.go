@@ -45,7 +45,7 @@ func (r *LiveRunner) runMainPipelineStep(ctx context.Context, cfg *config.Config
 	}
 
 	switch step.Type {
-	case "deployment", "statefulset", "daemonset":
+	case "deployment", "statefulset":
 		return r.runScaledWorkload(ctx, cfg, phase, step)
 	case "release":
 		return r.runReleaseScript(ctx, cfg, phase, step)
@@ -85,7 +85,7 @@ func (r *LiveRunner) stepHookEnv(cfg *config.Config, phase Phase, index int, hoo
 		env = append(env, "KZERO_STEP_CUSTOM="+step.Custom)
 	}
 	switch step.Type {
-	case "deployment", "statefulset", "daemonset", "release":
+	case "deployment", "statefulset", "release":
 		env = append(env, "KZERO_STEP_TYPE="+step.Type)
 		env = append(env, "KZERO_STEP_NAMESPACE="+step.Namespace)
 		env = append(env, "KZERO_STEP_NAME="+step.Name)
