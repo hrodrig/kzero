@@ -1,4 +1,4 @@
-# GoReleaser for kzero — same flow as pgwd: merge develop → main, tag v0.2.0, push tag (CI runs release).
+# GoReleaser for kzero — same flow as pgwd: merge develop → main, tag v0.2.x, push tag (CI runs release).
 # Local: make release-check && make release (on main only).
 # Snapshot: make snapshot → artifacts under dist/
 

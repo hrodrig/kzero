@@ -21,6 +21,7 @@ The first **public** releases are **0.2.0** onward (there was no prior `1.0.x` l
 |---------|------------|
 | **0.2.0** | Initial published release: packaging, CI, core CLI/engine, declarative YAML pipelines. |
 | **0.2.1** | Parse-time allow-list for compact step kinds; **DaemonSet** removed from built-in scalable workloads (documented `custom:` workaround); see [supported workload kinds](SPECIFICATIONS.md#supported-workload-kinds). |
+| **0.2.2** | **`docs/ROADMAP.md`** published and linked; roadmap milestone bands aligned with **0.2.x** semver; **CHANGELOG** structure repaired so **[0.2.1]** release notes are under the correct heading again. |
 
 ---
 

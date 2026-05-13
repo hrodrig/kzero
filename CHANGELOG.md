@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-05-13
+
 ### Added
 
 - **`docs/ROADMAP.md`**: in-repo prioritized roadmap (semver bands **0.3.x**–**1.0.0 (future)**) plus **Shipped** for **0.2.0** / **0.2.1**; linked from **README** and **docs/README**.
@@ -14,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **`docs/ROADMAP.md`**: rename milestone headings from fictional `v1.0.x` / `v2.0` style labels to **0.3.x**–**1.0.0 (future)** bands aligned with public releases starting at **0.2.0**.
+
+### Fixed
+
+- **`CHANGELOG.md`**: restore the **`[0.2.1]`** section (Removed / Changed) that had been folded under **`[Unreleased]`** by mistake, so published **0.2.1** release notes match the tagged release again.
 
 ## [0.2.1] - 2026-05-13
 
@@ -38,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/hrodrig/kzero/releases/tag/v0.2.2
 [0.2.1]: https://github.com/hrodrig/kzero/releases/tag/v0.2.1
 [0.2.0]: https://github.com/hrodrig/kzero/releases/tag/v0.2.0
