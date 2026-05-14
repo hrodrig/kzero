@@ -29,7 +29,7 @@ The first **public** releases are **0.2.0** onward (there was no prior `1.0.x` l
 
 | # | Item | Status |
 |---|------|--------|
-| 1 | **CLI warnings** at startup for config the current engine does not honor: `run.worker_concurrency > 1`, `retry.attempts > 1`, or `notify.{slack,discord}.enabled` (with tests). | Pending |
+| 1 | **CLI warnings** at startup for config the current engine does not honor: `run.worker_concurrency > 1`, `retry.attempts > 1`, or `notify.{slack,discord}.enabled` (with tests). | **Done** (unreleased; stderr on `analyze` / `down` / `up` / `reset`) |
 | 2 | **Explicit allow-list** for compact pipeline step kinds at parse time so `analyze` rejects what `live` cannot run. | **Done** (0.2.1) |
 | 3 | **Richer `analyze` output**: list normalized steps (reuse existing describe helpers) and flag schema fields that are declared but not implemented. | Pending |
 | 4 | **DaemonSet**: remove from built-in scalable workloads; document workaround (`custom:` + `kubectl patch` nodeSelector, etc.). | **Done** (0.2.1; SPEC link above). |

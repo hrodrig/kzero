@@ -70,8 +70,8 @@ This subsection documents **observable behavior in the codebase today** (sequent
 1. **Sequential pipeline steps:** For `kzero down` / `kzero up` / `kzero reset`, each entry in `pipelines.down` or `pipelines.up` runs **after** the previous step completes successfully. Steps do **not** run in parallel. Fail-fast: the first failing hook or step aborts the phase (see §5).
 2. **`retry.attempts` and `retry.delay`:** Parsed and stored on the loaded `Config`, but the engine **does not** retry failed `kubectl`, `helm`, or hook subprocesses. A failure surfaces immediately; use `hooks.on-error`, external supervisors, or resilient wrapper scripts until retry logic ships.
 3. **`run.worker_concurrency`:** Parsed and stored; the engine **does not** use it to schedule concurrent steps. Operators may keep the key for **forward compatibility** with a future worker pool.
-
-<a id="supported-workload-kinds"></a>
+4. **`notify.slack` / `notify.discord`:** Parsed and stored; the engine **does not** send webhooks or other notifications.
+5. **CLI warnings:** After a successful config load, `kzero analyze`, `kzero down`, `kzero up`, and `kzero reset` print **non-fatal warnings** to **stderr** when `run.worker_concurrency > 1`, `retry.attempts > 1`, or `notify.slack.enabled` / `notify.discord.enabled` is true, because those settings are not honored by the v1 engine yet.
 ### Supported workload kinds
 
 Compact step references (`<kind>.<namespace>/<name>`) in `pipelines.down` and `pipelines.up` are validated against an explicit allow-list at config load time. Unsupported kinds are rejected by `kzero analyze` before any live execution.

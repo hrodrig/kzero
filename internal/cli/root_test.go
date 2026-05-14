@@ -84,6 +84,45 @@ run:
 	}
 }
 
+func TestAnalyze_deferredFeatureWarningsOnStderr(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
+	if err := os.WriteFile(cfgPath, []byte(`
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.argocd/argocd-server
+retry:
+  attempts: 2
+run:
+  mode: "dry-run"
+  worker_concurrency: 2
+notify:
+  slack:
+    enabled: true
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	cmd := newRootCmd()
+	cmd.SetOut(&stdout)
+	cmd.SetErr(&stderr)
+	cmd.SetArgs([]string{"analyze", "--config", cfgPath})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	errOut := stderr.String()
+	for _, want := range []string{
+		"warning: run.worker_concurrency=2",
+		"warning: retry.attempts=2",
+		"warning: notify.slack.enabled",
+	} {
+		if !strings.Contains(errOut, want) {
+			t.Fatalf("stderr missing %q; full stderr: %q", want, errOut)
+		}
+	}
+}
+
 func TestDown_dryRunCompletes(t *testing.T) {
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`

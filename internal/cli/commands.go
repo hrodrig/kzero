@@ -2,11 +2,18 @@ package cli
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/engine"
 	"github.com/spf13/cobra"
 )
+
+func writeDeferredFeatureWarnings(w io.Writer, cfg *config.Config) {
+	for _, msg := range config.DeferredFeatureWarnings(cfg) {
+		_, _ = fmt.Fprintf(w, "warning: %s\n", msg)
+	}
+}
 
 func newAnalyzeCmd() *cobra.Command {
 	return &cobra.Command{
@@ -17,6 +24,7 @@ func newAnalyzeCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("analyze config: %w", err)
 			}
+			writeDeferredFeatureWarnings(cmd.ErrOrStderr(), cfg)
 
 			configPath := cfgFile
 			if configPath == "" {
@@ -39,6 +47,7 @@ func newDownCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("load config: %w", err)
 			}
+			writeDeferredFeatureWarnings(cmd.ErrOrStderr(), cfg)
 			eng := engine.New(cfg, cmd.OutOrStdout())
 			return eng.RunDown(cmd.Context(), cfg)
 		},
@@ -54,6 +63,7 @@ func newUpCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("load config: %w", err)
 			}
+			writeDeferredFeatureWarnings(cmd.ErrOrStderr(), cfg)
 			eng := engine.New(cfg, cmd.OutOrStdout())
 			return eng.RunUp(cmd.Context(), cfg)
 		},
@@ -69,6 +79,7 @@ func newResetCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("load config: %w", err)
 			}
+			writeDeferredFeatureWarnings(cmd.ErrOrStderr(), cfg)
 			eng := engine.New(cfg, cmd.OutOrStdout())
 			return eng.RunReset(cmd.Context(), cfg)
 		},
