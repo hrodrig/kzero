@@ -25,7 +25,9 @@ jobs:
       - name: Run unit tests
         run: go test -race -coverprofile=coverage.out -covermode=atomic -v ./...
 
-      - name: Upload coverage to Codecov
+      # Requires repository secret CODECOV_TOKEN from https://codecov.io/gh/hrodrig/kzero
+      # (fork PRs may skip upload without the secret; CI still passes.)
+      - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
