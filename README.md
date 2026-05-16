@@ -15,9 +15,11 @@
 [![Security](https://github.com/hrodrig/kzero/actions/workflows/security.yml/badge.svg)](https://github.com/hrodrig/kzero/actions/workflows/security.yml)
 [![CodeQL](https://github.com/hrodrig/kzero/actions/workflows/codeql.yml/badge.svg)](https://github.com/hrodrig/kzero/actions/workflows/codeql.yml)
 
+![gghstats clones](https://gghstats.hermesrodriguez.com/api/v1/badge/hrodrig/kzero?metric=clones)
+
 **Repo:** [github.com/hrodrig/kzero](https://github.com/hrodrig/kzero) · **Releases:** [Releases](https://github.com/hrodrig/kzero/releases) · **DeepWiki:** [hrodrig/kzero](https://deepwiki.com/hrodrig/kzero)
 
-*Badges:* **Version** is a static badge aligned with the repo **`VERSION`** file (next release target). **GitHub release** shows the latest published **tag** on GitHub; it can lag the **`VERSION`** file until a release is cut. **Go** matches **`go.mod`**. **License** points at this repository’s license file. **Ask DeepWiki** links to [DeepWiki](https://deepwiki.com/) AI-generated docs for this repository (see also [badge maker](https://deepwiki.com/badge-maker)). **CI**, **Security**, and **CodeQL** reflect [GitHub Actions](https://github.com/hrodrig/kzero/actions) workflows. **codecov** tracks coverage uploaded from CI. **pkg.go.dev**, **Go Report Card**, and **deps.dev** summarize the Go module and dependencies.
+*Badges:* **Version** is a static badge aligned with the repo **`VERSION`** file (next release target). **GitHub release** shows the latest published **tag** on GitHub; it can lag the **`VERSION`** file until a release is cut. **Go** matches **`go.mod`**. **License** points at this repository’s license file. **Ask DeepWiki** links to [DeepWiki](https://deepwiki.com/) AI-generated docs for this repository (see also [badge maker](https://deepwiki.com/badge-maker)). **CI**, **Security**, and **CodeQL** reflect [GitHub Actions](https://github.com/hrodrig/kzero/actions) workflows. **codecov** tracks coverage uploaded from CI. **pkg.go.dev**, **Go Report Card**, and **deps.dev** summarize the Go module and dependencies. **gghstats clones** shows Git clone traffic for this repo (see [gghstats](https://github.com/hrodrig/gghstats)).
 
 ![kzero overview — declarative Kubernetes workload orchestration (pipelines, hooks, workload step types)](docs/kzero-hero-oss.png)
 
