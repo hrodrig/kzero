@@ -9,13 +9,13 @@
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hrodrig/kzero)
 [![CI](https://github.com/hrodrig/kzero/actions/workflows/ci.yml/badge.svg)](https://github.com/hrodrig/kzero/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/hrodrig/kzero/graph/badge.svg)](https://codecov.io/gh/hrodrig/kzero)
+[![gghstats clones](https://gghstats.hermesrodriguez.com/api/v1/badge/hrodrig/kzero?metric=clones)](https://gghstats.hermesrodriguez.com/hrodrig/kzero)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/kzero)](https://pkg.go.dev/github.com/hrodrig/kzero)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hrodrig/kzero)](https://goreportcard.com/report/github.com/hrodrig/kzero)
 [![deps.dev](https://img.shields.io/badge/deps.dev-go%20module-blue)](https://deps.dev/go/github.com%2Fhrodrig%2Fkzero)
 [![Security](https://github.com/hrodrig/kzero/actions/workflows/security.yml/badge.svg)](https://github.com/hrodrig/kzero/actions/workflows/security.yml)
 [![CodeQL](https://github.com/hrodrig/kzero/actions/workflows/codeql.yml/badge.svg)](https://github.com/hrodrig/kzero/actions/workflows/codeql.yml)
 
-![gghstats clones](https://gghstats.hermesrodriguez.com/api/v1/badge/hrodrig/kzero?metric=clones)
 
 **Repo:** [github.com/hrodrig/kzero](https://github.com/hrodrig/kzero) · **Releases:** [Releases](https://github.com/hrodrig/kzero/releases) · **DeepWiki:** [hrodrig/kzero](https://deepwiki.com/hrodrig/kzero)
 
