@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-04
+
 ### Added
 
 - **`run.execution`**: `shell` (default), `native` (client-go), or `auto` (native with shell fallback) for `deployment` / `statefulset` steps in live mode.
@@ -14,8 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Docs:** [docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md) documents workload execution backend; [docs/ROADMAP.md](docs/ROADMAP.md) marks 0.4.x items 5–9 done (pending release tag).
-- **Dependencies:** `k8s.io/client-go` and `k8s.io/api` for native execution.
+- **Docs:** [docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md) documents workload execution backend; [docs/ROADMAP.md](docs/ROADMAP.md) marks 0.4.x items 5–9 shipped in **0.4.0**.
+- **Dependencies:** `k8s.io/client-go` and `k8s.io/api` for native execution; `golang.org/x/net` v0.55.0 (govulncheck clean with client-go).
 
 ## [0.2.3] - 2026-06-04
 
@@ -71,7 +73,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/hrodrig/kzero/compare/v0.2.3...v0.4.0
 [0.2.3]: https://github.com/hrodrig/kzero/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/hrodrig/kzero/releases/tag/v0.2.2
 [0.2.1]: https://github.com/hrodrig/kzero/releases/tag/v0.2.1
