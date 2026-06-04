@@ -15,11 +15,6 @@ func DeferredFeatureWarnings(cfg *Config) []string {
 			"run.worker_concurrency=%d is set but the v1 engine runs pipeline steps sequentially; only one worker is used",
 			cfg.Run.WorkerConcurrency))
 	}
-	if cfg.Retry.Attempts > 1 {
-		out = append(out, fmt.Sprintf(
-			"retry.attempts=%d is set but step retries are not implemented yet",
-			cfg.Retry.Attempts))
-	}
 	if cfg.Notify.Slack.Enabled {
 		out = append(out, "notify.slack.enabled is true but Slack notifications are not implemented yet")
 	}

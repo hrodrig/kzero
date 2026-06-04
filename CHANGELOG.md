@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-06-04
+
+### Added
+
+- **Per-step retry in live mode**: `retry.attempts` and `retry.delay` are honored for each pipeline step (pre + main + post). Transient failures (API timeout/conflict/429/503, rollout deadlines, common connection errors) retry with backoff **`delay × 2^(n−1)`** (max **2m**). Non-retriable: `NotFound`, `Forbidden`, `context.Canceled`. **`dry-run`** unchanged (no retries). Logs `[retry] pipeline …` before each wait.
+
 ## [0.5.1] - 2026-06-04
 
 Pilot polish after **0.5.0**: stronger dry-run on the native path and configurable timing-line colors.

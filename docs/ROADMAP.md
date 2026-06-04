@@ -35,6 +35,7 @@ The **next strategic priority** is a **native Go path** via **`k8s.io/client-go`
 | **0.4.1** | **`analyze` cluster validation**: API **Get** checks for pipeline `deployment` / `statefulset` refs when kubeconfig loads (roadmap **0.4.x** #10). |
 | **0.5.0** | **Operator safety for pilots**: **`Kubernetes target:`** on pipeline commands, **`kzero target`**, **`KZERO_*` env overrides** on load, **elapsed time** summary; suitable for scripted **`release.*`** down/up with external Helm wrappers. |
 | **0.5.1** | **`run.color`** for timing-line ANSI styling; **server-side dry-run** on native/auto scale steps (roadmap **0.4.x** #11). |
+| **0.5.2** | **Per-step retry** with exponential backoff on transient errors (roadmap **0.5.x** #12). |
 
 ---
 
@@ -75,7 +76,7 @@ Applies to **both** executors where relevant; subprocess classification still ma
 
 | # | Item | Status |
 |---|------|--------|
-| 12 | **Retry** with exponential backoff for transient failures, wired to `cfg.Retry`. | Pending |
+| 12 | **Retry** with exponential backoff for transient failures, wired to `cfg.Retry`. | **Done** (0.5.2) |
 | 13 | **Concurrency** via bounded worker pool from `run.worker_concurrency`, preserving strict YAML order unless a future opt-in per-step parallelism is defined. | Pending |
 | 14 | **Propagate `client.id`** into structured logs and hook environment (e.g. `KZERO_CLIENT_ID`). | Pending |
 | 15 | **Subprocess error taxonomy** for shell path (exit codes, common stderr patterns) when native path is not used. | Pending |

@@ -33,7 +33,6 @@ func TestDeferredFeatureWarnings_allSignals(t *testing.T) {
 	got := DeferredFeatureWarnings(cfg)
 	want := []string{
 		"run.worker_concurrency=4 is set but the v1 engine runs pipeline steps sequentially; only one worker is used",
-		"retry.attempts=3 is set but step retries are not implemented yet",
 		"notify.slack.enabled is true but Slack notifications are not implemented yet",
 		"notify.discord.enabled is true but Discord notifications are not implemented yet",
 	}

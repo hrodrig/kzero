@@ -7,8 +7,10 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/executor"
 )
 
 func stepKey(phase Phase, index int) string {
@@ -406,6 +408,105 @@ func assertStep(t *testing.T, c RecordedCall, phase Phase, index int) {
 	t.Helper()
 	if c.Kind != "step" || c.Phase != phase || c.Index != index {
 		t.Fatalf("expected step %s[%d], got %#v", phase, index, c)
+	}
+}
+
+func TestRunDown_retriesTransientPipelineStep(t *testing.T) {
+	t.Parallel()
+
+	rec := &RecordingRunner{
+		StepFailRemaining: map[string]int{stepKey(PhaseDown, 0): 1},
+		StepFailErr:       executor.ErrConflict,
+	}
+	var log strings.Builder
+	eng := &Engine{Runner: rec, Out: &log}
+	cfg := &config.Config{
+		Run:   config.RunConfig{Mode: "live"},
+		Retry: config.RetryConfig{Attempts: 3, Delay: time.Millisecond},
+		Pipelines: config.PipelinesConfig{
+			Down: []config.PipelineStep{
+				{Ref: "deployment.ns/a", Type: "deployment", Namespace: "ns", Name: "a"},
+			},
+		},
+	}
+	if err := eng.RunDown(context.Background(), cfg); err != nil {
+		t.Fatalf("RunDown: %v", err)
+	}
+	stepCalls := 0
+	for _, c := range rec.Calls {
+		if c.Kind == "step" {
+			stepCalls++
+		}
+	}
+	if stepCalls != 2 {
+		t.Fatalf("expected 2 step executions (1 fail + 1 ok), got %d calls: %#v", stepCalls, rec.Calls)
+	}
+	if !strings.Contains(log.String(), "[retry]") {
+		t.Fatalf("expected retry log, got %q", log.String())
+	}
+}
+
+func TestRunDown_doesNotRetryNotFound(t *testing.T) {
+	t.Parallel()
+
+	rec := &RecordingRunner{
+		StepFailRemaining: map[string]int{stepKey(PhaseDown, 0): 2},
+		StepFailErr:       executor.ErrNotFound,
+	}
+	eng := &Engine{Runner: rec}
+	cfg := &config.Config{
+		Run:   config.RunConfig{Mode: "live"},
+		Retry: config.RetryConfig{Attempts: 3, Delay: time.Millisecond},
+		Pipelines: config.PipelinesConfig{
+			Down: []config.PipelineStep{
+				{Ref: "deployment.ns/a", Type: "deployment", Namespace: "ns", Name: "a"},
+			},
+		},
+	}
+	err := eng.RunDown(context.Background(), cfg)
+	if err == nil || !errors.Is(err, executor.ErrNotFound) {
+		t.Fatalf("expected not found, got %v", err)
+	}
+	stepCalls := 0
+	for _, c := range rec.Calls {
+		if c.Kind == "step" {
+			stepCalls++
+		}
+	}
+	if stepCalls != 1 {
+		t.Fatalf("expected 1 step attempt, got %d", stepCalls)
+	}
+}
+
+func TestRunDown_dryRunSkipsRetry(t *testing.T) {
+	t.Parallel()
+
+	rec := &RecordingRunner{
+		StepFailRemaining: map[string]int{stepKey(PhaseDown, 0): 2},
+		StepFailErr:       executor.ErrConflict,
+	}
+	eng := &Engine{Runner: rec}
+	cfg := &config.Config{
+		Run:   config.RunConfig{Mode: "dry-run"},
+		Retry: config.RetryConfig{Attempts: 3, Delay: time.Millisecond},
+		Pipelines: config.PipelinesConfig{
+			Down: []config.PipelineStep{
+				{Ref: "deployment.ns/a", Type: "deployment", Namespace: "ns", Name: "a"},
+			},
+		},
+	}
+	err := eng.RunDown(context.Background(), cfg)
+	if err == nil || !errors.Is(err, executor.ErrConflict) {
+		t.Fatalf("expected conflict, got %v", err)
+	}
+	stepCalls := 0
+	for _, c := range rec.Calls {
+		if c.Kind == "step" {
+			stepCalls++
+		}
+	}
+	if stepCalls != 1 {
+		t.Fatalf("dry-run should not retry, got %d step calls", stepCalls)
 	}
 }
 

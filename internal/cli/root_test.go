@@ -187,7 +187,6 @@ notify:
 	errOut := stderr.String()
 	for _, want := range []string{
 		"warning: run.worker_concurrency=2",
-		"warning: retry.attempts=2",
 		"warning: notify.slack.enabled",
 	} {
 		if !strings.Contains(errOut, want) {

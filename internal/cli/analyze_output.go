@@ -48,6 +48,16 @@ func printAnalyzeHeader(w io.Writer, cfg *config.Config, configPath string) erro
 	if cfg.Run.Timeout > 0 {
 		lines = append(lines, "Run timeout: "+cfg.Run.Timeout.String())
 	}
+	if cfg.Retry.Attempts > 0 {
+		retryLine := fmt.Sprintf("Retry: attempts=%d", cfg.Retry.Attempts)
+		if cfg.Retry.Delay > 0 {
+			retryLine += ", delay=" + cfg.Retry.Delay.String()
+		}
+		if cfg.Run.Mode == "live" && cfg.Retry.Attempts > 1 {
+			retryLine += " (live: exponential backoff on transient errors)"
+		}
+		lines = append(lines, retryLine)
+	}
 	if ws := strings.TrimSpace(cfg.Helm.Workspace); ws != "" {
 		lines = append(lines, "Helm workspace: "+ws)
 	}

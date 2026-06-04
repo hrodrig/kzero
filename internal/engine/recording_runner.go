@@ -12,6 +12,9 @@ type RecordingRunner struct {
 	Calls   []RecordedCall
 	HookErr map[string]error
 	StepErr map[string]error
+	// StepFailRemaining fails the main step this many times before succeeding (live retry tests).
+	StepFailRemaining map[string]int
+	StepFailErr       error
 }
 
 // RecordedCall is one hook or pipeline invocation observed in tests.
@@ -43,6 +46,13 @@ func (r *RecordingRunner) RunPipelineStep(ctx context.Context, cfg *config.Confi
 	}
 	r.Calls = append(r.Calls, RecordedCall{Kind: "step", Phase: phase, Index: index, Step: step})
 	key := fmt.Sprintf("%s:%d", phase, index)
+	if n := r.StepFailRemaining[key]; n > 0 {
+		r.StepFailRemaining[key] = n - 1
+		if r.StepFailErr != nil {
+			return r.StepFailErr
+		}
+		return fmt.Errorf("injected transient failure for %s", key)
+	}
 	if err, ok := r.StepErr[key]; ok && err != nil {
 		return err
 	}

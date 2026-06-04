@@ -249,10 +249,10 @@ Full schema, validation, and acceptance criteria: **[docs/SPECIFICATIONS.md](doc
 
 | Key | Purpose |
 |-----|---------|
-| **`attempts`** | Declared retry count (**integer**). |
-| **`delay`** | Backoff between attempts (**Go duration**, e.g. **`8s`**). |
+| **`attempts`** | Total tries per pipeline step in **`live`** mode (**integer**, minimum effective **1**). |
+| **`delay`** | Base wait before the first retry (**Go duration**, e.g. **`8s`**); after failure *n*, wait **`delay × 2^(n−1)`** (capped at **2m**; default base **5s** if `delay` is zero). |
 
-The engine **does not** retry failed steps yet; keys are part of the contract. See [SPEC — Current engine](docs/SPECIFICATIONS.md#current-engine-sequencing-retry-and-worker-concurrency).
+Retries rerun the whole step (per-step **pre**, main, **post**). Only **transient** failures retry (API timeouts, conflicts, 429/503, connection errors). **`NotFound`** / **`Forbidden`** fail immediately. **`dry-run`** never retries. See [SPEC — Current engine](docs/SPECIFICATIONS.md#current-engine-sequencing-retry-and-worker-concurrency).
 
 ### `pipelines`
 

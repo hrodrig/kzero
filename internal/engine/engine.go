@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/retry"
 )
 
 // Engine runs phased pipelines using a Runner (dry-run or live).
 type Engine struct {
 	Runner Runner
+	Out    io.Writer
 }
 
 // New builds an Engine for cfg.Run.Mode, writing dry-run / log lines to out.
@@ -24,7 +27,7 @@ func New(cfg *config.Config, out io.Writer) *Engine {
 	default:
 		r = NewDryRunner(cfg, out)
 	}
-	return &Engine{Runner: r}
+	return &Engine{Runner: r, Out: out}
 }
 
 // RunDown runs pre-down, pipelines.down, then post-down. Fail-fast; on-error hook runs on failure.
@@ -59,7 +62,7 @@ func (e *Engine) runDown(ctx context.Context, cfg *config.Config) error {
 		return finishWithError(ctx, e.Runner, cfg, err)
 	}
 	for i, step := range cfg.Pipelines.Down {
-		if err := e.Runner.RunPipelineStep(ctx, cfg, PhaseDown, i, step); err != nil {
+		if err := e.runPipelineStepWithRetry(ctx, cfg, PhaseDown, i, step); err != nil {
 			return finishWithError(ctx, e.Runner, cfg, err)
 		}
 	}
@@ -74,7 +77,7 @@ func (e *Engine) runUp(ctx context.Context, cfg *config.Config) error {
 		return finishWithError(ctx, e.Runner, cfg, err)
 	}
 	for i, step := range cfg.Pipelines.Up {
-		if err := e.Runner.RunPipelineStep(ctx, cfg, PhaseUp, i, step); err != nil {
+		if err := e.runPipelineStepWithRetry(ctx, cfg, PhaseUp, i, step); err != nil {
 			return finishWithError(ctx, e.Runner, cfg, err)
 		}
 	}
@@ -89,6 +92,33 @@ func withRunTimeout(ctx context.Context, cfg *config.Config) (context.Context, c
 		return ctx, func() {}
 	}
 	return context.WithTimeout(ctx, cfg.Run.Timeout)
+}
+
+func (e *Engine) runPipelineStepWithRetry(ctx context.Context, cfg *config.Config, phase Phase, index int, step config.PipelineStep) error {
+	max := retry.Attempts(cfg)
+	if max <= 1 || cfg.Run.Mode != "live" {
+		return e.Runner.RunPipelineStep(ctx, cfg, phase, index, step)
+	}
+	var lastErr error
+	for try := 1; try <= max; try++ {
+		lastErr = e.Runner.RunPipelineStep(ctx, cfg, phase, index, step)
+		if lastErr == nil {
+			return nil
+		}
+		if try == max || !retry.IsRetriable(lastErr) {
+			return lastErr
+		}
+		wait := retry.Backoff(cfg.Retry.Delay, try)
+		retry.LogRetry(e.Out, string(phase), index, step.Ref, try, max, wait, lastErr)
+		timer := time.NewTimer(wait)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return lastErr
+		case <-timer.C:
+		}
+	}
+	return lastErr
 }
 
 func finishWithError(ctx context.Context, runner Runner, cfg *config.Config, err error) error {
