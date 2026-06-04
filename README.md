@@ -2,7 +2,7 @@
 
 <a id="top"></a>
 
-[![Version](https://img.shields.io/badge/version-0.5.1-blue.svg)](https://github.com/hrodrig/kzero/releases)
+[![Version](https://img.shields.io/badge/version-0.5.3-blue.svg)](https://github.com/hrodrig/kzero/releases)
 [![GitHub release](https://img.shields.io/github/v/release/hrodrig/kzero)](https://github.com/hrodrig/kzero/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
