@@ -158,9 +158,22 @@ Unknown step option keys (outside the documented set) or unknown step shapes mus
 ## 4. Command Behavior
 
 ## `kzero analyze`
-- Validates config and prints normalized execution plan.
-- Must not mutate cluster state.
+- Validates config and prints a **normalized execution plan** on **stdout**. Must not mutate cluster state.
 - Exit code `0` on valid config; non-zero on invalid config.
+- After a successful load, prints **non-fatal warnings** to **stderr** for deferred schema fields (same set as in [Current engine](#current-engine-sequencing-retry-and-worker-concurrency): `run.worker_concurrency > 1`, `retry.attempts > 1`, `notify.slack.enabled`, `notify.discord.enabled`). Warnings do not change the exit code.
+
+### Analyze stdout (v1)
+
+In order (omit lines when the corresponding config value is empty):
+
+1. **Header:** `Config`, `Schema`, `Run mode`; optional `Cluster`, `Client id`, `Run timeout`, `Helm workspace`.
+2. **Phase hooks:** one line per set hook (`Hook pre-down:`, `Hook post-down:`, `Hook pre-up:`, `Hook post-up:`, `Hook on-error:`).
+3. **Counts:** `Pipeline steps: down=N up=M`.
+4. **`[down]`** section: for each step, `  <index>: <normalized step>` where the label uses the compact ref (e.g. `deployment.ns/app`) or `custom: <path>`. Optional parenthetical metadata: `pre`, `post`, `replicas`, `wait_for_ready`, `timeout`; for `release.*` steps, `script: <helm.workspace>/<release>.sh`.
+5. **`[up]`** section: same format as `[down]`.
+6. **`Deferred`** block (only if any deferred field is set): heading `Deferred (accepted by schema; not implemented by v1 engine):` followed by bullet lines summarizing the same messages as stderr warnings.
+
+`analyze` does **not** invoke the execution engine; it only lists the configured plan. For planned hook/script invocations in `dry-run` mode, use `kzero down` / `kzero up` with `run.mode: dry-run`.
 
 ## `kzero down`
 Execution order:

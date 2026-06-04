@@ -37,19 +37,9 @@ func (r *DryRunner) RunPipelineStep(ctx context.Context, cfg *config.Config, pha
 		return fmt.Errorf("step %s[%d]: %w", phase, index, ctx.Err())
 	default:
 	}
-	desc := describeStep(step)
+	desc := DescribeStep(step)
 	if _, err := fmt.Fprintf(r.Out, "[dry-run] pipeline %s step %d: %s\n", phase, index, desc); err != nil {
 		return err
 	}
 	return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
-}
-
-func describeStep(step config.PipelineStep) string {
-	if step.Custom != "" {
-		return "custom " + step.Custom
-	}
-	if step.Ref != "" {
-		return step.Ref
-	}
-	return step.Type + "/" + step.Namespace + "/" + step.Name
 }

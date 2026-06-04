@@ -7,9 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-06-04
+
 ### Added
 
 - **CLI warnings** (stderr) after successful config load when **`run.worker_concurrency` > 1**, **`retry.attempts` > 1**, or **`notify.slack.enabled` / `notify.discord.enabled`** is true — those fields are accepted by the schema but not yet implemented by the v1 engine (`analyze`, `down`, `up`, `reset`).
+- **`kzero analyze`**: prints normalized **`[down]`** / **`[up]`** step lists (with optional script paths, hooks, and scale options), phase hooks, run metadata, and a **Deferred** summary on stdout for schema fields not yet honored by the engine.
+
+### Changed
+
+- **Docs:** [docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md) and [README.md](README.md) describe the **`kzero analyze`** stdout/stderr contract.
+- **Roadmap:** strategic priority for **client-go** / native executor (**0.4.x**); **0.3.x** operator-honesty band complete.
+- **Go toolchain:** `go.mod` and build images require **Go 1.26.4+** (stdlib).
+
+### Security
+
+- Bump minimum Go version to **1.26.4** to address [GO-2026-5037](https://pkg.go.dev/vuln/GO-2026-5037) (`crypto/x509` hostname parsing) reported by `govulncheck` on Go 1.26.3.
 
 ## [0.2.2] - 2026-05-13
 
@@ -48,7 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/hrodrig/kzero/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/hrodrig/kzero/releases/tag/v0.2.2
 [0.2.1]: https://github.com/hrodrig/kzero/releases/tag/v0.2.1
 [0.2.0]: https://github.com/hrodrig/kzero/releases/tag/v0.2.0

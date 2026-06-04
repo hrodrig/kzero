@@ -30,10 +30,7 @@ func newAnalyzeCmd() *cobra.Command {
 			if configPath == "" {
 				configPath = "kzero.yaml"
 			}
-			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Config: %s\n", configPath)
-			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Schema: %s\n", cfg.SchemaVersion)
-			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Pipeline steps: down=%d up=%d\n", len(cfg.Pipelines.Down), len(cfg.Pipelines.Up))
-			return nil
+			return printAnalyzePlan(cmd.OutOrStdout(), cfg, configPath)
 		},
 	}
 }

@@ -79,8 +79,62 @@ run:
 		t.Fatalf("Execute: %v", err)
 	}
 	out := stdout.String()
-	if !strings.Contains(out, "Pipeline steps: down=1 up=0") {
-		t.Fatalf("unexpected output: %q", out)
+	for _, want := range []string{
+		"Pipeline steps: down=1 up=0",
+		"[down]",
+		"0: deployment.argocd/argocd-server",
+		"Run mode: dry-run",
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("stdout missing %q; full output: %q", want, out)
+		}
+	}
+}
+
+func TestAnalyze_sampleStyleListsStepsAndDeferredOnStdout(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
+	if err := os.WriteFile(cfgPath, []byte(`
+schema_version: "1.0"
+helm:
+  workspace: "./helm-assets"
+pipelines:
+  down:
+    - deployment.argocd/argocd-server
+    - release.monitoring/kube-prometheus-stack
+  up:
+    - deployment.argocd/argocd-server
+retry:
+  attempts: 3
+run:
+  mode: "dry-run"
+  worker_concurrency: 4
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	cmd := newRootCmd()
+	cmd.SetOut(&stdout)
+	cmd.SetErr(&stderr)
+	cmd.SetArgs([]string{"analyze", "--config", cfgPath})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	out := stdout.String()
+	for _, want := range []string{
+		"[down]",
+		"[up]",
+		"release.monitoring/kube-prometheus-stack",
+		"helm-assets/kube-prometheus-stack.sh",
+		"Deferred (accepted by schema",
+		"run.worker_concurrency=4",
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("stdout missing %q; full output: %q", want, out)
+		}
+	}
+	if strings.Contains(stderr.String(), "Deferred") {
+		t.Fatalf("deferred summary should be on stdout, not stderr: %q", stderr.String())
 	}
 }
 

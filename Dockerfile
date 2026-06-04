@@ -1,7 +1,7 @@
 # kzero — minimal runtime image (build from repo root: make docker-build)
 # Final stage uses distroless (no Alpine/BusyBox) so CVEs in wget/busybox from
 # minimal Alpine bases do not apply; CA certs are included in distroless static.
-FROM golang:1.26.3-alpine3.22 AS build
+FROM golang:1.26.4-alpine3.22 AS build
 ARG VERSION=dev
 ARG COMMIT=unknown
 ARG BUILDDATE=unknown
