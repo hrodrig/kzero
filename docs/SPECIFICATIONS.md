@@ -60,7 +60,7 @@ kzero stays **generic** and **configuration-driven**: the engine interprets vali
 - `pipelines.down` / `pipelines.up` list items; map-valued steps may include `pre` / `post` (per-step hook script paths), `replicas`, `wait_for_ready`, `timeout` where documented in §3
 - `notify` (optional; channel handling may be no-op in early v1)
 - `retry.attempts`, `retry.delay` (loaded; engine behavior: see subsection below)
-- `run.kubeconfig`, `run.mode`, `run.timeout`, `run.worker_concurrency`, `run.operation_timeout`
+- `run.kubeconfig`, `run.mode`, `run.execution`, `run.timeout`, `run.worker_concurrency`, `run.operation_timeout`
 
 <a id="current-engine-sequencing-retry-and-worker-concurrency"></a>
 ### Current engine: sequencing, retry, and worker concurrency
@@ -72,14 +72,29 @@ This subsection documents **observable behavior in the codebase today** (sequent
 3. **`run.worker_concurrency`:** Parsed and stored; the engine **does not** use it to schedule concurrent steps. Operators may keep the key for **forward compatibility** with a future worker pool.
 4. **`notify.slack` / `notify.discord`:** Parsed and stored; the engine **does not** send webhooks or other notifications.
 5. **CLI warnings:** After a successful config load, `kzero analyze`, `kzero down`, `kzero up`, and `kzero reset` print **non-fatal warnings** to **stderr** when `run.worker_concurrency > 1`, `retry.attempts > 1`, or `notify.slack.enabled` / `notify.discord.enabled` is true, because those settings are not honored by the v1 engine yet.
+
+### Workload execution backend (`run.execution`)
+
+When `run.mode` is `live`, `deployment` and `statefulset` steps use a **Workload** executor selected by `run.execution` (default **`shell`** if omitted):
+
+| Value | Behavior |
+|-------|----------|
+| `shell` | `kubectl scale` and `kubectl rollout status` (subprocess; honors `command.kubectl` and `KUBECONFIG` from `run.kubeconfig`). |
+| `native` | `k8s.io/client-go`: update workload replica count and poll readiness (no `kubectl` for scale/wait). Requires a valid kubeconfig / in-cluster config. |
+| `auto` | Try **native**; on client init failure, fall back to **shell** and print a one-line notice on the run output stream. |
+
+Hooks, `custom:` steps, per-step `pre`/`post`, and `release` scripts always use `/bin/sh` regardless of `run.execution`.
+
+API errors on the native path are wrapped with stable sentinels (`ErrNotFound`, `ErrForbidden`, `ErrConflict` in `internal/executor`) for `errors.Is` in tests or `on-error` hooks.
+
 ### Supported workload kinds
 
 Compact step references (`<kind>.<namespace>/<name>`) in `pipelines.down` and `pipelines.up` are validated against an explicit allow-list at config load time. Unsupported kinds are rejected by `kzero analyze` before any live execution.
 
 | Kind | Down action | Up action |
 |------|-------------|-----------|
-| `deployment` | `kubectl scale --replicas=0` | `kubectl scale --replicas=N` (N = step `replicas` or 1; optional `wait_for_ready` → `kubectl rollout status`) |
-| `statefulset` | `kubectl scale --replicas=0` | `kubectl scale --replicas=N` (N = step `replicas` or 1; optional `wait_for_ready` → `kubectl rollout status`) |
+| `deployment` | scale to 0 (`shell`: `kubectl scale`; `native`: API update) | scale to N (default 1; optional `wait_for_ready` → rollout wait) |
+| `statefulset` | scale to 0 | scale to N (default 1; optional `wait_for_ready` → rollout wait) |
 | `release` | `<helm.workspace>/<name>.sh down` | `<helm.workspace>/<name>.sh up` |
 
 `daemonset` is **not** a built-in kind in v1 because the Kubernetes API server does not expose a `/scale` subresource for DaemonSet, so `kubectl scale daemonset/...` returns `Error from server (NotFound): the server could not find the requested resource`. Configs that reference `daemonset.<ns>/<name>` are rejected at parse time.
@@ -125,7 +140,7 @@ and `daemonset-enable.sh` removes that nodeSelector key. A future minor release 
 For each pipeline step, when `run.mode` is `live`:
 
 1. If `pre` is set, run `/bin/sh <pre>` before the step’s main action.
-2. Run the main action (`kubectl scale` / `kubectl rollout status` / release script / custom script).
+2. Run the main action (workload scale / rollout wait per `run.execution`, or release script / custom script).
 3. If `post` is set, run `/bin/sh <post>` **only if** the main action succeeded.
 
 If `pre` fails, the main action and `post` for that step do not run; the phase fails and `hooks.on-error` applies per the global failure policy.

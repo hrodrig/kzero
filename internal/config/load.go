@@ -290,6 +290,9 @@ func validate(cfg *Config) error {
 	if cfg.Run.Mode != "dry-run" && cfg.Run.Mode != "live" {
 		return fmt.Errorf("run.mode must be one of: dry-run, live")
 	}
+	if err := validateRunExecution(cfg); err != nil {
+		return err
+	}
 	if cfg.Pipelines.Down == nil && cfg.Pipelines.Up == nil {
 		return errors.New("pipelines.down or pipelines.up is required")
 	}
@@ -297,6 +300,20 @@ func validate(cfg *Config) error {
 		return err
 	}
 	return nil
+}
+
+func validateRunExecution(cfg *Config) error {
+	e := strings.TrimSpace(cfg.Run.Execution)
+	if e == "" {
+		cfg.Run.Execution = "shell"
+		return nil
+	}
+	switch e {
+	case "shell", "native", "auto":
+		return nil
+	default:
+		return fmt.Errorf("run.execution must be one of: shell, native, auto")
+	}
 }
 
 func validateHelmWorkspaceForReleases(cfg *Config) error {

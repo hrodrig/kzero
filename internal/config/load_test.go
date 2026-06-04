@@ -310,3 +310,36 @@ run:
 		})
 	}
 }
+
+func TestLoadConfig_RunExecutionDefaultAndValidation(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.ns/app
+run:
+  mode: "dry-run"
+`)
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Run.Execution != "shell" {
+		t.Fatalf("expected default execution shell, got %q", cfg.Run.Execution)
+	}
+
+	bad := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.ns/app
+run:
+  mode: "dry-run"
+  execution: "kubectl"
+`)
+	if _, err := Load(bad); err == nil || !strings.Contains(err.Error(), "run.execution") {
+		t.Fatalf("expected run.execution validation error, got %v", err)
+	}
+}

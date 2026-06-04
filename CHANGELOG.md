@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`run.execution`**: `shell` (default), `native` (client-go), or `auto` (native with shell fallback) for `deployment` / `statefulset` steps in live mode.
+- **`internal/executor`**: `Shell` and `Native` workloads; typed API error sentinels; fake-clientset tests.
+
+### Changed
+
+- **Docs:** [docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md) documents workload execution backend; [docs/ROADMAP.md](docs/ROADMAP.md) marks 0.4.x items 5–9 done (pending release tag).
+- **Dependencies:** `k8s.io/client-go` and `k8s.io/api` for native execution.
+
 ## [0.2.3] - 2026-06-04
 
 ### Added

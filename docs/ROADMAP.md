@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-06-04
+**Last reviewed:** 2026-06-03
 
 ### Versioning note
 
@@ -53,11 +53,11 @@ Introduce an **`Executor`** abstraction and implement workload steps against the
 
 | # | Item | Status |
 |---|------|--------|
-| 5 | **`internal/executor` contract**: `ShellExecutor` (current behavior) and `NativeExecutor` (client-go). Config: `run.execution: shell \| native \| auto` (default `shell` until native is stable). Document in SPEC. | Pending |
-| 6 | **Native scale** for `deployment` and `statefulset` (`Scale` subresource via `k8s.io/client-go`). Same YAML step refs; same down→0 / up→N semantics. | Pending |
-| 7 | **Native rollout wait** for `wait_for_ready` on up (conditions / watch — replace `kubectl rollout status` on the native path). | Pending |
-| 8 | **Typed API errors** (`NotFound`, `Forbidden`, conflict) surfaced to the operator and `on-error` hooks. | Pending |
-| 9 | **Tests without a cluster**: fake clientset (and table-driven cases) for scale + wait; document optional **envtest** / **kind** policy under Maintenance. | Pending |
+| 5 | **`internal/executor` contract**: `Shell` (kubectl) and `Native` (client-go). Config: `run.execution: shell \| native \| auto` (default `shell`). Document in SPEC. | **Done** (unreleased) |
+| 6 | **Native scale** for `deployment` and `statefulset` (API update; same down→0 / up→N semantics). | **Done** (unreleased) |
+| 7 | **Native rollout wait** for `wait_for_ready` on up (poll deployment/statefulset status). | **Done** (unreleased) |
+| 8 | **Typed API errors** (`NotFound`, `Forbidden`, conflict) via `errors.Is` on wrapped sentinels. | **Done** (unreleased) |
+| 9 | **Tests without a cluster**: fake clientset for scale + wait. | **Done** (unreleased) |
 | 10 | **`analyze` + API (optional)**: when kubeconfig is reachable, validate that referenced workloads exist and support scale (fail in analyze, not only in live). | Pending |
 | 11 | **Stronger dry-run on native path**: server-side dry-run (`DryRun: All`) for scale/patch operations where applicable. | Pending |
 

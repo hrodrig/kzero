@@ -80,8 +80,10 @@ type RetryConfig struct {
 }
 
 type RunConfig struct {
-	Kubeconfig        string        `mapstructure:"kubeconfig"`
-	Mode              string        `mapstructure:"mode"`
+	Kubeconfig string `mapstructure:"kubeconfig"`
+	Mode       string `mapstructure:"mode"`
+	// Execution selects workload step backend: shell (kubectl), native (client-go), or auto.
+	Execution         string        `mapstructure:"execution"`
 	Timeout           time.Duration `mapstructure:"timeout"`
 	WorkerConcurrency int           `mapstructure:"worker_concurrency"`
 	OperationTimeout  time.Duration `mapstructure:"operation_timeout"`

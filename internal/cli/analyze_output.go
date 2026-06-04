@@ -28,6 +28,7 @@ func printAnalyzeHeader(w io.Writer, cfg *config.Config, configPath string) erro
 		fmt.Sprintf("Config: %s", configPath),
 		fmt.Sprintf("Schema: %s", cfg.SchemaVersion),
 		fmt.Sprintf("Run mode: %s", cfg.Run.Mode),
+		fmt.Sprintf("Run execution: %s", cfg.Run.Execution),
 	}
 	if cfg.Cluster.Name != "" || cfg.Cluster.Environment != "" {
 		lines = append(lines, fmt.Sprintf("Cluster: name=%q environment=%q", cfg.Cluster.Name, cfg.Cluster.Environment))

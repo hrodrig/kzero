@@ -6,8 +6,10 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/executor"
 )
 
 // LiveRunner executes hooks, custom scripts, kubectl scale/rollout for workloads,
@@ -15,6 +17,12 @@ import (
 type LiveRunner struct {
 	Out  io.Writer
 	Exec LiveExec
+	// Workload overrides scale/rollout backend (tests). When nil, resolved from cfg.Run.Execution.
+	Workload executor.Workload
+
+	mu          sync.Mutex
+	cachedWL    executor.Workload
+	cachedWLKey string
 }
 
 // RunHook implements Runner.

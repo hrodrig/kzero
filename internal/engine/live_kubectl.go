@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/executor"
 )
 
 // LiveExec runs argv0 with args; env is the full environment; dir is the working directory.
@@ -51,47 +51,48 @@ func (r *LiveRunner) writeOutput(out []byte) {
 
 func (r *LiveRunner) runScaledWorkload(ctx context.Context, cfg *config.Config, phase Phase, step config.PipelineStep) error {
 	if _, ok := scalableKinds[step.Type]; !ok {
-		return fmt.Errorf("live: unsupported resource kind %q for kubectl scale", step.Type)
+		return fmt.Errorf("live: unsupported resource kind %q for scale", step.Type)
 	}
 
 	opCtx, cancel := withOpTimeout(ctx, cfg)
 	defer cancel()
 
-	replicas := scaleReplicas(phase, step)
-	bin := kubectlPath(cfg)
-	args := []string{
-		"scale",
-		fmt.Sprintf("%s/%s", step.Type, step.Name),
-		"-n", step.Namespace,
-		"--replicas", strconv.Itoa(replicas),
-	}
-	out, err := r.runProcess(opCtx, bin, args, r.envFor(cfg), ".")
-	r.writeOutput(out)
+	wl, err := r.workloadFor(cfg)
 	if err != nil {
-		return fmt.Errorf("kubectl scale %s/%s in %s: %w", step.Type, step.Name, step.Namespace, err)
+		return err
 	}
 
+	replicas := int32(scaleReplicas(phase, step))
+	if err := wl.Scale(opCtx, step.Type, step.Namespace, step.Name, replicas); err != nil {
+		return err
+	}
 	if phase == PhaseUp && step.WaitForReady {
-		return r.runRolloutStatus(opCtx, cfg, step)
+		return wl.WaitRollout(opCtx, step.Type, step.Namespace, step.Name, rolloutTimeout(cfg, step))
 	}
 	return nil
 }
 
-func (r *LiveRunner) runRolloutStatus(ctx context.Context, cfg *config.Config, step config.PipelineStep) error {
-	timeout := rolloutTimeout(cfg, step)
-	bin := kubectlPath(cfg)
-	args := []string{
-		"rollout", "status",
-		fmt.Sprintf("%s/%s", step.Type, step.Name),
-		"-n", step.Namespace,
-		"--timeout", timeout.String(),
+func (r *LiveRunner) workloadFor(cfg *config.Config) (executor.Workload, error) {
+	if r.Workload != nil {
+		return r.Workload, nil
 	}
-	out, err := r.runProcess(ctx, bin, args, r.envFor(cfg), ".")
-	r.writeOutput(out)
+	key := cfg.Run.Kubeconfig + "|" + cfg.Run.Execution + "|" + cfg.Command.Kubectl
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.cachedWL != nil && r.cachedWLKey == key {
+		return r.cachedWL, nil
+	}
+	wl, err := executor.NewWorkload(cfg, executor.Deps{
+		Run:      r.runProcess,
+		WriteOut: r.writeOutput,
+		Out:      r.Out,
+	})
 	if err != nil {
-		return fmt.Errorf("kubectl rollout status %s/%s in %s: %w", step.Type, step.Name, step.Namespace, err)
+		return nil, err
 	}
-	return nil
+	r.cachedWL = wl
+	r.cachedWLKey = key
+	return wl, nil
 }
 
 func (r *LiveRunner) runReleaseScript(ctx context.Context, cfg *config.Config, phase Phase, step config.PipelineStep) error {
