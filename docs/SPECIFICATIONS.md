@@ -221,7 +221,8 @@ If `down` fails, `up` must not run.
 
 ## 6. Dry-Run Policy
 
-- In `dry-run`, commands are rendered/logged but not executed against cluster state.
+- In `dry-run`, commands do not persist cluster mutations. Hook, `custom:`, and `release.*` steps are **plan-only** (logged, not executed).
+- When `run.execution` is **`native`** or **`auto`** and a kubeconfig is available, `deployment` / `statefulset` steps use **server-side dry-run** (`Update` with `DryRun=All`): the API validates the scale without changing stored replica counts. Output includes `[dry-run] native scale … (server-side dry-run ok)` or a wrapped API error (e.g. `NotFound`, `Forbidden`). With **`shell`** execution, those steps remain plan-only (`[dry-run] pipeline …` lines).
 - Hook and custom script execution policy for dry-run (v1):
   - default: do not execute scripts; print planned invocation.
   - Per-step `pre` / `post` scripts follow the same rule; the engine prints their planned paths in step order (see §3).

@@ -74,6 +74,7 @@ retry:
 run:
   kubeconfig: ""
   mode: "dry-run"
+  color: "auto"   # elapsed-time line: auto | always | never (NO_COLOR disables)
   timeout: 25m
   worker_concurrency: 8
   operation_timeout: 45s

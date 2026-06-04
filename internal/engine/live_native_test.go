@@ -24,7 +24,7 @@ func TestLiveRunner_NativeWorkloadSkipsKubectl(t *testing.T) {
 
 	var execCalls int
 	r := &LiveRunner{
-		Workload: executor.NewNative(client),
+		Workload: executor.NewNative(client, false),
 		Exec: func(ctx context.Context, argv0 string, args, env []string, dir string) ([]byte, error) {
 			execCalls++
 			return nil, nil

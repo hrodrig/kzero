@@ -82,6 +82,8 @@ type RetryConfig struct {
 type RunConfig struct {
 	Kubeconfig string `mapstructure:"kubeconfig"`
 	Mode       string `mapstructure:"mode"`
+	// Color controls ANSI styling on the command timing line: auto, always, or never.
+	Color string `mapstructure:"color"`
 	// Execution selects workload step backend: shell (kubectl), native (client-go), or auto.
 	Execution         string        `mapstructure:"execution"`
 	Timeout           time.Duration `mapstructure:"timeout"`

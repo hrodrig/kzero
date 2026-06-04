@@ -96,3 +96,62 @@ func TestCheckPipelineWorkloads_dedupesRefs(t *testing.T) {
 		t.Fatalf("lines = %d, want 1 deduped ref", len(lines))
 	}
 }
+
+func TestPrintClusterValidation_okAndSkip(t *testing.T) {
+	t.Parallel()
+
+	rep := int32(1)
+	client := fake.NewSimpleClientset(&appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "ns"},
+		Spec:       appsv1.DeploymentSpec{Replicas: &rep},
+	})
+	factory := func(string) (kubernetes.Interface, error) { return client, nil }
+	cfg := &config.Config{
+		Pipelines: config.PipelinesConfig{
+			Down: []config.PipelineStep{{Type: "deployment", Namespace: "ns", Name: "app"}},
+		},
+	}
+
+	var out, errOut strings.Builder
+	if err := PrintClusterValidation(&out, &errOut, cfg, factory); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.String(), "Cluster validation:") || !strings.Contains(out.String(), "OK") {
+		t.Fatalf("stdout: %q", out.String())
+	}
+
+	cfg2 := &config.Config{
+		Pipelines: config.PipelinesConfig{
+			Down: []config.PipelineStep{{Type: "deployment", Namespace: "ns", Name: "app"}},
+		},
+	}
+	errOut.Reset()
+	if err := PrintClusterValidation(&out, &errOut, cfg2, func(string) (kubernetes.Interface, error) {
+		return nil, errors.New("no client")
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(errOut.String(), "cluster validation skipped") {
+		t.Fatalf("stderr: %q", errOut.String())
+	}
+}
+
+func TestCheckPipelineWorkloads_statefulSetNoReplicas(t *testing.T) {
+	t.Parallel()
+
+	client := fake.NewSimpleClientset(&appsv1.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{Name: "sts", Namespace: "ns"},
+		Spec:       appsv1.StatefulSetSpec{},
+	})
+	cfg := &config.Config{
+		Pipelines: config.PipelinesConfig{
+			Down: []config.PipelineStep{{Type: "statefulset", Namespace: "ns", Name: "sts"}},
+		},
+	}
+	_, _, err := CheckPipelineWorkloads(context.Background(), cfg, func(string) (kubernetes.Interface, error) {
+		return client, nil
+	})
+	if err == nil || !strings.Contains(err.Error(), "replicas unset") {
+		t.Fatalf("got %v", err)
+	}
+}

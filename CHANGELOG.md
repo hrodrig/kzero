@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-06-04
+
+Pilot polish after **0.5.0**: stronger dry-run on the native path and configurable timing-line colors.
+
+### Added
+
+- **Server-side dry-run for native scale**: with `run.mode: dry-run` and `run.execution: native` or `auto`, `deployment` / `statefulset` steps call the API with `DryRun=All` (validates RBAC and object state without persisting replica changes). Shell execution and `release` / `custom` steps remain plan-only.
+- **Colored elapsed time** on command summary lines: green when the command succeeds, yellow when it fails. Controlled by **`run.color`** in YAML (`auto`, `always`, `never`; default `auto`), overridable with **`KZERO_RUN_COLOR`** / legacy **`KZERO_COLOR`** when `auto`, plus **`NO_COLOR`** and **`FORCE_COLOR`**. Summary is written to **stderr** so `kzero down | tee log` still shows colors on the terminal when `run.color: always`.
+
+## [0.5.0] - 2026-06-04
+
+First **pilot-ready** operator release: safe cluster identification, env overrides, and run timing for live Helm/script pipelines.
+
+### Added
+
+- **`Kubernetes target:`** block on **`analyze`**, **`down`**, **`up`**, and **`reset`**: prints resolved **context**, **cluster**, **namespace**, **api_server**, and **kubeconfig** path before any pipeline work (avoids hitting the wrong environment).
+- **`kzero target`**: print only the Kubernetes target block for a config file.
+- **Elapsed time** on every command: final line `kzero <command> finished in …` or `failed after …`.
+- **`KZERO_*` env overrides** for `run.mode`, `run.kubeconfig`, and related keys now apply on config load (`BindEnv`).
+
 ## [0.4.1] - 2026-06-04
 
 ### Added
@@ -79,7 +99,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/hrodrig/kzero/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/hrodrig/kzero/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/hrodrig/kzero/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/hrodrig/kzero/compare/v0.2.3...v0.4.0
 [0.2.3]: https://github.com/hrodrig/kzero/compare/v0.2.2...v0.2.3

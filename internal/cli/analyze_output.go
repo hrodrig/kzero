@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/hrodrig/kzero/internal/cluster"
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/engine"
 	"github.com/hrodrig/kzero/internal/validate"
@@ -15,6 +16,12 @@ func printAnalyzePlan(w, errW io.Writer, cfg *config.Config, configPath string) 
 		configPath = "kzero.yaml"
 	}
 	if err := printAnalyzeHeader(w, cfg, configPath); err != nil {
+		return err
+	}
+	if err := cluster.Print(w, cfg); err != nil {
+		return fmt.Errorf("kubernetes target: %w", err)
+	}
+	if _, err := fmt.Fprintln(w); err != nil {
 		return err
 	}
 	printPhaseHooks(w, cfg)
@@ -32,10 +39,8 @@ func printAnalyzeHeader(w io.Writer, cfg *config.Config, configPath string) erro
 		fmt.Sprintf("Config: %s", configPath),
 		fmt.Sprintf("Schema: %s", cfg.SchemaVersion),
 		fmt.Sprintf("Run mode: %s", cfg.Run.Mode),
+		fmt.Sprintf("Run color: %s", cfg.Run.Color),
 		fmt.Sprintf("Run execution: %s", cfg.Run.Execution),
-	}
-	if cfg.Cluster.Name != "" || cfg.Cluster.Environment != "" {
-		lines = append(lines, fmt.Sprintf("Cluster: name=%q environment=%q", cfg.Cluster.Name, cfg.Cluster.Environment))
 	}
 	if cfg.Client.ID != "" {
 		lines = append(lines, "Client id: "+cfg.Client.ID)

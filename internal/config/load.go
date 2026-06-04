@@ -47,7 +47,9 @@ func Load(path string) (*Config, error) {
 	v.SetConfigFile(configPath)
 	v.SetConfigType("yaml")
 	v.SetEnvPrefix("KZERO")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 	v.AutomaticEnv()
+	bindConfigEnv(v)
 
 	if err := v.ReadInConfig(); err != nil {
 		return nil, fmt.Errorf("read config: %w", err)
@@ -78,6 +80,24 @@ func Load(path string) (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// bindConfigEnv links nested YAML keys to KZERO_* variables so Unmarshal picks up overrides.
+func bindConfigEnv(v *viper.Viper) {
+	for _, key := range []string{
+		"run.mode",
+		"run.kubeconfig",
+		"run.color",
+		"run.execution",
+		"run.timeout",
+		"run.worker_concurrency",
+		"run.operation_timeout",
+		"helm.workspace",
+		"command.kubectl",
+		"command.helm",
+	} {
+		_ = v.BindEnv(key)
+	}
 }
 
 func parsePipelines(cfg *Config, raw map[string]interface{}) error {
@@ -293,6 +313,9 @@ func validate(cfg *Config) error {
 	if err := validateRunExecution(cfg); err != nil {
 		return err
 	}
+	if err := validateRunColor(cfg); err != nil {
+		return err
+	}
 	if cfg.Pipelines.Down == nil && cfg.Pipelines.Up == nil {
 		return errors.New("pipelines.down or pipelines.up is required")
 	}
@@ -300,6 +323,20 @@ func validate(cfg *Config) error {
 		return err
 	}
 	return nil
+}
+
+func validateRunColor(cfg *Config) error {
+	c := strings.TrimSpace(cfg.Run.Color)
+	if c == "" {
+		cfg.Run.Color = "auto"
+		return nil
+	}
+	switch c {
+	case "auto", "always", "never":
+		return nil
+	default:
+		return fmt.Errorf("run.color must be one of: auto, always, never")
+	}
 }
 
 func validateRunExecution(cfg *Config) error {

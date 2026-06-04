@@ -44,7 +44,16 @@ func newNativeOrError(cfg *config.Config) (Workload, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewNative(client), nil
+	return NewNative(client, false), nil
+}
+
+// NewNativeForDryRun returns a Native executor that validates scale via server-side dry-run.
+func NewNativeForDryRun(cfg *config.Config) (Workload, error) {
+	client, err := NewKubernetesClient(cfg.Run.Kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+	return NewNative(client, true), nil
 }
 
 // KubectlPath returns the kubectl binary configured on cfg.

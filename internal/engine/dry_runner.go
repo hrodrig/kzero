@@ -6,11 +6,15 @@ import (
 	"io"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/executor"
 )
 
 // DryRunner logs planned invocations without executing scripts or mutating the cluster.
+// When nativeWL is set (native/auto execution + kubeconfig), deployment/statefulset
+// steps are validated with server-side dry-run (DryRun=All) instead of plan-only text.
 type DryRunner struct {
-	Out io.Writer
+	Out      io.Writer
+	nativeWL executor.Workload
 }
 
 // RunHook implements Runner.
@@ -37,6 +41,15 @@ func (r *DryRunner) RunPipelineStep(ctx context.Context, cfg *config.Config, pha
 		return fmt.Errorf("step %s[%d]: %w", phase, index, ctx.Err())
 	default:
 	}
+	if step.Type == "deployment" || step.Type == "statefulset" {
+		if err := r.runNativeDryRunScale(ctx, cfg, phase, index, step); err != nil {
+			return err
+		}
+		if r.nativeWL != nil {
+			return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
+		}
+	}
+
 	desc := DescribeStep(step)
 	if _, err := fmt.Fprintf(r.Out, "[dry-run] pipeline %s step %d: %s\n", phase, index, desc); err != nil {
 		return err

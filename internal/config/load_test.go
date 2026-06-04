@@ -243,6 +243,43 @@ run:
 	assertContains(t, err.Error(), "run.mode")
 }
 
+func TestLoadConfig_invalidRunColorRejected(t *testing.T) {
+	t.Parallel()
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.ns/app
+run:
+  mode: "dry-run"
+  color: "rainbow"
+`)
+	_, err := Load(path)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	assertContains(t, err.Error(), "run.color")
+}
+
+func TestLoadConfig_runColorDefaultsToAuto(t *testing.T) {
+	t.Parallel()
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.ns/app
+run:
+  mode: "dry-run"
+`)
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Run.Color != "auto" {
+		t.Fatalf("got run.color %q", cfg.Run.Color)
+	}
+}
+
 func TestLoadConfig_noPipelineStepsRejected(t *testing.T) {
 	t.Parallel()
 	path := writeTempConfig(t, `

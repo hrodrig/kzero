@@ -10,11 +10,13 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/hrodrig/kzero/internal/cluster"
 	"github.com/hrodrig/kzero/internal/validate"
 )
 
 func stubClusterValidationSkipped(t *testing.T) {
 	t.Helper()
+	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
 	old := validate.DefaultClientFactory
 	validate.DefaultClientFactory = func(string) (kubernetes.Interface, error) {
 		return nil, errors.New("test: skip cluster validation")
@@ -26,7 +28,7 @@ func TestRootCommand_HasExpectedSubcommands(t *testing.T) {
 	// Do not use t.Parallel: newRootCmd binds package-level cfgFile and
 	// registers cobra.OnInitialize, which races under go test -race.
 	cmd := newRootCmd()
-	expected := []string{"analyze", "down", "up", "reset", "version"}
+	expected := []string{"analyze", "target", "down", "up", "reset", "version"}
 	for _, name := range expected {
 		if _, _, err := cmd.Find([]string{name}); err != nil {
 			t.Fatalf("expected subcommand %q to exist: %v", name, err)
@@ -195,6 +197,7 @@ notify:
 }
 
 func TestDown_dryRunCompletes(t *testing.T) {
+	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`
 schema_version: "1.0"
@@ -215,12 +218,19 @@ run:
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
+	if !strings.Contains(stdout.String(), "Kubernetes target:") {
+		t.Fatalf("expected kubernetes target block, got: %q", stdout.String())
+	}
 	if !strings.Contains(stdout.String(), "[dry-run]") {
 		t.Fatalf("expected dry-run log lines, got: %q", stdout.String())
+	}
+	if !strings.Contains(stdout.String(), "kzero down finished in") {
+		t.Fatalf("expected elapsed summary, got: %q", stdout.String())
 	}
 }
 
 func TestUp_dryRunCompletes(t *testing.T) {
+	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`
 schema_version: "1.0"
@@ -247,6 +257,7 @@ run:
 }
 
 func TestReset_dryRunRunsDownThenUp(t *testing.T) {
+	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`
 schema_version: "1.0"

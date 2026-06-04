@@ -18,11 +18,11 @@ func New(cfg *config.Config, out io.Writer) *Engine {
 	var r Runner
 	switch cfg.Run.Mode {
 	case "dry-run":
-		r = &DryRunner{Out: out}
+		r = NewDryRunner(cfg, out)
 	case "live":
 		r = &LiveRunner{Out: out}
 	default:
-		r = &DryRunner{Out: out}
+		r = NewDryRunner(cfg, out)
 	}
 	return &Engine{Runner: r}
 }

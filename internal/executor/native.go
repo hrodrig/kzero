@@ -13,12 +13,22 @@ import (
 
 // Native scales and waits via the Kubernetes API (client-go).
 type Native struct {
-	client kubernetes.Interface
+	client           kubernetes.Interface
+	serverSideDryRun bool
 }
 
 // NewNative returns an API-backed Workload executor.
-func NewNative(client kubernetes.Interface) *Native {
-	return &Native{client: client}
+// When serverSideDryRun is true, Update calls use DryRun=All (no persisted mutation).
+func NewNative(client kubernetes.Interface, serverSideDryRun bool) *Native {
+	return &Native{client: client, serverSideDryRun: serverSideDryRun}
+}
+
+func (n *Native) updateOptions() metav1.UpdateOptions {
+	opts := metav1.UpdateOptions{}
+	if n.serverSideDryRun {
+		opts.DryRun = []string{metav1.DryRunAll}
+	}
+	return opts
 }
 
 func (n *Native) Scale(ctx context.Context, kind, namespace, name string, replicas int32) error {
@@ -38,7 +48,7 @@ func (n *Native) scaleDeployment(ctx context.Context, namespace, name string, re
 		return WrapAPIError(err, fmt.Sprintf("deployment %s/%s", namespace, name))
 	}
 	dep.Spec.Replicas = &replicas
-	_, err = n.client.AppsV1().Deployments(namespace).Update(ctx, dep, metav1.UpdateOptions{})
+	_, err = n.client.AppsV1().Deployments(namespace).Update(ctx, dep, n.updateOptions())
 	if err != nil {
 		return WrapAPIError(err, fmt.Sprintf("deployment %s/%s", namespace, name))
 	}
@@ -51,7 +61,7 @@ func (n *Native) scaleStatefulSet(ctx context.Context, namespace, name string, r
 		return WrapAPIError(err, fmt.Sprintf("statefulset %s/%s", namespace, name))
 	}
 	sts.Spec.Replicas = &replicas
-	_, err = n.client.AppsV1().StatefulSets(namespace).Update(ctx, sts, metav1.UpdateOptions{})
+	_, err = n.client.AppsV1().StatefulSets(namespace).Update(ctx, sts, n.updateOptions())
 	if err != nil {
 		return WrapAPIError(err, fmt.Sprintf("statefulset %s/%s", namespace, name))
 	}

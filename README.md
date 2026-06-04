@@ -2,7 +2,7 @@
 
 <a id="top"></a>
 
-[![Version](https://img.shields.io/badge/version-0.4.1-blue.svg)](https://github.com/hrodrig/kzero/releases)
+[![Version](https://img.shields.io/badge/version-0.5.1-blue.svg)](https://github.com/hrodrig/kzero/releases)
 [![GitHub release](https://img.shields.io/github/v/release/hrodrig/kzero)](https://github.com/hrodrig/kzero/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -60,7 +60,7 @@ Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.
 ## Features
 
 - **Configuration-first** (`schema_version: "1.0"`): pipelines and hooks live in config, not hardcoded playbooks.
-- **Commands**: `analyze`, `down`, `up`, `reset`, `version` (`reset` = full `down` then `up`; if `down` fails, `up` does not run). **`analyze`** optionally checks the API that each `deployment` / `statefulset` in the plan exists when kubeconfig loads.
+- **Commands**: `analyze`, `target`, `down`, `up`, `reset`, `version` (`reset` = full `down` then `up`; if `down` fails, `up` does not run). Every pipeline command prints a **`Kubernetes target:`** block (context, cluster, API server, kubeconfig path) before work starts. **`analyze`** optionally checks the API that each `deployment` / `statefulset` in the plan exists when kubeconfig loads.
 - **Phase hooks**: `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error` (shell script paths).
 - **Per-step hooks** (`pre` / `post`): optional shell scripts for a **single** pipeline step—run immediately before and after that step’s main action; **`post` runs only if the main action succeeds**.
 - **Step types**: compact refs (`deployment.ns/name`, `statefulset.ns/name`), `release.ns/name` (scripts under `helm.workspace`), and `custom: ./script.sh` (with optional sibling `pre` / `post` keys on the same YAML mapping). DaemonSet is **not** supported as a built-in kind because `kubectl scale` rejects it (no `/scale` subresource); use a `custom:` step with `kubectl patch` to set a `nodeSelector` that drains the pods.

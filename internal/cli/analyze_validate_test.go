@@ -12,10 +12,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
+	"github.com/hrodrig/kzero/internal/cluster"
 	"github.com/hrodrig/kzero/internal/validate"
 )
 
 func TestAnalyze_clusterValidationOK(t *testing.T) {
+	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
 	rep := int32(1)
 	client := fake.NewSimpleClientset(&appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "ns"},
@@ -54,6 +56,7 @@ run:
 }
 
 func TestAnalyze_clusterValidationFailsExit(t *testing.T) {
+	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
 	client := fake.NewSimpleClientset()
 	old := validate.DefaultClientFactory
 	validate.DefaultClientFactory = func(string) (kubernetes.Interface, error) { return client, nil }
