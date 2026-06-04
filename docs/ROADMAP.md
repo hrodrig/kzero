@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-06-04
+**Last reviewed:** 2026-06-04 (bands **0.3.x**, **0.4.x**, and **0.5.x** items **#12–#13** closed for **v0.5.3**)
 
 ### Versioning note
 
@@ -15,11 +15,20 @@ The first **public** releases are **0.2.0** onward (there was no prior `1.0.x` l
 
 ### Strategic direction
 
-The v1 engine today is a **shell-backed** orchestrator (`kubectl` subprocesses, `/bin/sh` for hooks, releases, and custom steps). That was the right MVP.
+The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`**: `shell` (default), **`native`** (client-go scale + rollout wait), or **`auto`** (native with shell fallback). Phase hooks, **`release.*`**, and **`custom:`** remain **shell-backed**.
 
-The **next strategic priority** is a **native Go path** via **`k8s.io/client-go`** (and related modules): typed errors, testability without a live cluster, server-side dry-run, and room for richer pipeline steps (patch, suspend, delete) without growing the shell surface.
+**Completed bands:** **0.3.x** (operator honesty), **0.4.x** (native client + analyze validation + server-side dry-run on native). **0.5.x** retry and sequential-only contract (**#12–#13**) shipped through **v0.5.3**.
 
-**Helm** stays on **workspace scripts** in the near term; a **Helm SDK** executor is optional later. **`release.*`**, **`custom:`**, and phase hooks may keep using shell even after workloads move to client-go.
+**Current focus (planned work):**
+
+| Band | Open items |
+|------|------------|
+| **0.5.x** | **#14** `client.id` in logs / hook env; **#15** shell subprocess error taxonomy |
+| **0.6.x** | slog, secret redaction, **`notify`**, post-up **`verify`** |
+| **0.7.x** | Cosign/SBOM, coverage gate in **`release-check`**, more step types, `custom:` / release ergonomics |
+| **1.0.0** | Helm SDK (optional), default **native** when `run.execution` omitted, PVC patterns, **kind**/envtest CI |
+
+**Helm** stays on **workspace scripts** until an optional Helm SDK executor (**1.0.0 #25**). **`release.*`**, **`custom:`**, and phase hooks may keep using shell even when workload steps default to native.
 
 ---
 
@@ -31,11 +40,12 @@ The **next strategic priority** is a **native Go path** via **`k8s.io/client-go`
 | **0.2.1** | Parse-time allow-list for compact step kinds; **DaemonSet** removed from built-in scalable workloads (documented `custom:` workaround); see [supported workload kinds](SPECIFICATIONS.md#supported-workload-kinds). |
 | **0.2.2** | **`docs/ROADMAP.md`** published and linked; roadmap milestone bands aligned with **0.2.x** semver; **CHANGELOG** structure repaired so **[0.2.1]** release notes are under the correct heading again. CLI **deferred-feature warnings** on `analyze` / `down` / `up` / `reset` (stderr). |
 | **0.2.3** | **Richer `kzero analyze`**: normalized **`[down]`** / **`[up]`** plans on stdout, **Deferred** summary, phase hooks and step metadata; SPEC/README contract. Completes **0.3.x** operator-honesty band. |
-| **0.4.0** | **`run.execution`** (`shell` / `native` / `auto`) and **`internal/executor`**: client-go scale + rollout wait for `deployment` / `statefulset`; fake-clientset tests. Completes core **0.4.x** native-client band (items 5–9). |
-| **0.4.1** | **`analyze` cluster validation**: API **Get** checks for pipeline `deployment` / `statefulset` refs when kubeconfig loads (roadmap **0.4.x** #10). |
+| **0.4.0** | **`run.execution`** (`shell` / `native` / `auto`) and **`internal/executor`**: client-go scale + rollout wait for `deployment` / `statefulset`; fake-clientset tests (roadmap **0.4.x** #5–9). |
+| **0.4.1** | **`analyze` cluster validation**: API **Get** checks for pipeline `deployment` / `statefulset` refs when kubeconfig loads (roadmap **0.4.x** #10). **0.4.x** band closed after **0.5.1** (#11). |
 | **0.5.0** | **Operator safety for pilots**: **`Kubernetes target:`** on pipeline commands, **`kzero target`**, **`KZERO_*` env overrides** on load, **elapsed time** summary; suitable for scripted **`release.*`** down/up with external Helm wrappers. |
 | **0.5.1** | **`run.color`** for timing-line ANSI styling; **server-side dry-run** on native/auto scale steps (roadmap **0.4.x** #11). |
 | **0.5.2** | **Per-step retry** with exponential backoff on transient errors (roadmap **0.5.x** #12). |
+| **0.5.3** | **`run.worker_concurrency` removed** from contract; pipeline execution **strictly sequential** (roadmap **0.5.x** #13 closed). |
 
 ---
 
@@ -45,16 +55,18 @@ Close the gap between **schema** and **engine** before larger execution changes.
 
 | # | Item | Status |
 |---|------|--------|
-| 1 | **CLI warnings** for config the engine does not honor: `run.worker_concurrency > 1`, `retry.attempts > 1`, `notify.{slack,discord}.enabled`. | **Done** (0.2.2) |
+| 1 | **CLI warnings** for config the engine does not honor: `retry.attempts > 1`, `notify.{slack,discord}.enabled` (and formerly `worker_concurrency`; removed from contract in 0.5.3). | **Done** (0.2.2) |
 | 2 | **Explicit allow-list** for compact pipeline step kinds at parse time. | **Done** (0.2.1) |
 | 3 | **Richer `analyze` output**: list normalized steps and summarize deferred schema fields. | **Done** (0.2.3) |
 | 4 | **DaemonSet**: not a built-in scalable kind; document `custom:` workaround. | **Done** (0.2.1) |
 
 ---
 
-## 0.4.x — native Kubernetes client (priority)
+## 0.4.x — native Kubernetes client (complete)
 
-Introduce an **`Executor`** abstraction and implement workload steps against the API instead of fork/exec `kubectl` where practical.
+Band **closed** (items **#5–#11**). Last deliverable: server-side dry-run on the native path (**v0.5.1**, item #11).
+
+Introduced an **`Executor`** abstraction and workload steps against the API instead of fork/exec `kubectl` where practical.
 
 | # | Item | Status |
 |---|------|--------|
@@ -70,14 +82,16 @@ Introduce an **`Executor`** abstraction and implement workload steps against the
 
 ---
 
-## 0.5.x — execution engine (retries and throughput)
+## 0.5.x — execution engine (retries; sequential contract)
+
+Items **#12–#13** are **done** (**v0.5.2** / **v0.5.3**). Remaining open work: **#14–#15**.
 
 Applies to **both** executors where relevant; subprocess classification still matters for hooks and scripts.
 
 | # | Item | Status |
 |---|------|--------|
 | 12 | **Retry** with exponential backoff for transient failures, wired to `cfg.Retry`. | **Done** (0.5.2) |
-| 13 | **Concurrency** via bounded worker pool from `run.worker_concurrency`, preserving strict YAML order unless a future opt-in per-step parallelism is defined. | Pending |
+| 13 | **Pipeline parallelism** (`run.worker_concurrency`, worker pools, parallel waves). | **Removed from contract** (0.5.3) — engine stays **strictly sequential**; use step order and `custom:` for operator-controlled batching. |
 | 14 | **Propagate `client.id`** into structured logs and hook environment (e.g. `KZERO_CLIENT_ID`). | Pending |
 | 15 | **Subprocess error taxonomy** for shell path (exit codes, common stderr patterns) when native path is not used. | Pending |
 
@@ -125,4 +139,4 @@ Major when YAML **`schema_version`**, executor behavior, and step types are stab
 
 - **GoReleaser**: address `nfpms` deprecation warnings (`maintainer`, `builds` → `ids`) on the next housekeeping release.
 - **client-go version**: pin `k8s.io/*` modules to a supported Kubernetes minor; document minimum cluster version in README.
-- **Integration tests**: **0.4.x** adds fake-client coverage; **1.0.0** targets optional **kind** / envtest in CI once flake policy is agreed (see SPEC testing baseline).
+- **Integration tests**: **0.4.x** delivered fake-client coverage (band complete). **1.0.0 #28** targets optional **kind** / envtest in CI once flake policy is agreed (see SPEC testing baseline).

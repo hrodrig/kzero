@@ -121,11 +121,11 @@ pipelines:
     - release.monitoring/kube-prometheus-stack
   up:
     - deployment.argocd/argocd-server
-retry:
-  attempts: 3
 run:
   mode: "dry-run"
-  worker_concurrency: 4
+notify:
+  slack:
+    enabled: true
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -145,7 +145,7 @@ run:
 		"release.monitoring/kube-prometheus-stack",
 		"helm-assets/kube-prometheus-stack.sh",
 		"Deferred (accepted by schema",
-		"run.worker_concurrency=4",
+		"notify.slack.enabled",
 	} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("stdout missing %q; full output: %q", want, out)
@@ -168,7 +168,6 @@ retry:
   attempts: 2
 run:
   mode: "dry-run"
-  worker_concurrency: 2
 notify:
   slack:
     enabled: true
@@ -186,7 +185,6 @@ notify:
 	}
 	errOut := stderr.String()
 	for _, want := range []string{
-		"warning: run.worker_concurrency=2",
 		"warning: notify.slack.enabled",
 	} {
 		if !strings.Contains(errOut, want) {

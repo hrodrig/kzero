@@ -242,8 +242,9 @@ Full schema, validation, and acceptance criteria: **[docs/SPECIFICATIONS.md](doc
 | **`mode`** | **`dry-run`** (log plan only) or **`live`** (execute `kubectl` / `helm`). Required. |
 | **`timeout`** | Wall-clock budget for a full **`down`**, **`up`**, or **`reset`** (Go duration, e.g. **`25m`**). |
 | **`kubeconfig`** | Path passed to **`kubectl`** / **`helm`**; empty uses the process environment / default kubeconfig search. |
-| **`worker_concurrency`** | Integer in the schema; the **v1** engine runs pipeline steps **sequentially** in YAML order. Parsed and stored for forward compatibility—see [SPEC — Current engine](docs/SPECIFICATIONS.md#current-engine-sequencing-retry-and-worker-concurrency). |
 | **`operation_timeout`** | Per-operation ceiling (e.g. **`45s`**) for individual kubectl/helm calls inside a step. |
+
+Pipeline steps always run **sequentially** in YAML order (no parallel execution). See [SPEC — Current engine](docs/SPECIFICATIONS.md#current-engine-sequencing-retry-and-concurrency).
 
 ### `retry`
 
@@ -252,7 +253,7 @@ Full schema, validation, and acceptance criteria: **[docs/SPECIFICATIONS.md](doc
 | **`attempts`** | Total tries per pipeline step in **`live`** mode (**integer**, minimum effective **1**). |
 | **`delay`** | Base wait before the first retry (**Go duration**, e.g. **`8s`**); after failure *n*, wait **`delay × 2^(n−1)`** (capped at **2m**; default base **5s** if `delay` is zero). |
 
-Retries rerun the whole step (per-step **pre**, main, **post**). Only **transient** failures retry (API timeouts, conflicts, 429/503, connection errors). **`NotFound`** / **`Forbidden`** fail immediately. **`dry-run`** never retries. See [SPEC — Current engine](docs/SPECIFICATIONS.md#current-engine-sequencing-retry-and-worker-concurrency).
+Retries rerun the whole step (per-step **pre**, main, **post**). Only **transient** failures retry (API timeouts, conflicts, 429/503, connection errors). **`NotFound`** / **`Forbidden`** fail immediately. **`dry-run`** never retries. See [SPEC — Current engine](docs/SPECIFICATIONS.md#current-engine-sequencing-retry-and-concurrency).
 
 ### `pipelines`
 

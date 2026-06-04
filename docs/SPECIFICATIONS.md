@@ -35,9 +35,9 @@ kzero stays **generic** and **configuration-driven**: the engine interprets vali
 **Implementation patterns to prefer (target architecture):**
 - Phased workflows with explicit ordering (`pre-*`, pipeline steps, `post-*`).
 - Readiness waits and per-step / global timeouts.
-- Bounded parallelism for independent steps (worker pool; cap via `run.worker_concurrency`) once implemented.
+- **Strict sequential** pipeline execution in YAML order (parallel steps are out of scope for v1; use `custom:` scripts if you need controlled parallelism).
 - Safe notifications: optional channels, redact or mask secrets in logs, include run mode and correlation metadata (e.g. `client.id`, cluster name).
-- kubectl and Helm execution with explicit timeouts, structured logs, and **per-step retry** with exponential backoff for transient failures in **live** mode (see [Current engine: sequencing, retry, and worker concurrency](#current-engine-sequencing-retry-and-worker-concurrency)).
+- kubectl and Helm execution with explicit timeouts, structured logs, and **per-step retry** with exponential backoff for transient failures in **live** mode (see [Current engine: sequencing, retry, and concurrency](#current-engine-sequencing-retry-and-concurrency)).
 
 **Avoid:**
 - Hardcoding product- or tenant-specific resource lists or branching logic in Go; express that in YAML and hooks instead.
@@ -60,18 +60,19 @@ kzero stays **generic** and **configuration-driven**: the engine interprets vali
 - `pipelines.down` / `pipelines.up` list items; map-valued steps may include `pre` / `post` (per-step hook script paths), `replicas`, `wait_for_ready`, `timeout` where documented in §3
 - `notify` (optional; channel handling may be no-op in early v1)
 - `retry.attempts`, `retry.delay` (loaded; engine behavior: see subsection below)
-- `run.kubeconfig`, `run.mode`, `run.execution`, `run.timeout`, `run.worker_concurrency`, `run.operation_timeout`
+- `run.kubeconfig`, `run.mode`, `run.execution`, `run.timeout`, `run.operation_timeout`
 
-<a id="current-engine-sequencing-retry-and-worker-concurrency"></a>
-### Current engine: sequencing, retry, and worker concurrency
+**Removed from contract (schema 1.0):** `run.worker_concurrency` is **not** supported. Legacy configs that still set it are ignored (unknown key under `run`). Pipeline parallelism is intentionally out of scope; express ordering and optional batching in YAML step order and `custom:` scripts.
 
-This subsection documents **observable behavior in the codebase today** (sequential pipeline steps; **`cfg.Retry`** honored in **live** mode; **`cfg.Run.WorkerConcurrency`** not used yet). It overrides informal “in scope” wording elsewhere when there is a conflict.
+<a id="current-engine-sequencing-retry-and-concurrency"></a>
+### Current engine: sequencing, retry, and concurrency
 
-1. **Sequential pipeline steps:** For `kzero down` / `kzero up` / `kzero reset`, each entry in `pipelines.down` or `pipelines.up` runs **after** the previous step completes successfully. Steps do **not** run in parallel. Fail-fast: the first failing hook or step aborts the phase (see §5).
+This subsection documents **observable behavior in the codebase today** (strictly sequential pipeline steps; **`cfg.Retry`** honored in **live** mode). It overrides informal “in scope” wording elsewhere when there is a conflict.
+
+1. **Sequential pipeline steps:** For `kzero down` / `kzero up` / `kzero reset`, each entry in `pipelines.down` or `pipelines.up` runs **after** the previous step completes successfully. Steps do **not** run in parallel. Fail-fast: the first failing hook or step aborts the phase (see §5). On **down**, `deployment` / `statefulset` steps set replicas without waiting for pods to terminate unless a step defines its own wait semantics via hooks or future fields.
 2. **`retry.attempts` and `retry.delay`:** In **`run.mode: live`**, each **pipeline step** (pre-hook, main step, post-hook as one unit) may be retried up to **`retry.attempts`** times. After failure *n*, the engine waits **`retry.delay × 2^(n−1)`** (capped at **2m**) before the next try. Retries apply only to **transient** errors (API timeout/conflict/429/503, `context.DeadlineExceeded`, common connection/timeout strings). **`ErrNotFound`**, **`ErrForbidden`**, and **`context.Canceled`** are not retried. **`dry-run`** does not retry. A line `[retry] pipeline …` is written to the command output stream when a retry occurs.
-3. **`run.worker_concurrency`:** Parsed and stored; the engine **does not** use it to schedule concurrent steps. Operators may keep the key for **forward compatibility** with a future worker pool.
-4. **`notify.slack` / `notify.discord`:** Parsed and stored; the engine **does not** send webhooks or other notifications.
-5. **CLI warnings:** After a successful config load, `kzero analyze`, `kzero down`, `kzero up`, and `kzero reset` print **non-fatal warnings** to **stderr** when `run.worker_concurrency > 1` or `notify.slack.enabled` / `notify.discord.enabled` is true, because those settings are not honored by the v1 engine yet.
+3. **`notify.slack` / `notify.discord`:** Parsed and stored; the engine **does not** send webhooks or other notifications.
+4. **CLI warnings:** After a successful config load, `kzero analyze`, `kzero down`, `kzero up`, and `kzero reset` print **non-fatal warnings** to **stderr** when `notify.slack.enabled` / `notify.discord.enabled` is true, because those settings are not honored by the v1 engine yet.
 
 ### Workload execution backend (`run.execution`)
 
@@ -175,7 +176,7 @@ Unknown step option keys (outside the documented set) or unknown step shapes mus
 ## `kzero analyze`
 - Validates config and prints a **normalized execution plan** on **stdout**. Must not mutate cluster state.
 - Exit code `0` on valid config; non-zero on invalid config.
-- After a successful load, prints **non-fatal warnings** to **stderr** for deferred schema fields (same set as in [Current engine](#current-engine-sequencing-retry-and-worker-concurrency): `run.worker_concurrency > 1`, `notify.slack.enabled`, `notify.discord.enabled`). Warnings do not change the exit code.
+- After a successful load, prints **non-fatal warnings** to **stderr** for deferred schema fields (same set as in [Current engine](#current-engine-sequencing-retry-and-concurrency): `notify.slack.enabled`, `notify.discord.enabled`). Warnings do not change the exit code.
 
 ### Analyze stdout (v1)
 

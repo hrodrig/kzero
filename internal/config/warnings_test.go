@@ -13,7 +13,7 @@ func TestDeferredFeatureWarnings_nilConfig(t *testing.T) {
 
 func TestDeferredFeatureWarnings_minimalDryRun(t *testing.T) {
 	cfg := &Config{
-		Run:   RunConfig{Mode: "dry-run", WorkerConcurrency: 1},
+		Run:   RunConfig{Mode: "dry-run"},
 		Retry: RetryConfig{Attempts: 1},
 	}
 	if got := DeferredFeatureWarnings(cfg); len(got) != 0 {
@@ -23,7 +23,7 @@ func TestDeferredFeatureWarnings_minimalDryRun(t *testing.T) {
 
 func TestDeferredFeatureWarnings_allSignals(t *testing.T) {
 	cfg := &Config{
-		Run:   RunConfig{Mode: "dry-run", WorkerConcurrency: 4},
+		Run:   RunConfig{Mode: "dry-run"},
 		Retry: RetryConfig{Attempts: 3},
 		Notify: NotifyConfig{
 			Slack:   ChannelConfig{Enabled: true},
@@ -32,7 +32,6 @@ func TestDeferredFeatureWarnings_allSignals(t *testing.T) {
 	}
 	got := DeferredFeatureWarnings(cfg)
 	want := []string{
-		"run.worker_concurrency=4 is set but the v1 engine runs pipeline steps sequentially; only one worker is used",
 		"notify.slack.enabled is true but Slack notifications are not implemented yet",
 		"notify.discord.enabled is true but Discord notifications are not implemented yet",
 	}

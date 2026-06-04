@@ -85,8 +85,7 @@ type RunConfig struct {
 	// Color controls ANSI styling on the command timing line: auto, always, or never.
 	Color string `mapstructure:"color"`
 	// Execution selects workload step backend: shell (kubectl), native (client-go), or auto.
-	Execution         string        `mapstructure:"execution"`
-	Timeout           time.Duration `mapstructure:"timeout"`
-	WorkerConcurrency int           `mapstructure:"worker_concurrency"`
-	OperationTimeout  time.Duration `mapstructure:"operation_timeout"`
+	Execution        string        `mapstructure:"execution"`
+	Timeout          time.Duration `mapstructure:"timeout"`
+	OperationTimeout time.Duration `mapstructure:"operation_timeout"`
 }

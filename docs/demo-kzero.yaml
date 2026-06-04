@@ -11,5 +11,4 @@ retry:
 run:
   mode: "dry-run"
   timeout: 10m
-  worker_concurrency: 2
   operation_timeout: 30s

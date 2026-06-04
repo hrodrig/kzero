@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-06-04
+
+### Removed
+
+- **`run.worker_concurrency`** removed from the configuration contract. The engine always runs pipeline steps **sequentially** in YAML order. Legacy YAML keys are ignored; CLI warnings for `worker_concurrency` are dropped. Roadmap item **0.5.x #13** (pipeline parallelism) is **closed** as out of scope.
+
 ## [0.5.2] - 2026-06-04
 
 ### Added

@@ -90,7 +90,6 @@ func bindConfigEnv(v *viper.Viper) {
 		"run.color",
 		"run.execution",
 		"run.timeout",
-		"run.worker_concurrency",
 		"run.operation_timeout",
 		"helm.workspace",
 		"command.kubectl",
