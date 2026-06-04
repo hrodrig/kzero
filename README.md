@@ -2,7 +2,7 @@
 
 <a id="top"></a>
 
-[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/hrodrig/kzero/releases)
+[![Version](https://img.shields.io/badge/version-0.4.1-blue.svg)](https://github.com/hrodrig/kzero/releases)
 [![GitHub release](https://img.shields.io/github/v/release/hrodrig/kzero)](https://github.com/hrodrig/kzero/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -83,7 +83,7 @@ Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.
 
 Pre-built **`.deb`**, **`.rpm`**, **`.tar.gz`** (and **`.zip`** on Windows), plus **multi-arch** container images on **`ghcr.io/hrodrig/kzero`**, are on **[GitHub Releases](https://github.com/hrodrig/kzero/releases)** and **[latest release](https://github.com/hrodrig/kzero/releases/latest)**. The **release** badge at the top of this README shows the current tag at a glance.
 
-**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. GoReleaser here uses the **git tag (with `v`)** in Linux package and archive basenames (for example **`kzero_v0.4.0_linux_amd64.deb`**), while the download path is still `…/download/v0.4.0/…`. **Pick names from the release page**, use the **snippet below**, or use the **badge**.
+**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. GoReleaser here uses the **git tag (with `v`)** in Linux package and archive basenames (for example **`kzero_v0.4.1_linux_amd64.deb`**), while the download path is still `…/download/v0.4.1/…`. **Pick names from the release page**, use the **snippet below**, or use the **badge**.
 
 ### Install latest `.deb` (Debian / Ubuntu, `amd64`)
 
@@ -120,18 +120,18 @@ Paste the block **as a whole**, or chain with `&&`, so **`apt` does not run** af
 
 ### Fixed-tag examples (copy from the release page if you prefer)
 
-| Format | Example (tag **`v0.4.0`** in the URL path; artifact basename includes the same **`v0.4.0`**) |
+| Format | Example (tag **`v0.4.1`** in the URL path; artifact basename includes the same **`v0.4.1`**) |
 |--------|------------------------------------------------------------------|
-| **`.deb`** | `curl -fsSL -o /tmp/kzero_v0.4.0_linux_amd64.deb https://github.com/hrodrig/kzero/releases/download/v0.4.0/kzero_v0.4.0_linux_amd64.deb` then `sudo apt install /tmp/kzero_v0.4.0_linux_amd64.deb` |
-| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.4.0/kzero_v0.4.0_linux_amd64.rpm` then `sudo rpm -Uvh kzero_v0.4.0_linux_amd64.rpm` or `sudo dnf install ./kzero_v0.4.0_linux_amd64.rpm` |
-| **`.tar.gz` (Linux)** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.4.0/kzero_v0.4.0_linux_amd64.tar.gz` then `tar xzf kzero_v0.4.0_linux_amd64.tar.gz` and run **`./kzero`** from the extracted tree (see **`share/examples/kzero/kzero.sample.yml`**) |
-| **`.tar.gz` (macOS)** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.4.0/kzero_v0.4.0_darwin_amd64.tar.gz` (or **`…_darwin_arm64.tar.gz`** on Apple silicon) |
+| **`.deb`** | `curl -fsSL -o /tmp/kzero_v0.4.1_linux_amd64.deb https://github.com/hrodrig/kzero/releases/download/v0.4.1/kzero_v0.4.1_linux_amd64.deb` then `sudo apt install /tmp/kzero_v0.4.1_linux_amd64.deb` |
+| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.4.1/kzero_v0.4.1_linux_amd64.rpm` then `sudo rpm -Uvh kzero_v0.4.1_linux_amd64.rpm` or `sudo dnf install ./kzero_v0.4.1_linux_amd64.rpm` |
+| **`.tar.gz` (Linux)** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.4.1/kzero_v0.4.1_linux_amd64.tar.gz` then `tar xzf kzero_v0.4.1_linux_amd64.tar.gz` and run **`./kzero`** from the extracted tree (see **`share/examples/kzero/kzero.sample.yml`**) |
+| **`.tar.gz` (macOS)** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.4.1/kzero_v0.4.1_darwin_amd64.tar.gz` (or **`…_darwin_arm64.tar.gz`** on Apple silicon) |
 
 **Update:** download a newer release and run the same install command again (`rpm -Uvh`, `apt install` over the `.deb`, or replace the tarball tree).
 
-**Windows:** use the **`.zip`** asset for your arch (for example **`kzero_v0.4.0_windows_amd64.zip`**), unpack, run **`kzero.exe`** where **`kubectl`** is available.
+**Windows:** use the **`.zip`** asset for your arch (for example **`kzero_v0.4.1_windows_amd64.zip`**), unpack, run **`kzero.exe`** where **`kubectl`** is available.
 
-**Docker:** `docker pull ghcr.io/hrodrig/kzero:v0.4.0` (match the image tag to the **[release](https://github.com/hrodrig/kzero/releases)** you want). Published images use **`gcr.io/distroless/static-debian12:nonroot`** (static **`kzero`** binary only: no shell, no BusyBox/Alpine runtime). **`Dockerfile`** in this repo uses the same final stage. Package: [ghcr.io/hrodrig/kzero](https://github.com/hrodrig/kzero/pkgs/container/kzero).
+**Docker:** `docker pull ghcr.io/hrodrig/kzero:v0.4.1` (match the image tag to the **[release](https://github.com/hrodrig/kzero/releases)** you want). Published images use **`gcr.io/distroless/static-debian12:nonroot`** (static **`kzero`** binary only: no shell, no BusyBox/Alpine runtime). **`Dockerfile`** in this repo uses the same final stage. Package: [ghcr.io/hrodrig/kzero](https://github.com/hrodrig/kzero/pkgs/container/kzero).
 
 **Homebrew** and **BSD packaging** helpers: when published, see **Releases** and **`contrib/README.md`**.
 
@@ -161,7 +161,7 @@ From any machine with Go **1.26.4+** (installs to `$(go env GOPATH)/bin`; ensure
 go install github.com/hrodrig/kzero/cmd/kzero@latest
 ```
 
-Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.4.0`). Module reference: [pkg.go.dev/github.com/hrodrig/kzero](https://pkg.go.dev/github.com/hrodrig/kzero).
+Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.4.1`). Module reference: [pkg.go.dev/github.com/hrodrig/kzero](https://pkg.go.dev/github.com/hrodrig/kzero).
 
 [↑ Back to top](#top)
 
@@ -313,7 +313,7 @@ See **`SECURITY.md`** for reporting vulnerabilities.
 
 1. Work on **`develop`**; merge to **`main`** when ready.
 2. Before tagging: run **`make release-check`** (requires **Docker**): semver **`VERSION`**, **`make lint`** (gofmt, go vet, **gocyclo** ≤14), **`make test`**, **`make security`** (govulncheck), **`make docker-scan`** (Grype on the image; use **`GRYPE_FAIL_ON`** to tune the gate, default **high**).
-3. On **`main`**: create an annotated tag (e.g. `git tag -a v0.4.0 -m "Release 0.4.0"`) and **`git push origin v0.4.0`**. The **Release** workflow runs **`make release-check`** then **GoReleaser** (binaries + **`ghcr.io/hrodrig/kzero`**).
+3. On **`main`**: create an annotated tag (e.g. `git tag -a v0.4.1 -m "Release 0.4.1"`) and **`git push origin v0.4.1`**. The **Release** workflow runs **`make release-check`** then **GoReleaser** (binaries + **`ghcr.io/hrodrig/kzero`**).
 4. Local release after checks: **`make release`** (same as CI tail; **main** branch only).
 
 Snapshot builds (no git tag): **`make snapshot`** → artifacts under **`dist/`** (archives **`.tar.gz`** / **`.zip`**, Linux **`.deb`** / **`.rpm`**, checksums). See **`contrib/README.md`** for packaging notes.

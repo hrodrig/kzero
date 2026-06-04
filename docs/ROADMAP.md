@@ -32,6 +32,7 @@ The **next strategic priority** is a **native Go path** via **`k8s.io/client-go`
 | **0.2.2** | **`docs/ROADMAP.md`** published and linked; roadmap milestone bands aligned with **0.2.x** semver; **CHANGELOG** structure repaired so **[0.2.1]** release notes are under the correct heading again. CLI **deferred-feature warnings** on `analyze` / `down` / `up` / `reset` (stderr). |
 | **0.2.3** | **Richer `kzero analyze`**: normalized **`[down]`** / **`[up]`** plans on stdout, **Deferred** summary, phase hooks and step metadata; SPEC/README contract. Completes **0.3.x** operator-honesty band. |
 | **0.4.0** | **`run.execution`** (`shell` / `native` / `auto`) and **`internal/executor`**: client-go scale + rollout wait for `deployment` / `statefulset`; fake-clientset tests. Completes core **0.4.x** native-client band (items 5–9). |
+| **0.4.1** | **`analyze` cluster validation**: API **Get** checks for pipeline `deployment` / `statefulset` refs when kubeconfig loads (roadmap **0.4.x** #10). |
 
 ---
 
@@ -59,7 +60,7 @@ Introduce an **`Executor`** abstraction and implement workload steps against the
 | 7 | **Native rollout wait** for `wait_for_ready` on up (poll deployment/statefulset status). | **Done** (0.4.0) |
 | 8 | **Typed API errors** (`NotFound`, `Forbidden`, conflict) via `errors.Is` on wrapped sentinels. | **Done** (0.4.0) |
 | 9 | **Tests without a cluster**: fake clientset for scale + wait. | **Done** (0.4.0) |
-| 10 | **`analyze` + API (optional)**: when kubeconfig is reachable, validate that referenced workloads exist and support scale (fail in analyze, not only in live). | **Done** (unreleased) |
+| 10 | **`analyze` + API (optional)**: when kubeconfig is reachable, validate that referenced workloads exist and support scale (fail in analyze, not only in live). | **Done** (0.4.1) |
 | 11 | **Stronger dry-run on native path**: server-side dry-run (`DryRun: All`) for scale/patch operations where applicable. | Pending |
 
 **Out of scope for 0.4.x:** replacing `release.*` shell scripts with Helm SDK; node drain/cordon; PVC wipe primitives (see **0.7.x** / **1.0.0**).
