@@ -30,7 +30,7 @@ func newAnalyzeCmd() *cobra.Command {
 			if configPath == "" {
 				configPath = "kzero.yaml"
 			}
-			return printAnalyzePlan(cmd.OutOrStdout(), cfg, configPath)
+			return printAnalyzePlan(cmd.OutOrStdout(), cmd.ErrOrStderr(), cfg, configPath)
 		},
 	}
 }

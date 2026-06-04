@@ -187,8 +187,9 @@ In order (omit lines when the corresponding config value is empty):
 4. **`[down]`** section: for each step, `  <index>: <normalized step>` where the label uses the compact ref (e.g. `deployment.ns/app`) or `custom: <path>`. Optional parenthetical metadata: `pre`, `post`, `replicas`, `wait_for_ready`, `timeout`; for `release.*` steps, `script: <helm.workspace>/<release>.sh`.
 5. **`[up]`** section: same format as `[down]`.
 6. **`Deferred`** block (only if any deferred field is set): heading `Deferred (accepted by schema; not implemented by v1 engine):` followed by bullet lines summarizing the same messages as stderr warnings.
+7. **`Cluster validation`** (only when the config lists at least one `deployment` or `statefulset` step **and** a Kubernetes client can be built from `run.kubeconfig` / default loading rules): heading `Cluster validation:` followed by one line per unique workload ref (`  OK  <ref>` or `  FAIL  <ref> (<reason>)`). Checks use a read-only **Get** (existence and `spec.replicas` set). If any line is **FAIL**, `analyze` exits non-zero. If the client cannot be loaded, a **non-fatal** note is printed to **stderr** (`cluster validation skipped (...)`) and exit code stays **0** (plan-only mode).
 
-`analyze` does **not** invoke the execution engine; it only lists the configured plan. For planned hook/script invocations in `dry-run` mode, use `kzero down` / `kzero up` with `run.mode: dry-run`.
+`analyze` does **not** invoke the execution engine; it does **not** mutate cluster state. For planned hook/script invocations in `dry-run` mode, use `kzero down` / `kzero up` with `run.mode: dry-run`.
 
 ## `kzero down`
 Execution order:

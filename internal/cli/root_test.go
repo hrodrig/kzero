@@ -2,11 +2,25 @@ package cli
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"k8s.io/client-go/kubernetes"
+
+	"github.com/hrodrig/kzero/internal/validate"
 )
+
+func stubClusterValidationSkipped(t *testing.T) {
+	t.Helper()
+	old := validate.DefaultClientFactory
+	validate.DefaultClientFactory = func(string) (kubernetes.Interface, error) {
+		return nil, errors.New("test: skip cluster validation")
+	}
+	t.Cleanup(func() { validate.DefaultClientFactory = old })
+}
 
 func TestRootCommand_HasExpectedSubcommands(t *testing.T) {
 	// Do not use t.Parallel: newRootCmd binds package-level cfgFile and
@@ -58,6 +72,7 @@ func TestVersionCommand_PrintsMetadata(t *testing.T) {
 }
 
 func TestAnalyze_validConfigPrintsSummary(t *testing.T) {
+	stubClusterValidationSkipped(t)
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`
 schema_version: "1.0"
@@ -92,6 +107,7 @@ run:
 }
 
 func TestAnalyze_sampleStyleListsStepsAndDeferredOnStdout(t *testing.T) {
+	stubClusterValidationSkipped(t)
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`
 schema_version: "1.0"
@@ -139,6 +155,7 @@ run:
 }
 
 func TestAnalyze_deferredFeatureWarningsOnStderr(t *testing.T) {
+	stubClusterValidationSkipped(t)
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`
 schema_version: "1.0"

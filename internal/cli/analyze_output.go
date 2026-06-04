@@ -7,9 +7,10 @@ import (
 
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/engine"
+	"github.com/hrodrig/kzero/internal/validate"
 )
 
-func printAnalyzePlan(w io.Writer, cfg *config.Config, configPath string) error {
+func printAnalyzePlan(w, errW io.Writer, cfg *config.Config, configPath string) error {
 	if configPath == "" {
 		configPath = "kzero.yaml"
 	}
@@ -20,7 +21,10 @@ func printAnalyzePlan(w io.Writer, cfg *config.Config, configPath string) error 
 	if err := printAnalyzePipelines(w, cfg); err != nil {
 		return err
 	}
-	return printDeferredSummary(w, cfg)
+	if err := printDeferredSummary(w, cfg); err != nil {
+		return err
+	}
+	return validate.PrintClusterValidation(w, errW, cfg, validate.DefaultClientFactory)
 }
 
 func printAnalyzeHeader(w io.Writer, cfg *config.Config, configPath string) error {

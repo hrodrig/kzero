@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`kzero analyze` cluster validation**: when kubeconfig loads, **Get** checks for each unique `deployment` / `statefulset` ref; **FAIL** lines and non-zero exit if missing or not scalable; **stderr** skip note when the API client cannot be built.
+
 ## [0.4.0] - 2026-06-04
 
 ### Added
