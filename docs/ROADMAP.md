@@ -19,6 +19,8 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 
 **Target architecture (single container image):** expand the **native executor** so the published **distroless** image does not require separate `kubectl` / `helm` binaries on `PATH`. Workloads already use **client-go**; planned extensions include **in-cluster command execution** (`remotecommand`), **PVC lifecycle** via the API, **preflight connectivity** checks, and a **Helm SDK** path for **`release.*`** (install/uninstall/wait and optional OCI registry authentication). Phase hooks and **`custom:`** shell scripts remain valid on hosts with a shell; **containerized** runs should prefer **declarative pipeline steps** over `.sh` inside the image.
 
+**Honest gap until 0.7.x #25:** the distroless image is **not self-contained** for the most common operator path today—**`release.*`** steps still invoke **`<helm.workspace>/<name>.sh`** (shell + external `helm` on the host or in a sidecar image). **0.6.x** adds notify, structured logs, verify, and infra probe around that model; **Helm SDK** closes the container gap in **0.7.x**, not because of abstract architecture preference but because **`release.*` without bundled helm** is an operational limitation from day one.
+
 **Log capture** before or after pipelines is **out of scope** for the engine—invoke external tools via phase hooks when operators need archives.
 
 **Completed bands:** **0.3.x** (operator honesty), **0.4.x** (native client + analyze validation + server-side dry-run on native). **0.5.x** retry, **`client.id`**, live audit logs, and sequential-only contract shipped through **v0.5.6**.
@@ -104,17 +106,18 @@ Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subpr
 
 ## 0.6.x — observability, notifications, and preflight
 
-**Implementation plan:** [plan-0.6.0.md](plan-0.6.0.md) (target **`v0.6.0`**, PR order PR1–PR6).
+**Implementation plan:** [plan-0.6.0.md](plan-0.6.0.md) (target **`v0.6.0`**). Merge order: **PR1** audit → **notify** → **slog** → **verify** → **infra probe** → **preflight** + SPEC + tag.
 
 | # | Item | Status |
 |---|------|--------|
-| 16 | **`log/slog`** with `--log-format json|text`. | Pending |
-| 17 | **Secret redaction** in logs and optional `--no-env-passthrough` for hooks. | Pending |
-| 18 | **`notify`**: implement common outbound channels—**Slack**, **Microsoft Teams**, **PagerDuty**, and a **generic webhook** (plus **Discord** already in schema). Fire on pipeline start/end and optionally on error; redact secrets in payloads. | Pending |
-| 19 | **Preflight connectivity**: before mutating resources, verify API reachability (e.g. list nodes or equivalent) and fail fast with a clear message. | Pending |
-| 20 | **Operator audit**: include **OS username** and **UID** in the **`Kubernetes target:`** block and expose **`KZERO_OS_USER`** / **`KZERO_OS_UID`** (or equivalent) to hooks and subprocesses. Complements **`client.id`**. | Pending |
-| 21 | **`verify` mode** after `up`: structured readiness report (e.g. JSON). | Pending |
-| 22 | **Infra probe** before destructive **`down`** / **`reset`**: optional **`infra_probe`** config and **`kzero probe`** (or equivalent flag) runs a **declarative mini-pipeline** (operator-maintained dummy **`release.*`** + PVC) to confirm storage/Helm can provision before wiping real PVCs and core releases. Fail-fast; optional result cache TTL. | Pending |
+| 16 | **`log/slog`** with `--log-format json|text`. | Pending (PR3 — before verify) |
+| 17 | **Secret redaction** in logs and optional `--no-env-passthrough` for hooks. | Pending (0.6.1+; minimal notify redaction in PR2) |
+| 18 | **`notify`**: implement common outbound channels—**Slack**, **Microsoft Teams**, **PagerDuty**, and a **generic webhook** (plus **Discord** already in schema). Fire on pipeline start/end and optionally on error; redact secrets in payloads. | Pending (PR2) |
+| 19 | **Preflight connectivity**: before mutating resources, verify API reachability (e.g. list nodes or equivalent) and fail fast with a clear message. | Pending (PR6) |
+| 20 | **Operator audit**: include **OS username** and **UID** in the **`Kubernetes target:`** block and expose **`KZERO_OS_USER`** / **`KZERO_OS_UID`** (or equivalent) to hooks and subprocesses. Complements **`client.id`**. | In progress (PR1) |
+| 21 | **`verify` mode** after `up`: structured readiness report (e.g. JSON). | Pending (PR4 — after slog) |
+| 22 | **Infra probe** before destructive **`down`** / **`reset`**: optional **`infra_probe`** config and **`kzero probe`** (or equivalent flag) runs a **declarative mini-pipeline** (operator-maintained dummy **`release.*`** + PVC) to confirm storage/Helm can provision before wiping real PVCs and core releases. Fail-fast; optional result cache TTL. | Pending (PR5) |
+| 22bis | **Helm workspace contract in SPEC**: document flat **`<helm.workspace>/<release>.sh`** naming, env vars, and analyze/live resolution **before** **0.7.x #25** (Helm SDK) extends paths/OCI. | Pending (PR6) |
 
 ---
 
@@ -150,6 +153,8 @@ Major when YAML **`schema_version`**, executor behavior, and step types are stab
 
 ## Maintenance notes
 
+- **Release cadence:** closing semver bands (0.5.x → 0.6.x) justifies frequent tags; once adoption catches up, prefer fewer tags that each earn changelog, port-sync, and demo refresh—avoid maintaining versions nobody runs.
+- **Coverage artifact:** `coverage.out` is deny-all gitignored; `make clean` removes it locally so clones do not accumulate stale artifacts (`git add -f` risk).
 - **GoReleaser**: address `nfpms` deprecation warnings (`maintainer`, `builds` → `ids`) on the next housekeeping release.
 - **client-go version**: pin `k8s.io/*` modules to a supported Kubernetes minor; document minimum cluster version in README.
 - **Integration tests**: **0.4.x** delivered fake-client coverage (band complete). **1.0.0 #28** targets optional **kind** / envtest in CI once flake policy is agreed (see SPEC testing baseline).

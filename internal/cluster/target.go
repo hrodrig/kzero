@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/correlation"
 	"k8s.io/client-go/tools/clientcmd"
 	api "k8s.io/client-go/tools/clientcmd/api"
 )
@@ -90,6 +91,10 @@ func Print(w io.Writer, cfg *config.Config) error {
 		lines = append(lines, fmt.Sprintf("  client_id: %s", cfg.Client.ID))
 	}
 	lines = append(lines,
+		fmt.Sprintf("  os_user: %s", operatorField(correlation.OperatorUser())),
+		fmt.Sprintf("  os_uid: %s", operatorField(correlation.OperatorUID())),
+	)
+	lines = append(lines,
 		fmt.Sprintf("  context: %s", t.ContextName),
 		fmt.Sprintf("  cluster: %s", t.ClusterName),
 		fmt.Sprintf("  namespace: %s", t.Namespace),
@@ -108,4 +113,11 @@ func Print(w io.Writer, cfg *config.Config) error {
 		}
 	}
 	return nil
+}
+
+func operatorField(v string) string {
+	if strings.TrimSpace(v) == "" {
+		return "(unknown)"
+	}
+	return v
 }

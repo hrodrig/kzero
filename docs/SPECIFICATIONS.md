@@ -175,6 +175,8 @@ If `pre` fails, the main action and `post` for that step do not run; the phase f
 | Variable | Meaning |
 |----------|---------|
 | `KZERO_CLIENT_ID` | Set when `client.id` is configured (same value as YAML / `KZERO_CLIENT_ID` env override) |
+| `KZERO_OS_USER` | OS username of the kzero process (`(unknown)` in the target block when unavailable) |
+| `KZERO_OS_UID` | Numeric UID of the kzero process when resolvable |
 | `KZERO_PHASE` | `down` or `up` |
 | `KZERO_PIPELINE_STEP_INDEX` | Zero-based index of this step in the phase’s pipeline list |
 | `KZERO_STEP_HOOK` | `pre` or `post` |
@@ -185,7 +187,7 @@ If `pre` fails, the main action and `post` for that step do not run; the phase f
 
 Release `.sh` scripts also receive `KZERO_PHASE` on install (see engine implementation).
 
-**Engine log lines** (`[dry-run]`, `[retry]`, native dry-run messages) include a **`client_id=`** field when `client.id` is set (values with spaces are quoted). **`[live]`** lines omit **`client_id=`** (audit identity is printed once in the **`Kubernetes target:`** block). **`[live]`** lines are emitted before scale, rollout wait, Helm uninstall, release scripts, and hook/custom script execution. Hook, custom, and release subprocesses still receive **`KZERO_CLIENT_ID`** in their environment.
+**Engine log lines** (`[dry-run]`, `[retry]`, native dry-run messages) include a **`client_id=`** field when `client.id` is set (values with spaces are quoted). **`[live]`** lines omit **`client_id=`** (audit identity is printed once in the **`Kubernetes target:`** block, together with **`os_user`** and **`os_uid`**). **`[live]`** lines are emitted before scale, rollout wait, Helm uninstall, release scripts, and hook/custom script execution. Hook, custom, and release subprocesses receive **`KZERO_CLIENT_ID`** (when configured), **`KZERO_OS_USER`**, and **`KZERO_OS_UID`** in their environment.
 
 ### Per-step hooks in `dry-run`
 

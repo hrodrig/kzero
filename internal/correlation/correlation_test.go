@@ -20,12 +20,19 @@ func TestClientID_trimAndEmpty(t *testing.T) {
 func TestAppendEnv(t *testing.T) {
 	t.Parallel()
 	base := []string{"HOME=/tmp"}
-	if got := AppendEnv(&config.Config{}, base); len(got) != 1 {
-		t.Fatalf("empty client: got %v", got)
-	}
-	got := AppendEnv(&config.Config{Client: config.ClientConfig{ID: "cbpi-dev"}}, base)
-	if len(got) != 2 || got[1] != "KZERO_CLIENT_ID=cbpi-dev" {
+	got := AppendEnv(&config.Config{}, base)
+	if got[0] != "HOME=/tmp" {
 		t.Fatalf("got %v", got)
+	}
+	got = AppendEnv(&config.Config{Client: config.ClientConfig{ID: "cbpi-dev"}}, base)
+	var hasClient bool
+	for _, e := range got {
+		if e == "KZERO_CLIENT_ID=cbpi-dev" {
+			hasClient = true
+		}
+	}
+	if !hasClient {
+		t.Fatalf("missing KZERO_CLIENT_ID in %v", got)
 	}
 }
 

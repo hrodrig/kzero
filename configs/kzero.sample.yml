@@ -24,6 +24,7 @@ helm:
   workspace: "./helm-assets"
 
 # Optional label for run metadata (engine logs: client_id=…; hooks: KZERO_CLIENT_ID).
+# Operator audit: Kubernetes target block prints os_user/os_uid; hooks also get KZERO_OS_USER / KZERO_OS_UID.
 client:
   id: ""
 

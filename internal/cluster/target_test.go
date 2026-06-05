@@ -90,6 +90,8 @@ users:
 		"Kubernetes target:",
 		"  started_at:",
 		"  client_id: ops-team-a",
+		"  os_user:",
+		"  os_uid:",
 		"  context: dev",
 		"  cluster: dev-cluster",
 		"  api_server: https://dev.local",

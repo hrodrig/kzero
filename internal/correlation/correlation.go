@@ -20,10 +20,16 @@ func ClientID(cfg *config.Config) string {
 	return strings.TrimSpace(cfg.Client.ID)
 }
 
-// AppendEnv adds KZERO_CLIENT_ID to env when client.id is set.
+// AppendEnv adds KZERO_CLIENT_ID (when set), KZERO_OS_USER, and KZERO_OS_UID to subprocess env.
 func AppendEnv(cfg *config.Config, env []string) []string {
 	if id := ClientID(cfg); id != "" {
-		return append(env, EnvClientID+"="+id)
+		env = append(env, EnvClientID+"="+id)
+	}
+	if u := OperatorUser(); u != "" {
+		env = append(env, EnvOSUser+"="+u)
+	}
+	if uid := OperatorUID(); uid != "" {
+		env = append(env, EnvOSUID+"="+uid)
 	}
 	return env
 }

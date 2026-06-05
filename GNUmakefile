@@ -26,7 +26,7 @@ help:
 	@echo "  build           Build ./bin/kzero for current platform"
 	@echo "  build-all       Cross-compile to $(DIST)/ (linux, darwin, windows, freebsd, openbsd)"
 	@echo "  install         go install to \$$GOBIN"
-	@echo "  clean           Remove ./bin/kzero and $(DIST)/"
+	@echo "  clean           Remove ./bin/kzero, coverage.out, and $(DIST)/"
 	@echo "  test            Unit tests (go test ./...)"
 	@echo "  cover           Unit tests with coverage.out"
 	@echo "  cover-check     Fail if total statement coverage < $(COVERAGE_MIN)% (override: COVERAGE_MIN=70)"
@@ -68,7 +68,7 @@ install:
 	go install -trimpath $(LDFLAGS) ./cmd/kzero
 
 clean:
-	rm -f bin/$(BINARY)
+	rm -f bin/$(BINARY) coverage.out
 	rm -rf $(DIST)
 
 test:

@@ -1,8 +1,20 @@
 # Plan 0.6.0 — operator-ready band
 
-**Status:** draft (implementation not started)  
+**Status:** in progress — **PR1** (#20 operator audit) implemented on `develop` (uncommitted); merge order below  
 **Target release:** `v0.6.0` on `main` after `make release-check`  
-**Roadmap band:** [ROADMAP.md](ROADMAP.md) **0.6.x** items **#16–#22** (subset shipped in 0.6.0; remainder may continue as 0.6.1+)
+**Roadmap band:** [ROADMAP.md](ROADMAP.md) **0.6.x** items **#16–#22** (+ **#22bis** SPEC doc); remainder may continue as **0.6.1+**
+
+### Internal merge order (operator review, 2026-06-05)
+
+After **PR1** (audit, smallest slice), prioritize **visible operator value** and **dependencies**:
+
+1. **notify** — best work/impact ratio; Slack/Discord already in schema; same `Notifier` interface for Teams/PagerDuty/generic webhook  
+2. **slog** — before **verify**, so readiness output is JSON-native from day one (avoid Fprintf rewrite)  
+3. **verify** — reuses `LiveRunner` + cluster target; structured report + distinct exit codes  
+4. **infra probe** — most experimental; inherits structured logger if **slog** lands first  
+5. **preflight** + release polish — API gate does not block the above; ship before tag **0.6.0**
+
+**Also in 0.6 (before 0.7 Helm SDK):** document the **Helm workspace** contract in SPEC (**#22bis**) while flat `<release>.sh` behavior is still stable.
 
 ## Why 0.6.0
 
@@ -38,6 +50,15 @@ After **0.5.x** (motor, retry, audit, subprocess taxonomy), the gap for producti
 
 Merge to **`develop`** in this order. Each PR must pass `make lint`, `make test`, `make cover-check`.
 
+| PR | Item | Roadmap |
+|----|------|---------|
+| PR1 | Operator audit | #20 |
+| PR2 | Notify | #18 |
+| PR3 | slog | #16 |
+| PR4 | Verify | #21 |
+| PR5 | Infra probe | #22 |
+| PR6 | Preflight + SPEC Helm workspace + release **0.6.0** | #19, #22bis |
+
 ### PR1 — Operator audit (#20)
 
 **Scope:** smallest, no new commands.
@@ -51,20 +72,7 @@ Merge to **`develop`** in this order. Each PR must pass `make lint`, `make test`
 
 ---
 
-### PR2 — Preflight (#19)
-
-**Scope:** live mode only; dry-run prints plan line only.
-
-- `internal/engine/preflight.go`: `List` nodes (or `ServerVersion` + namespace GET) via client-go when kubeconfig loads  
-- Call from `Engine.runDown` / `runUp` **before** `pre-down` / `pre-up` hooks in **live**  
-- Clear error: `preflight: cannot reach Kubernetes API: …`  
-- `analyze`: optional warning if preflight would fail (reuse validate client factory pattern)  
-
-**Acceptance:** wrong kubeconfig fails fast in live; dry-run unchanged behavior.
-
----
-
-### PR3 — Notify (#18)
+### PR2 — Notify (#18)
 
 **Scope:** new `internal/notify` package; HTTP outbound only (no SDK deps).
 
@@ -95,7 +103,7 @@ notify:
 
 | Event | When |
 |-------|------|
-| `pipeline.start` | After preflight, before first pipeline step |
+| `pipeline.start` | After preflight (PR6), before first pipeline step; until PR6 merges, after target print |
 | `pipeline.success` | After `post-down` / `post-up` / full `reset` |
 | `pipeline.error` | On fail-fast (before `on-error` hook); include step ref + error summary |
 
@@ -106,6 +114,21 @@ notify:
 **CLI:** remove deferred warnings for implemented channels; warn only for enabled-but-unknown keys.
 
 **Acceptance:** integration test with `httptest.Server` records POST; live E2E manual with Slack webhook test channel.
+
+---
+
+### PR3 — slog (#16)
+
+**Scope:**
+
+- Global flag `--log-format text|json` on `down`, `up`, `reset`, `probe`, `verify`  
+- `internal/log` wrapper: structured fields (`command`, `phase`, `step`, `ref`, `err`)  
+- Pipeline timing line remains human-readable in `text` mode  
+- Notify payloads and engine paths should log through the same wrapper where practical  
+
+**Acceptance:** `kzero --log-format json up` emits one JSON object per major event; cron can parse.
+
+**Rationale:** lands **before verify** so readiness reports and probe output do not start as ad-hoc `Fprintf` paths.
 
 ---
 
@@ -161,16 +184,24 @@ infra_probe:
 
 ---
 
-### PR6 — slog (#16) + polish
+### PR6 — Preflight (#19) + Helm workspace SPEC (#22bis) + release
 
-**Scope:**
+**Preflight** (live mode only; dry-run prints plan line only):
 
-- Global flag `--log-format text|json` on `down`, `up`, `reset`, `probe`, `verify`  
-- `internal/log` wrapper: structured fields (`command`, `phase`, `step`, `ref`, `err`)  
-- Pipeline timing line remains human-readable in `text` mode  
-- README + CHANGELOG for 0.6.0  
+- `internal/engine/preflight.go`: `List` nodes (or `ServerVersion` + namespace GET) via client-go when kubeconfig loads  
+- Call from `Engine.runDown` / `runUp` **before** `pre-down` / `pre-up` hooks in **live**  
+- Clear error: `preflight: cannot reach Kubernetes API: …`  
+- `analyze`: optional warning if preflight would fail (reuse validate client factory pattern)  
 
-**Acceptance:** `kzero --log-format json up` emits one JSON object per major event; cron can parse.
+**Helm workspace contract** ([SPECIFICATIONS.md](SPECIFICATIONS.md) new section):
+
+- Flat `<helm.workspace>/<release-name>.sh` resolution (`release.<ns>/<name>` step → script basename = release **name**)  
+- Required env (`KZERO_PHASE`, `KZERO_RELEASE_*`, correlation vars)  
+- What **0.7.x** Helm SDK may extend (hierarchical paths, values files, OCI auth) without silently breaking today's flat layout  
+
+**Release polish:** README + CHANGELOG for **0.6.0**; deferred-warnings cleanup for any remaining notify keys.
+
+**Acceptance:** wrong kubeconfig fails fast in live; SPEC documents workspace rules; `make release-check` green.
 
 ---
 
@@ -190,11 +221,12 @@ infra_probe:
 | Area | Approach |
 |------|----------|
 | notify | `httptest` + golden payload fixtures |
-| preflight | fake clientset / unreachable kubeconfig |
-| verify | fake clientset with ready/not-ready deployments |
-| infra_probe | engine test with stub Runner; integration optional in kzero-all pilot |
 | slog | capture stdout, `json.Valid` per line in json mode |
+| verify | fake clientset with ready/not-ready deployments; JSON schema matches slog fields |
+| infra_probe | engine test with stub Runner; integration optional in kzero-all pilot |
+| preflight | fake clientset / unreachable kubeconfig |
 | OS audit | unit tests only |
+| Helm workspace SPEC | review only (no engine change in 0.6.0) |
 
 ---
 
