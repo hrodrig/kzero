@@ -57,6 +57,8 @@ export KZERO_CLIENT_ID=my-pipeline-runner         # overrides client.id from YAM
 export KZERO_COLOR=never                          # plain logs in CI
 ```
 
+**Notifications:** configure **`notify.*`** in YAML or via **`KZERO_NOTIFY_*`** env vars; run **`kzero notify test`** before the first live pipeline. See [notifications.md](notifications.md).
+
 ## Wrapper with a manual gate
 
 Some teams ship a **host wrapper** around kzero that:

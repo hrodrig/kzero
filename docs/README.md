@@ -9,6 +9,7 @@
 | [demo-kzero.yaml](demo-kzero.yaml) | Minimal YAML used by [demo.tape](demo.tape) (VHS) |
 | [demo.tape](demo.tape) | VHS tape to record [demo.gif](demo.gif) |
 | [examples/pipeline-order-and-integrity.md](examples/pipeline-order-and-integrity.md) | Ordered `down` steps, `wait_for_ready` limits, per-step `post` examples |
+| [examples/notifications.md](examples/notifications.md) | **notify** channels, `kzero notify test`, env overrides, live vs dry-run |
 | [examples/automation-and-pipelines.md](examples/automation-and-pipelines.md) | CI/cron: live mode, env overrides, auto-confirm for YES-gated wrappers |
 | [examples/waiting-between-pipeline-steps.md](examples/waiting-between-pipeline-steps.md) | Wait between steps: Helm `--wait`, `post` on `release.*`, `wait_for_ready` |
 | [examples/hooks/wait-helm-release-ready.sh](examples/hooks/wait-helm-release-ready.sh) | Reference `post` hook after Helm install (release steps on `up`) |

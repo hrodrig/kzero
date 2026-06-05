@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Operator audit** (**0.6.x #20**): **`Kubernetes target:`** prints **`os_user`** / **`os_uid`**; hooks and subprocesses receive **`KZERO_OS_USER`** / **`KZERO_OS_UID`**.
+- **Multi-channel `notify`** (**0.6.x #18**): **`slack`**, **`discord`**, **`teams`**, **`pagerduty`** (Events API v2), and generic **`webhook`**; events **`pipeline.start`**, **`pipeline.success`**, **`pipeline.error`** in **`live`** mode.
+- **`kzero notify test`**: POST to enabled channels without running a pipeline; optional **`--event`** for payload previews.
+- **Docs:** [docs/examples/notifications.md](docs/examples/notifications.md) — channel setup, env overrides, test-then-live workflow.
+
+### Changed
+
+- **`notify.*`**: no longer emits deferred-feature warnings when enabled.
+- **0.6 plan:** internal merge order notify → slog → verify → infra probe; Helm workspace SPEC (**#22bis**) before **0.7.x** Helm SDK.
+- **`make clean`**: removes **`coverage.out`** (artifact stays gitignored).
+
 ## [0.5.7] - 2026-06-05
 
 ### Added

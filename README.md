@@ -195,7 +195,16 @@ kzero analyze --config ./kzero.yaml
 kzero down --config ./kzero.yaml
 ```
 
-**`analyze`** validates the profile and prints the normalized plan on stdout: run metadata, phase hooks, indexed **`[down]`** / **`[up]`** steps (including release script paths and per-step options), and a **Deferred** block for schema fields the v1 engine does not implement yet. Non-fatal warnings for those deferred fields also go to **stderr**. See [docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md) → **`kzero analyze`**.
+**`analyze`** validates the profile and prints the normalized plan on stdout: run metadata, phase hooks, indexed **`[down]`** / **`[up]`** steps (including release script paths and per-step options), and a **Deferred** block when unimplemented schema fields are set. See [docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md) → **`kzero analyze`**.
+
+### Test notifications (no pipeline)
+
+```bash
+kzero notify test --config ./kzero.yaml
+kzero notify test -c ./kzero.yaml --event pipeline.error
+```
+
+Verifies **`notify.*`** channels without contacting the API or running **`down`** / **`up`**. Full cookbook: [docs/examples/notifications.md](docs/examples/notifications.md).
 
 ### Explicit config path
 
@@ -235,7 +244,7 @@ Full schema, validation, and acceptance criteria: **[docs/SPECIFICATIONS.md](doc
 | **`helm`** | **`workspace`**: directory with `<release>.sh` scripts and values for **`release.ns/name`** steps. |
 | **`command`** | Optional paths for **`kubectl`** and **`helm`**. |
 | **`hooks`** | Optional global scripts: **`pre-down`**, **`post-down`**, **`pre-up`**, **`post-up`**, **`on-error`**. |
-| **`notify`** | Optional **`slack`** / **`discord`** blocks (see SPEC). |
+| **`notify`** | Optional outbound alerts: **`slack`**, **`discord`**, **`teams`**, **`pagerduty`**, **`webhook`**; fires on pipeline start/success/error in **`live`** mode. Test with **`kzero notify test`** (see [docs/examples/notifications.md](docs/examples/notifications.md)). |
 | **`pipelines`** | See [`pipelines`](#pipelines) below. |
 | **`retry`** | See [`retry`](#retry) below. |
 | **`run`** | See [`run`](#run) below. |

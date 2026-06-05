@@ -229,6 +229,8 @@ In order (omit lines when the corresponding config value is empty):
 - Exit **0** when all channel POSTs succeed; **non-zero** when config is invalid, no channel is enabled, or any POST fails.
 - Payload **`mode`** is **`test`** (independent of **`run.mode`** in YAML).
 
+Operator cookbook (YAML per channel, env vars, troubleshooting): [examples/notifications.md](examples/notifications.md).
+
 ## `kzero down`
 Execution order:
 1. `hooks.pre-down` (if set)

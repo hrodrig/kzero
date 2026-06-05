@@ -42,6 +42,7 @@ hooks:
 
 # Notifications (live mode only for pipelines). Test without a pipeline: kzero notify test -c <file>
 # Events: pipeline.start, pipeline.success, pipeline.error (plus notify.test via notify test).
+# Cookbook: docs/examples/notifications.md
 notify:
   on_error: true
   slack:
