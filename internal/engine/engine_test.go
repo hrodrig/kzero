@@ -11,6 +11,9 @@ import (
 
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/executor"
+	"github.com/hrodrig/kzero/internal/validate"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
 )
 
 func stepKey(phase Phase, index int) string {
@@ -411,8 +414,18 @@ func assertStep(t *testing.T, c RecordedCall, phase Phase, index int) {
 	}
 }
 
+func stubLivePreflightOK(t *testing.T) {
+	t.Helper()
+	old := validate.DefaultClientFactory
+	validate.DefaultClientFactory = func(string) (kubernetes.Interface, error) {
+		return fake.NewSimpleClientset(), nil
+	}
+	t.Cleanup(func() { validate.DefaultClientFactory = old })
+}
+
 func TestRunDown_retriesTransientPipelineStep(t *testing.T) {
 	t.Parallel()
+	stubLivePreflightOK(t)
 
 	rec := &RecordingRunner{
 		StepFailRemaining: map[string]int{stepKey(PhaseDown, 0): 1},
@@ -448,6 +461,7 @@ func TestRunDown_retriesTransientPipelineStep(t *testing.T) {
 
 func TestRunDown_doesNotRetryNotFound(t *testing.T) {
 	t.Parallel()
+	stubLivePreflightOK(t)
 
 	rec := &RecordingRunner{
 		StepFailRemaining: map[string]int{stepKey(PhaseDown, 0): 2},

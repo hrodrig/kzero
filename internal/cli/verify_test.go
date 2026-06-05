@@ -13,6 +13,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
+	"github.com/hrodrig/kzero/internal/cluster"
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/validate"
 )
@@ -33,6 +34,8 @@ func TestShouldAutoVerify(t *testing.T) {
 }
 
 func TestVerify_readyDeployment(t *testing.T) {
+	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
+
 	rep := int32(1)
 	client := fake.NewSimpleClientset(
 		&appsv1.Deployment{
