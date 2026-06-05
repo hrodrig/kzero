@@ -59,6 +59,7 @@ kzero stays **generic** and **configuration-driven**: the engine interprets vali
 - `hooks.pre-down`, `hooks.post-down`, `hooks.pre-up`, `hooks.post-up`, `hooks.on-error`
 - `pipelines.down` / `pipelines.up` list items; map-valued steps may include `pre` / `post` (per-step hook script paths), `replicas`, `wait_for_ready`, `timeout` where documented in §3
 - `notify` (optional; outbound HTTP in **live** mode — see § notify)
+- `verify` (optional; post-up readiness — see § **`kzero verify`**)
 - `retry.attempts`, `retry.delay` (loaded; engine behavior: see subsection below)
 - `run.kubeconfig`, `run.mode`, `run.execution`, `run.timeout`, `run.operation_timeout`
 
@@ -241,6 +242,19 @@ Global flag on all commands (default **`text`**). Pipeline commands (`down`, `up
 | **`json`** | One JSON object per line (`kind`, `msg`, `command`, `phase`, `step_index`, `ref`, `error`, …) | JSON `command.summary` with `outcome` and `duration` |
 
 The **`Kubernetes target:`** block stays human-readable multiline text on stdout in both modes. Subprocess output from `kubectl` (shell path) is written raw to stdout, not wrapped as JSON.
+
+## `kzero verify`
+
+Read-only readiness checks after **`up`** (no mutations).
+
+- **`verify.checks`** (default **`workloads_ready`**, **`nodes_ready`**):
+  - **`workloads_ready`**: each unique **`deployment`** / **`statefulset`** in **`pipelines.up`** has **`ReadyReplicas`** (and **`UpdatedReplicas`**) ≥ desired count (`replicas` from YAML, default **1**).
+  - **`nodes_ready`**: every node reports **`Ready=True`**.
+- Output: **`verify.format`** (`text` | `json`) or CLI **`--log-format json`**.
+- Exit **0** when **`outcome: ready`**; **non-zero** when any check fails or the API is unreachable.
+- **`run.verify: true`**: after a successful **`up`** or **`reset`** in **`live`** mode, run the same checks automatically (failure fails the command with **`post-up verify:`**).
+
+JSON report shape: `{ "outcome", "cluster_name", "client_id", "checks": [{ "name", "ok", "items": [{ "ref", "ok", "detail" }] }] }`.
 
 ## `kzero down`
 Execution order:

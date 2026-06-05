@@ -11,9 +11,17 @@ type Config struct {
 	Command       CommandConfig   `mapstructure:"command"`
 	Hooks         HooksConfig     `mapstructure:"hooks"`
 	Notify        NotifyConfig    `mapstructure:"notify"`
+	Verify        VerifyConfig    `mapstructure:"verify"`
 	Pipelines     PipelinesConfig `mapstructure:"pipelines"`
 	Retry         RetryConfig     `mapstructure:"retry"`
 	Run           RunConfig       `mapstructure:"run"`
+}
+
+// VerifyConfig controls post-up readiness checks (`kzero verify`).
+type VerifyConfig struct {
+	Enabled bool     `mapstructure:"enabled"`
+	Checks  []string `mapstructure:"checks"`
+	Format  string   `mapstructure:"format"`
 }
 
 type ClusterConfig struct {
@@ -103,4 +111,6 @@ type RunConfig struct {
 	Execution        string        `mapstructure:"execution"`
 	Timeout          time.Duration `mapstructure:"timeout"`
 	OperationTimeout time.Duration `mapstructure:"operation_timeout"`
+	// Verify runs kzero verify after a successful up or reset (non-zero exit on failure).
+	Verify bool `mapstructure:"verify"`
 }

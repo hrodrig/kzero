@@ -53,6 +53,11 @@ func runPipelineCommand(cmd *cobra.Command, command string, cfg *config.Config, 
 		if err := run(eng, cfg); err != nil {
 			return err
 		}
+		if shouldAutoVerify(cfg, command) {
+			if err := runVerify(cmd, cfg, format, false); err != nil {
+				return fmt.Errorf("post-up verify: %w", err)
+			}
+		}
 		if notify.AnyEnabled(cfg) {
 			meta := notify.MetaFromConfig(cfg, command, started, time.Since(started))
 			_ = notify.Dispatch(ctx, cfg, notify.EventSuccess, meta, nil)

@@ -31,6 +31,7 @@ type rawConfig struct {
 	Command       CommandConfig          `mapstructure:"command"`
 	Hooks         HooksConfig            `mapstructure:"hooks"`
 	Notify        NotifyConfig           `mapstructure:"notify"`
+	Verify        VerifyConfig           `mapstructure:"verify"`
 	Pipelines     map[string]interface{} `mapstructure:"pipelines"`
 	Retry         RetryConfig            `mapstructure:"retry"`
 	Run           RunConfig              `mapstructure:"run"`
@@ -68,6 +69,7 @@ func Load(path string) (*Config, error) {
 		Command:       raw.Command,
 		Hooks:         raw.Hooks,
 		Notify:        raw.Notify,
+		Verify:        raw.Verify,
 		Retry:         raw.Retry,
 		Run:           raw.Run,
 	}
@@ -95,6 +97,9 @@ func bindConfigEnv(v *viper.Viper) {
 		"client.id",
 		"command.kubectl",
 		"command.helm",
+		"run.verify",
+		"verify.enabled",
+		"verify.format",
 	} {
 		_ = v.BindEnv(key)
 	}
@@ -321,6 +326,27 @@ func validate(cfg *Config) error {
 	}
 	if err := validateHelmWorkspaceForReleases(cfg); err != nil {
 		return err
+	}
+	return validateVerify(cfg)
+}
+
+func validateVerify(cfg *Config) error {
+	f := strings.TrimSpace(cfg.Verify.Format)
+	if f == "" {
+		cfg.Verify.Format = "text"
+	} else if f != "text" && f != "json" {
+		return fmt.Errorf("verify.format must be text or json")
+	}
+	for _, c := range cfg.Verify.Checks {
+		c = strings.TrimSpace(c)
+		if c == "" {
+			return errors.New("verify.checks: empty check name")
+		}
+		switch c {
+		case "workloads_ready", "nodes_ready":
+		default:
+			return fmt.Errorf("verify.checks: unknown check %q (want workloads_ready, nodes_ready)", c)
+		}
 	}
 	return nil
 }

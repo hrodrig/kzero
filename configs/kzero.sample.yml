@@ -96,6 +96,14 @@ pipelines:
         timeout: 10m
     - deployment.argocd/argocd-server
 
+# Post-up readiness (kzero verify). Checks pipelines.up workloads + optional node Ready.
+verify:
+  enabled: false
+  checks:
+    - workloads_ready
+    - nodes_ready
+  format: text   # text | json (CLI --log-format overrides for output)
+
 retry:
   attempts: 3
   delay: 8s
@@ -104,5 +112,6 @@ run:
   kubeconfig: ""
   mode: "dry-run"
   color: "auto"   # elapsed-time line: auto | always | never (NO_COLOR disables)
+  verify: false   # when true, run kzero verify after successful up / reset
   timeout: 25m
   operation_timeout: 45s

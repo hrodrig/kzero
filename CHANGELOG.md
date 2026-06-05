@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`kzero verify`** (**0.6.x #21**): post-up readiness checks (`workloads_ready`, `nodes_ready`); text/JSON report; **`run.verify`** auto-runs after successful **`up`** / **`reset`** in live mode.
 - **`--log-format text|json`** (**0.6.x #16**): structured JSON lines for engine events (`live`, `dry-run`, `retry`) and command summary; text mode preserves legacy `[live]` / `[dry-run]` lines.
 - **Operator audit** (**0.6.x #20**): **`Kubernetes target:`** prints **`os_user`** / **`os_uid`**; hooks and subprocesses receive **`KZERO_OS_USER`** / **`KZERO_OS_UID`**.
 - **Multi-channel `notify`** (**0.6.x #18**): **`slack`**, **`discord`**, **`teams`**, **`pagerduty`** (Events API v2), and generic **`webhook`**; events **`pipeline.start`**, **`pipeline.success`**, **`pipeline.error`** in **`live`** mode.
