@@ -77,7 +77,7 @@ func (r *LiveRunner) runPipelineStepHook(ctx context.Context, cfg *config.Config
 	out, err := r.runProcess(opCtx, "/bin/sh", []string{scriptPath}, env, ".")
 	r.writeOutput(out)
 	if err != nil {
-		return fmt.Errorf("%s: %w", label, err)
+		return fmt.Errorf("%s: %w", label, executor.WrapSubprocess("/bin/sh", []string{scriptPath}, out, err))
 	}
 	return nil
 }
@@ -118,7 +118,7 @@ func (r *LiveRunner) execScript(ctx context.Context, cfg *config.Config, label, 
 	out, err := r.runProcess(opCtx, "/bin/sh", []string{scriptPath}, r.envFor(cfg), ".")
 	r.writeOutput(out)
 	if err != nil {
-		return fmt.Errorf("%s: %w", label, err)
+		return fmt.Errorf("%s: %w", label, executor.WrapSubprocess("/bin/sh", []string{scriptPath}, out, err))
 	}
 	return nil
 }

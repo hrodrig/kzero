@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-06-05 (bands **0.5.x**–**0.7.x** refined for native executor, notifications, and extended step types)
+**Last reviewed:** 2026-06-05 (**0.5.x** band closed in **v0.5.7**; focus shifts to **0.6.x**)
 
 ### Versioning note
 
@@ -27,7 +27,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 
 | Band | Open items |
 |------|------------|
-| **0.5.x** | **#15** shell subprocess error taxonomy |
+| **0.5.x** | **Closed** (last item **#15** in **v0.5.7**) |
 | **0.6.x** | slog, secret redaction, **multi-channel `notify`**, **preflight** API checks, **OS user/uid** audit, post-up **`verify`** |
 | **0.7.x** | **`exec`** (run command in pod), **`pvc` delete**, **Helm SDK** + registry auth, Cosign/SBOM, extended step types |
 | **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI |
@@ -52,6 +52,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.5.3** | **`run.worker_concurrency` removed** from contract; pipeline execution **strictly sequential** (roadmap **0.5.x** #13 closed). |
 | **0.5.5** | **`[live]`** action logs, **`started_at`** / **`client_id`** in **`Kubernetes target:`**, release hook env fix, pipeline wait docs and reference hooks. |
 | **0.5.6** | Pipeline command factorization, coverage housekeeping, BSD port sync. |
+| **0.5.7** | **0.5.x band closed:** subprocess error taxonomy (`WrapSubprocess`, `ErrTransient`) for kubectl/helm/hooks on the shell path. |
 
 ---
 
@@ -90,16 +91,14 @@ Introduced an **`Executor`** abstraction and workload steps against the API inst
 
 ## 0.5.x — execution engine (retries; sequential contract)
 
-Items **#12–#14** are **done** (**v0.5.2** / **v0.5.3** / **v0.5.4**). Remaining open work: **#15**.
-
-Applies to **both** executors where relevant; subprocess classification still matters for hooks and scripts.
+Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subprocesses on the shell path; native API errors continue to use **`WrapAPIError`**.
 
 | # | Item | Status |
 |---|------|--------|
 | 12 | **Retry** with exponential backoff for transient failures, wired to `cfg.Retry`. | **Done** (0.5.2) |
 | 13 | **Pipeline parallelism** (`run.worker_concurrency`, worker pools, parallel waves). | **Removed from contract** (0.5.3) — engine stays **strictly sequential**; use step order and `custom:` for operator-controlled batching. |
 | 14 | **Propagate `client.id`** into structured logs and hook environment (e.g. `KZERO_CLIENT_ID`). | **Done** (0.5.4) |
-| 15 | **Subprocess error taxonomy** for shell path (exit codes, common stderr patterns) when native path is not used. | Pending |
+| 15 | **Subprocess error taxonomy** for shell path (exit codes, common stderr patterns) when native path is not used. | **Done** (0.5.7) |
 
 ---
 

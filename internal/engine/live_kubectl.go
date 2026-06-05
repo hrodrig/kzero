@@ -134,7 +134,7 @@ func (r *LiveRunner) runHelmUninstall(ctx context.Context, cfg *config.Config, s
 	out, err := r.runProcess(opCtx, helmBin, args, env, ".")
 	r.writeOutput(out)
 	if err != nil {
-		return fmt.Errorf("helm uninstall %s/%s: %w", step.Namespace, step.Name, err)
+		return fmt.Errorf("helm uninstall %s/%s: %w", step.Namespace, step.Name, executor.WrapSubprocess(helmBin, args, out, err))
 	}
 	return nil
 }
@@ -166,7 +166,7 @@ func (r *LiveRunner) runHelmInstallScript(ctx context.Context, cfg *config.Confi
 	out, err := r.runProcess(opCtx, "/bin/sh", []string{script, string(phase)}, env, ws)
 	r.writeOutput(out)
 	if err != nil {
-		return fmt.Errorf("release script %s: %w", script, err)
+		return fmt.Errorf("release script %s: %w", script, executor.WrapSubprocess("/bin/sh", []string{script, string(phase)}, out, err))
 	}
 	return nil
 }

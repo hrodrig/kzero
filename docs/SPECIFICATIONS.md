@@ -88,6 +88,8 @@ Hooks, `custom:` steps, per-step `pre`/`post`, and `release` scripts always use 
 
 API errors on the native path are wrapped with stable sentinels (`ErrNotFound`, `ErrForbidden`, `ErrConflict` in `internal/executor`) for `errors.Is` in tests or `on-error` hooks.
 
+Subprocess failures on the **shell** path (`kubectl`, `helm`, hook scripts) are classified with **`WrapSubprocess`**: exit codes and common stderr/stdout patterns map to the same sentinels plus **`ErrTransient`** for likely temporary network/API errors. **`retry`** honors **`ErrTransient`** the same way as native transient API errors.
+
 ### Supported workload kinds
 
 Compact step references (`<kind>.<namespace>/<name>`) in `pipelines.down` and `pipelines.up` are validated against an explicit allow-list at config load time. Unsupported kinds are rejected by `kzero analyze` before any live execution.

@@ -49,7 +49,7 @@ func (s *Shell) Scale(ctx context.Context, kind, namespace, name string, replica
 	out, err := s.deps.Run(ctx, bin, args, s.env(), ".")
 	s.write(out)
 	if err != nil {
-		return fmt.Errorf("kubectl scale %s/%s in %s: %w", kind, name, namespace, err)
+		return fmt.Errorf("kubectl scale %s/%s in %s: %w", kind, name, namespace, WrapSubprocess(bin, args, out, err))
 	}
 	return nil
 }
@@ -68,7 +68,7 @@ func (s *Shell) WaitRollout(ctx context.Context, kind, namespace, name string, t
 	out, err := s.deps.Run(ctx, bin, args, s.env(), ".")
 	s.write(out)
 	if err != nil {
-		return fmt.Errorf("kubectl rollout status %s/%s in %s: %w", kind, name, namespace, err)
+		return fmt.Errorf("kubectl rollout status %s/%s in %s: %w", kind, name, namespace, WrapSubprocess(bin, args, out, err))
 	}
 	return nil
 }

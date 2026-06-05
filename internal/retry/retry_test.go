@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -53,6 +54,9 @@ func TestIsRetriable_commonCases(t *testing.T) {
 	}
 	if !IsRetriable(errors.New("dial tcp: connection refused")) {
 		t.Fatal("connection refused should retry")
+	}
+	if !IsRetriable(fmt.Errorf("helm: %w", executor.ErrTransient)) {
+		t.Fatal("ErrTransient should retry")
 	}
 }
 

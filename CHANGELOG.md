@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.7] - 2026-06-05
+
+### Added
+
+- **Subprocess error taxonomy** (**0.5.x #15**, band closed): `WrapSubprocess` classifies kubectl/helm/hook failures by exit code and stderr patterns; stable sentinels **`ErrNotFound`**, **`ErrForbidden`**, **`ErrTransient`** for `errors.Is` and per-step retry.
+
+### Changed
+
+- **Shell path** (scale, rollout wait, helm uninstall, release scripts, hooks) returns classified errors instead of raw `exec` messages.
+
 ## [0.5.6] - 2026-06-05
 
 ### Changed
@@ -153,7 +163,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.5.6...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.5.7...HEAD
+[0.5.7]: https://github.com/hrodrig/kzero/compare/v0.5.6...v0.5.7
 [0.5.6]: https://github.com/hrodrig/kzero/compare/v0.5.5...v0.5.6
 [0.5.5]: https://github.com/hrodrig/kzero/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/hrodrig/kzero/compare/v0.5.3...v0.5.4
