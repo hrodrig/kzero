@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-03
+
 ### Added
 
 - **Preflight** (**0.6.x #19**): live **`down`** / **`up`** / **`reset`** verify Kubernetes API reachability before phase hooks; dry-run plan line; **`analyze`** stderr warning when preflight would fail.
@@ -25,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`notify.*`**: no longer emits deferred-feature warnings when enabled.
 - **0.6 plan:** internal merge order notify → slog → verify → infra probe; Helm workspace SPEC (**#22bis**) before **0.7.x** Helm SDK.
 - **`make clean`**: removes **`coverage.out`** (artifact stays gitignored).
+- **Ports:** sync FreeBSD and OpenBSD port Makefiles to **0.6.0**.
 
 ## [0.5.7] - 2026-06-05
 
@@ -182,7 +185,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.5.7...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/hrodrig/kzero/compare/v0.5.7...v0.6.0
 [0.5.7]: https://github.com/hrodrig/kzero/compare/v0.5.6...v0.5.7
 [0.5.6]: https://github.com/hrodrig/kzero/compare/v0.5.5...v0.5.6
 [0.5.5]: https://github.com/hrodrig/kzero/compare/v0.5.4...v0.5.5

@@ -1,5 +1,5 @@
 PORTNAME=	kzero
-PORTVERSION=	0.5.7
+PORTVERSION=	0.6.0
 DISTVERSIONPREFIX=	v
 CATEGORIES=	sysutils
 # Local test before release: copy the tarball into DISTDIR (see `make -V DISTDIR`

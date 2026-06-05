@@ -30,7 +30,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | Band | Open items |
 |------|------------|
 | **0.5.x** | **Closed** (last item **#15** in **v0.5.7**) |
-| **0.6.x** | **Closed** pending **v0.6.0** tag (notify, slog, verify, infra probe, preflight, OS audit, Helm workspace SPEC) |
+| **0.6.x** | **Closed** in **v0.6.0** (notify, slog, verify, infra probe, preflight, OS audit, Helm workspace SPEC) |
 | **0.7.x** | **`exec`**, **`pvc` delete**, **Helm SDK**, **probe checks native**, scheduling/affinity sanity, Cosign/SBOM, extended step types |
 | **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI |
 
@@ -55,6 +55,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.5.5** | **`[live]`** action logs, **`started_at`** / **`client_id`** in **`Kubernetes target:`**, release hook env fix, pipeline wait docs and reference hooks. |
 | **0.5.6** | Pipeline command factorization, coverage housekeeping, BSD port sync. |
 | **0.5.7** | **0.5.x band closed:** subprocess error taxonomy (`WrapSubprocess`, `ErrTransient`) for kubectl/helm/hooks on the shell path. |
+| **0.6.0** | **0.6.x band closed:** multi-channel **`notify`**, **`--log-format`**, **`kzero verify`**, **`kzero probe`** / **`infra_probe`**, live **preflight**, OS audit fields, Helm workspace SPEC. |
 
 ---
 
