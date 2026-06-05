@@ -14,7 +14,7 @@ func TestDryRunner_CustomScriptIsPlannedOnly(t *testing.T) {
 
 	var buf bytes.Buffer
 	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run"}}
-	r := &DryRunner{Out: &buf}
+	r := &DryRunner{Log: testEmitter(&buf)}
 	step := config.PipelineStep{Custom: "./hooks/x.sh"}
 
 	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step); err != nil {
@@ -34,7 +34,7 @@ func TestDryRunner_LogIncludesClientID(t *testing.T) {
 		Run:    config.RunConfig{Mode: "dry-run"},
 		Client: config.ClientConfig{ID: "lab"},
 	}
-	r := &DryRunner{Out: &buf}
+	r := &DryRunner{Log: testEmitter(&buf)}
 	step := config.PipelineStep{Custom: "./hooks/x.sh"}
 
 	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step); err != nil {
@@ -49,7 +49,7 @@ func TestDryRunner_RunHook_skipsEmptyAndHonoursCancel(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	r := &DryRunner{Out: &buf}
+	r := &DryRunner{Log: testEmitter(&buf)}
 	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run"}}
 
 	if err := r.RunHook(context.Background(), cfg, "pre", ""); err != nil {
@@ -70,7 +70,7 @@ func TestDryRunner_ReleaseDownPlansHelmUninstall(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	r := &DryRunner{Out: &buf}
+	r := &DryRunner{Log: testEmitter(&buf)}
 	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run"}}
 	step := config.PipelineStep{
 		Ref:       "release.monitoring/kube-prometheus-stack",

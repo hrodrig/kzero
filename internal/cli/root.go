@@ -9,7 +9,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
+var (
+	cfgFile   string
+	logFormat string
+)
 
 // Execute runs the root command tree.
 func Execute() error {
@@ -27,6 +30,7 @@ so operators can scale workloads and Helm releases in a safe, repeatable way.`,
 	}
 
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file path (default: ./kzero.yaml)")
+	rootCmd.PersistentFlags().StringVar(&logFormat, "log-format", "text", "log output format: text or json")
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.Version = Version

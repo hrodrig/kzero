@@ -9,6 +9,7 @@ import (
 	"github.com/hrodrig/kzero/internal/cluster"
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/engine"
+	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/notify"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +31,11 @@ func writeKubernetesTarget(w io.Writer, cfg *config.Config) error {
 }
 
 func runPipelineCommand(cmd *cobra.Command, command string, cfg *config.Config, run func(*engine.Engine, *config.Config) error) error {
-	return runTimed(cmd.ErrOrStderr(), command, cfg.Run.Color, func() error {
+	format, err := resolvedLogFormat()
+	if err != nil {
+		return err
+	}
+	return runTimed(cmd.ErrOrStderr(), command, cfg.Run.Color, format, func() error {
 		started := time.Now()
 		if err := writeKubernetesTarget(cmd.OutOrStdout(), cfg); err != nil {
 			return err
@@ -40,7 +45,9 @@ func runPipelineCommand(cmd *cobra.Command, command string, cfg *config.Config, 
 			meta := notify.MetaFromConfig(cfg, command, started, 0)
 			_ = notify.Dispatch(ctx, cfg, notify.EventStart, meta, nil)
 		}
-		eng := engine.New(cfg, cmd.OutOrStdout())
+		emit := log.New(cmd.OutOrStdout(), format)
+		emit.SetCommand(command)
+		eng := engine.New(cfg, emit)
 		eng.Command = command
 		eng.Started = started
 		if err := run(eng, cfg); err != nil {
@@ -68,7 +75,11 @@ func newAnalyzeCmd() *cobra.Command {
 			if configPath == "" {
 				configPath = "kzero.yaml"
 			}
-			return runTimed(cmd.ErrOrStderr(), "analyze", cfg.Run.Color, func() error {
+			format, err := resolvedLogFormat()
+			if err != nil {
+				return err
+			}
+			return runTimed(cmd.ErrOrStderr(), "analyze", cfg.Run.Color, format, func() error {
 				return printAnalyzePlan(cmd.OutOrStdout(), cmd.ErrOrStderr(), cfg, configPath)
 			})
 		},
@@ -124,7 +135,11 @@ func newTargetCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("load config: %w", err)
 			}
-			return runTimed(cmd.ErrOrStderr(), "target", cfg.Run.Color, func() error {
+			format, err := resolvedLogFormat()
+			if err != nil {
+				return err
+			}
+			return runTimed(cmd.ErrOrStderr(), "target", cfg.Run.Color, format, func() error {
 				return cluster.Print(cmd.OutOrStdout(), cfg)
 			})
 		},

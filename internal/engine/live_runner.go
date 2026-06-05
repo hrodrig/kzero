@@ -3,19 +3,19 @@ package engine
 import (
 	"context"
 	"fmt"
-	"io"
 	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/executor"
+	"github.com/hrodrig/kzero/internal/log"
 )
 
 // LiveRunner executes hooks, custom scripts, kubectl scale/rollout for workloads,
 // and release helper scripts under helm.workspace.
 type LiveRunner struct {
-	Out  io.Writer
+	Log  *log.Emitter
 	Exec LiveExec
 	// Workload overrides scale/rollout backend (tests). When nil, resolved from cfg.Run.Execution
 	// and cached under mu. The engine constructs one LiveRunner per invocation and runs pipeline
@@ -72,7 +72,7 @@ func (r *LiveRunner) runPipelineStepHook(ctx context.Context, cfg *config.Config
 	defer cancel()
 
 	label := pipelineStepHookLabel(phase, index, hookKind)
-	r.logLive(cfg, "hook %s: %s", label, scriptPath)
+	r.logLive("hook %s: %s", label, scriptPath)
 	env := r.stepHookEnv(cfg, phase, index, hookKind, step)
 	out, err := r.runProcess(opCtx, "/bin/sh", []string{scriptPath}, env, ".")
 	r.writeOutput(out)
@@ -114,7 +114,7 @@ func (r *LiveRunner) execScript(ctx context.Context, cfg *config.Config, label, 
 	opCtx, cancel := withOpTimeout(ctx, cfg)
 	defer cancel()
 
-	r.logLive(cfg, "hook %s: %s", label, scriptPath)
+	r.logLive("hook %s: %s", label, scriptPath)
 	out, err := r.runProcess(opCtx, "/bin/sh", []string{scriptPath}, r.envFor(cfg), ".")
 	r.writeOutput(out)
 	if err != nil {

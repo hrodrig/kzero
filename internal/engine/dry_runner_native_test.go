@@ -26,7 +26,7 @@ func TestDryRunner_NativeServerSideDryRun(t *testing.T) {
 
 	var buf bytes.Buffer
 	r := &DryRunner{
-		Out:      &buf,
+		Log:      testEmitter(&buf),
 		nativeWL: executor.NewNative(client, true),
 	}
 	cfg := &config.Config{
@@ -59,7 +59,7 @@ func TestDryRunner_ShellExecutionPlanOnly(t *testing.T) {
 	cfg := &config.Config{
 		Run: config.RunConfig{Mode: "dry-run", Execution: "shell"},
 	}
-	r := NewDryRunner(cfg, &buf)
+	r := NewDryRunner(cfg, testEmitter(&buf))
 	step := config.PipelineStep{
 		Ref:       "deployment.ns/app",
 		Type:      "deployment",
@@ -98,7 +98,7 @@ func TestNewDryRunner_unavailableKubeconfig(t *testing.T) {
 			Kubeconfig: "/nonexistent/kubeconfig.yaml",
 		},
 	}
-	r := NewDryRunner(cfg, &buf)
+	r := NewDryRunner(cfg, testEmitter(&buf))
 	dr, ok := r.(*DryRunner)
 	if !ok || dr.nativeWL != nil {
 		t.Fatalf("expected fallback DryRunner, got %T nativeWL=%v", r, dr.nativeWL)
@@ -120,7 +120,7 @@ func TestDryRunner_NativeWaitForReadyOnUp(t *testing.T) {
 
 	var buf bytes.Buffer
 	r := &DryRunner{
-		Out:      &buf,
+		Log:      testEmitter(&buf),
 		nativeWL: executor.NewNative(client, true),
 	}
 	cfg := &config.Config{

@@ -312,7 +312,7 @@ func TestLiveRunner_LogsClientIDOnScale(t *testing.T) {
 
 	var buf strings.Builder
 	r := &LiveRunner{
-		Out: &buf,
+		Log: testEmitter(&buf),
 		Exec: func(ctx context.Context, argv0 string, args, env []string, dir string) ([]byte, error) {
 			return nil, nil
 		},
@@ -341,7 +341,7 @@ func TestLiveRunner_LogsClientIDOnHelmUninstall(t *testing.T) {
 
 	var buf strings.Builder
 	r := &LiveRunner{
-		Out: &buf,
+		Log: testEmitter(&buf),
 		Exec: func(ctx context.Context, argv0 string, args, env []string, dir string) ([]byte, error) {
 			return nil, nil
 		},

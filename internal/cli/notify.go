@@ -38,7 +38,11 @@ pipeline.success, or pipeline.error payload formatting.`,
 			if !notify.AnyEnabled(cfg) {
 				return fmt.Errorf("notify test: no notify channel enabled in config")
 			}
-			return runTimed(cmd.ErrOrStderr(), "notify test", cfg.Run.Color, func() error {
+			format, err := resolvedLogFormat()
+			if err != nil {
+				return err
+			}
+			return runTimed(cmd.ErrOrStderr(), "notify test", cfg.Run.Color, format, func() error {
 				if err := notify.DispatchTest(cmd.Context(), cfg, event, nil); err != nil {
 					return err
 				}

@@ -3,18 +3,17 @@ package engine
 import (
 	"context"
 	"fmt"
-	"io"
 
 	"github.com/hrodrig/kzero/internal/config"
-	"github.com/hrodrig/kzero/internal/correlation"
 	"github.com/hrodrig/kzero/internal/executor"
+	"github.com/hrodrig/kzero/internal/log"
 )
 
 // DryRunner logs planned invocations without executing scripts or mutating the cluster.
 // When nativeWL is set (native/auto execution + kubeconfig), deployment/statefulset
 // steps are validated with server-side dry-run (DryRun=All) instead of plan-only text.
 type DryRunner struct {
-	Out      io.Writer
+	Log      *log.Emitter
 	nativeWL executor.Workload
 }
 
@@ -28,7 +27,9 @@ func (r *DryRunner) RunHook(ctx context.Context, cfg *config.Config, label, scri
 		return fmt.Errorf("hook %s: %w", label, ctx.Err())
 	default:
 	}
-	_, _ = fmt.Fprintf(r.Out, "[dry-run] %shook %s: %s\n", correlation.LogPrefix(cfg), label, scriptPath)
+	if r.Log != nil {
+		r.Log.DryRun(cfg, fmt.Sprintf("hook %s: %s", label, scriptPath))
+	}
 	return nil
 }
 
@@ -52,16 +53,15 @@ func (r *DryRunner) RunPipelineStep(ctx context.Context, cfg *config.Config, pha
 	}
 
 	if step.Type == "release" && phase == PhaseDown {
-		if _, err := fmt.Fprintf(r.Out, "[dry-run] %shelm uninstall %s/%s (--wait --ignore-not-found)\n",
-			correlation.LogPrefix(cfg), step.Namespace, step.Name); err != nil {
-			return err
+		if r.Log != nil {
+			r.Log.DryRun(cfg, fmt.Sprintf("helm uninstall %s/%s (--wait --ignore-not-found)", step.Namespace, step.Name))
 		}
 		return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
 	}
 
 	desc := DescribeStep(step)
-	if _, err := fmt.Fprintf(r.Out, "[dry-run] %spipeline %s step %d: %s\n", correlation.LogPrefix(cfg), phase, index, desc); err != nil {
-		return err
+	if r.Log != nil {
+		r.Log.DryRun(cfg, fmt.Sprintf("pipeline %s step %d: %s", phase, index, desc))
 	}
 	return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
 }

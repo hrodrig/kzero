@@ -20,7 +20,7 @@ func stepKey(phase Phase, index int) string {
 func TestNew_liveModeUsesLiveRunner(t *testing.T) {
 	t.Parallel()
 	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
-	e := New(cfg, io.Discard)
+	e := New(cfg, testEmitter(io.Discard))
 	if _, ok := e.Runner.(*LiveRunner); !ok {
 		t.Fatalf("expected LiveRunner, got %T", e.Runner)
 	}
@@ -29,7 +29,7 @@ func TestNew_liveModeUsesLiveRunner(t *testing.T) {
 func TestNew_unknownModeFallsBackToDryRunner(t *testing.T) {
 	t.Parallel()
 	cfg := &config.Config{Run: config.RunConfig{Mode: "bogus"}}
-	e := New(cfg, io.Discard)
+	e := New(cfg, testEmitter(io.Discard))
 	if _, ok := e.Runner.(*DryRunner); !ok {
 		t.Fatalf("expected DryRunner for unknown mode, got %T", e.Runner)
 	}
@@ -418,8 +418,8 @@ func TestRunDown_retriesTransientPipelineStep(t *testing.T) {
 		StepFailRemaining: map[string]int{stepKey(PhaseDown, 0): 1},
 		StepFailErr:       executor.ErrConflict,
 	}
-	var log strings.Builder
-	eng := &Engine{Runner: rec, Out: &log}
+	var logBuf strings.Builder
+	eng := &Engine{Runner: rec, Log: testEmitter(&logBuf)}
 	cfg := &config.Config{
 		Run:   config.RunConfig{Mode: "live"},
 		Retry: config.RetryConfig{Attempts: 3, Delay: time.Millisecond},
@@ -441,8 +441,8 @@ func TestRunDown_retriesTransientPipelineStep(t *testing.T) {
 	if stepCalls != 2 {
 		t.Fatalf("expected 2 step executions (1 fail + 1 ok), got %d calls: %#v", stepCalls, rec.Calls)
 	}
-	if !strings.Contains(log.String(), "[retry]") {
-		t.Fatalf("expected retry log, got %q", log.String())
+	if !strings.Contains(logBuf.String(), "[retry]") {
+		t.Fatalf("expected retry log, got %q", logBuf.String())
 	}
 }
 

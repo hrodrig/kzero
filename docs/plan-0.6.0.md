@@ -1,6 +1,6 @@
 # Plan 0.6.0 — operator-ready band
 
-**Status:** in progress — **PR1** + **PR2** shipped on `develop`; next **PR3** (slog); merge order below  
+**Status:** in progress — **PR1–PR3** shipped on `develop`; next **PR4** (verify); merge order below  
 **Target release:** `v0.6.0` on `main` after `make release-check`  
 **Roadmap band:** [ROADMAP.md](ROADMAP.md) **0.6.x** items **#16–#22** (+ **#22bis** SPEC doc); remainder may continue as **0.6.1+**
 

@@ -3,14 +3,13 @@ package retry
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"strings"
 	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
-	"github.com/hrodrig/kzero/internal/correlation"
 	"github.com/hrodrig/kzero/internal/executor"
+	"github.com/hrodrig/kzero/internal/log"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -92,15 +91,10 @@ func retriableMessage(msg string) bool {
 	return false
 }
 
-// LogRetry writes a structured retry line when out is non-nil.
+// LogRetry writes a structured retry line when out is non-nil (legacy text format).
 func LogRetry(out io.Writer, cfg *config.Config, phase string, index int, stepRef string, try, max int, wait time.Duration, err error) {
 	if out == nil {
 		return
 	}
-	ref := stepRef
-	if ref == "" {
-		ref = fmt.Sprintf("index %d", index)
-	}
-	_, _ = fmt.Fprintf(out, "[retry] %spipeline %s step %s attempt %d/%d failed (%v); retrying in %s\n",
-		correlation.LogPrefix(cfg), phase, ref, try, max, err, wait.Round(time.Millisecond))
+	log.New(out, log.FormatText).Retry(cfg, phase, index, stepRef, try, max, wait, err)
 }

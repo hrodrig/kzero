@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/notify"
 	"github.com/hrodrig/kzero/internal/retry"
 )
@@ -15,23 +15,23 @@ import (
 // Engine runs phased pipelines using a Runner (dry-run or live).
 type Engine struct {
 	Runner  Runner
-	Out     io.Writer
+	Log     *log.Emitter
 	Command string    // CLI command name: down, up, reset (for notify metadata)
 	Started time.Time // pipeline start time (for notify metadata)
 }
 
-// New builds an Engine for cfg.Run.Mode, writing dry-run / log lines to out.
-func New(cfg *config.Config, out io.Writer) *Engine {
+// New builds an Engine for cfg.Run.Mode, writing dry-run / live lines to emit.
+func New(cfg *config.Config, emit *log.Emitter) *Engine {
 	var r Runner
 	switch cfg.Run.Mode {
 	case "dry-run":
-		r = NewDryRunner(cfg, out)
+		r = NewDryRunner(cfg, emit)
 	case "live":
-		r = &LiveRunner{Out: out}
+		r = &LiveRunner{Log: emit}
 	default:
-		r = NewDryRunner(cfg, out)
+		r = NewDryRunner(cfg, emit)
 	}
-	return &Engine{Runner: r, Out: out}
+	return &Engine{Runner: r, Log: emit}
 }
 
 // RunDown runs pre-down, pipelines.down, then post-down. Fail-fast; on-error hook runs on failure.
@@ -113,7 +113,9 @@ func (e *Engine) runPipelineStepWithRetry(ctx context.Context, cfg *config.Confi
 			return lastErr
 		}
 		wait := retry.Backoff(cfg.Retry.Delay, try)
-		retry.LogRetry(e.Out, cfg, string(phase), index, step.Ref, try, max, wait, lastErr)
+		if e.Log != nil {
+			e.Log.Retry(cfg, string(phase), index, step.Ref, try, max, wait, lastErr)
+		}
 		timer := time.NewTimer(wait)
 		select {
 		case <-ctx.Done():

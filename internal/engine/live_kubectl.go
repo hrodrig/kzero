@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -52,8 +53,8 @@ func (r *LiveRunner) runProcess(ctx context.Context, argv0 string, args, env []s
 }
 
 func (r *LiveRunner) writeOutput(out []byte) {
-	if len(out) > 0 && r.Out != nil {
-		_, _ = r.Out.Write(out)
+	if len(out) > 0 && r.Log != nil {
+		_, _ = r.Log.Writer().Write(out)
 	}
 }
 
@@ -71,13 +72,13 @@ func (r *LiveRunner) runScaledWorkload(ctx context.Context, cfg *config.Config, 
 	}
 
 	replicas := int32(scaleReplicas(phase, step))
-	r.logLive(cfg, "scale %s -> %d replicas", step.Ref, replicas)
+	r.logLive("scale %s -> %d replicas", step.Ref, replicas)
 	if err := wl.Scale(opCtx, step.Type, step.Namespace, step.Name, replicas); err != nil {
 		return err
 	}
 	if phase == PhaseUp && step.WaitForReady {
 		timeout := rolloutTimeout(cfg, step)
-		r.logLive(cfg, "wait rollout %s (timeout %s)", step.Ref, timeout)
+		r.logLive("wait rollout %s (timeout %s)", step.Ref, timeout)
 		return wl.WaitRollout(opCtx, step.Type, step.Namespace, step.Name, timeout)
 	}
 	return nil
@@ -93,10 +94,14 @@ func (r *LiveRunner) workloadFor(cfg *config.Config) (executor.Workload, error) 
 	if r.cachedWL != nil && r.cachedWLKey == key {
 		return r.cachedWL, nil
 	}
+	var rawOut io.Writer
+	if r.Log != nil {
+		rawOut = r.Log.Writer()
+	}
 	wl, err := executor.NewWorkload(cfg, executor.Deps{
 		Run:      r.runProcess,
 		WriteOut: r.writeOutput,
-		Out:      r.Out,
+		Out:      rawOut,
 	})
 	if err != nil {
 		return nil, err
@@ -130,7 +135,7 @@ func (r *LiveRunner) runHelmUninstall(ctx context.Context, cfg *config.Config, s
 		"KZERO_RELEASE_NAME="+step.Name,
 		"KZERO_RELEASE_NAMESPACE="+step.Namespace,
 	)
-	r.logLive(cfg, "helm uninstall %s/%s (--wait --ignore-not-found)", step.Namespace, step.Name)
+	r.logLive("helm uninstall %s/%s (--wait --ignore-not-found)", step.Namespace, step.Name)
 	out, err := r.runProcess(opCtx, helmBin, args, env, ".")
 	r.writeOutput(out)
 	if err != nil {
@@ -162,7 +167,7 @@ func (r *LiveRunner) runHelmInstallScript(ctx context.Context, cfg *config.Confi
 		"KZERO_RELEASE_NAME="+step.Name,
 		"KZERO_RELEASE_NAMESPACE="+step.Namespace,
 	)
-	r.logLive(cfg, "release script %s (%s)", script, phase)
+	r.logLive("release script %s (%s)", script, phase)
 	out, err := r.runProcess(opCtx, "/bin/sh", []string{script, string(phase)}, env, ws)
 	r.writeOutput(out)
 	if err != nil {

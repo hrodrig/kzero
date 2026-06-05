@@ -55,6 +55,8 @@ kzero down --config ./profile.yaml
 export KZERO_RUN_KUBECONFIG=/path/to/kubeconfig   # same effect as KUBECONFIG for kzero/kubectl children
 export KZERO_CLIENT_ID=my-pipeline-runner         # overrides client.id from YAML
 export KZERO_COLOR=never                          # plain logs in CI
+# Structured logs for log aggregators:
+# kzero down --config ./profile.yaml --log-format json
 ```
 
 **Notifications:** configure **`notify.*`** in YAML or via **`KZERO_NOTIFY_*`** env vars; run **`kzero notify test`** before the first live pipeline. See [notifications.md](notifications.md).

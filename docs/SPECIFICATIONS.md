@@ -231,6 +231,17 @@ In order (omit lines when the corresponding config value is empty):
 
 Operator cookbook (YAML per channel, env vars, troubleshooting): [examples/notifications.md](examples/notifications.md).
 
+### Log format (`--log-format`)
+
+Global flag on all commands (default **`text`**). Pipeline commands (`down`, `up`, `reset`, `notify test`) emit engine events through the structured logger:
+
+| Mode | Engine stdout | Command summary (stderr) |
+|------|---------------|---------------------------|
+| **`text`** | Legacy lines: `[live] …`, `[dry-run] client_id=… …`, `[retry] …` | `kzero <cmd> finished in …` (ANSI when `run.color` allows) |
+| **`json`** | One JSON object per line (`kind`, `msg`, `command`, `phase`, `step_index`, `ref`, `error`, …) | JSON `command.summary` with `outcome` and `duration` |
+
+The **`Kubernetes target:`** block stays human-readable multiline text on stdout in both modes. Subprocess output from `kubectl` (shell path) is written raw to stdout, not wrapped as JSON.
+
 ## `kzero down`
 Execution order:
 1. `hooks.pre-down` (if set)

@@ -5,15 +5,22 @@ import (
 	"io"
 	"os"
 	"time"
+
+	"github.com/hrodrig/kzero/internal/log"
 )
 
-func runTimed(summary io.Writer, command string, colorMode string, fn func() error) error {
+func runTimed(summary io.Writer, command string, colorMode string, format log.Format, fn func() error) error {
 	start := time.Now()
 	err := fn()
 	if summary == nil {
 		summary = os.Stderr
 	}
-	writeCommandSummary(summary, command, time.Since(start), err, colorMode)
+	elapsed := time.Since(start)
+	if format == log.FormatJSON {
+		log.New(summary, format).CommandSummary(command, elapsed, err != nil)
+		return err
+	}
+	writeCommandSummary(summary, command, elapsed, err, colorMode)
 	return err
 }
 
