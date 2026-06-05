@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`make release-check`** now runs **`cover-check`** (minimum statement coverage gate, default 80%).
+- **CLI integration test** `TestClientID_e2eAnalyzeAndDownDryRun`: `client.id` on `analyze` stdout and `client_id=` in `down` dry-run logs.
+
 ### Fixed
 
 - **Docs:** CHANGELOG compare links for 0.5.2–0.5.4; SPEC `release` down action documents `helm uninstall` (0.5.4 behavior).

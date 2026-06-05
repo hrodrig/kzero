@@ -36,7 +36,7 @@ help:
 	@echo "  security        govulncheck ./..."
 	@echo "  docker-build    Build container image kzero:local"
 	@echo "  docker-scan     Build kzero:scan and run Grype (needs Docker)"
-	@echo "  release-check   VERSION semver + lint + test + security + docker-scan"
+	@echo "  release-check   VERSION semver + lint + test + cover-check + security + docker-scan"
 	@echo "  release         release-check then goreleaser (only from main)"
 	@echo "  snapshot        Goreleaser snapshot to $(DIST)/ (no tag; includes .deb/.rpm/.tar.gz)"
 	@echo "  dist-freebsd    Tarball for FreeBSD ports (default FREEBSD_ARCH=amd64)"
@@ -128,6 +128,7 @@ release-check:
 	echo "Release version: $$ver (tag v$$ver)";
 	@$(MAKE) lint
 	@$(MAKE) test
+	@$(MAKE) cover-check
 	@$(MAKE) security
 	@$(MAKE) docker-scan
 	@echo "All release checks passed."

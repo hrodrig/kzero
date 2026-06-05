@@ -314,7 +314,7 @@ See **`SECURITY.md`** for reporting vulnerabilities.
 ## Releases and CI
 
 1. Work on **`develop`**; merge to **`main`** when ready.
-2. Before tagging: run **`make release-check`** (requires **Docker**): semver **`VERSION`**, **`make lint`** (gofmt, go vet, **gocyclo** ≤14), **`make test`**, **`make security`** (govulncheck), **`make docker-scan`** (Grype on the image; use **`GRYPE_FAIL_ON`** to tune the gate, default **high**).
+2. Before tagging: run **`make release-check`** (requires **Docker**): semver **`VERSION`**, **`make lint`** (gofmt, go vet, **gocyclo** ≤14), **`make test`**, **`make cover-check`** (≥80% statements by default), **`make security`** (govulncheck), **`make docker-scan`** (Grype on the image; use **`GRYPE_FAIL_ON`** to tune the gate, default **high**).
 3. On **`main`**: create an annotated tag (e.g. `git tag -a v0.4.1 -m "Release 0.4.1"`) and **`git push origin v0.4.1`**. The **Release** workflow runs **`make release-check`** then **GoReleaser** (binaries + **`ghcr.io/hrodrig/kzero`**).
 4. Local release after checks: **`make release`** (same as CI tail; **main** branch only).
 

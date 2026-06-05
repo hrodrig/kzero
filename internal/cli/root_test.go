@@ -195,6 +195,54 @@ notify:
 	}
 }
 
+// TestClientID_e2eAnalyzeAndDownDryRun verifies client.id appears on analyze stdout
+// and in engine dry-run log lines (integration across config load → CLI → engine).
+func TestClientID_e2eAnalyzeAndDownDryRun(t *testing.T) {
+	stubClusterValidationSkipped(t)
+	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
+	if err := os.WriteFile(cfgPath, []byte(`
+schema_version: "1.0"
+client:
+  id: "kzero-e2e-client"
+pipelines:
+  down:
+    - deployment.ns/widget
+run:
+  mode: "dry-run"
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var analyzeOut bytes.Buffer
+	analyzeCmd := newRootCmd()
+	analyzeCmd.SetOut(&analyzeOut)
+	analyzeCmd.SetErr(&analyzeOut)
+	analyzeCmd.SetArgs([]string{"analyze", "--config", cfgPath})
+	if err := analyzeCmd.Execute(); err != nil {
+		t.Fatalf("analyze Execute: %v", err)
+	}
+	if !strings.Contains(analyzeOut.String(), "Client id: kzero-e2e-client") {
+		t.Fatalf("analyze missing Client id line: %q", analyzeOut.String())
+	}
+
+	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
+	var downOut bytes.Buffer
+	downCmd := newRootCmd()
+	downCmd.SetOut(&downOut)
+	downCmd.SetErr(&downOut)
+	downCmd.SetArgs([]string{"down", "--config", cfgPath})
+	if err := downCmd.Execute(); err != nil {
+		t.Fatalf("down Execute: %v", err)
+	}
+	out := downOut.String()
+	if !strings.Contains(out, `client_id=kzero-e2e-client`) {
+		t.Fatalf("down dry-run missing client_id in logs: %q", out)
+	}
+	if !strings.Contains(out, "[dry-run]") {
+		t.Fatalf("down dry-run missing [dry-run] prefix: %q", out)
+	}
+}
+
 func TestDown_dryRunCompletes(t *testing.T) {
 	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
