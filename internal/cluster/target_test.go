@@ -100,3 +100,12 @@ users:
 		}
 	}
 }
+
+func TestResolveFromConfig_missingKubeconfigFile(t *testing.T) {
+	t.Parallel()
+	cfg := &config.Config{Run: config.RunConfig{Kubeconfig: filepath.Join(t.TempDir(), "missing.yaml")}}
+	_, err := ResolveFromConfig(cfg)
+	if err == nil || !strings.Contains(err.Error(), "load kubeconfig") {
+		t.Fatalf("expected load kubeconfig error, got %v", err)
+	}
+}

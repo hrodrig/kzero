@@ -17,10 +17,12 @@ import (
 type LiveRunner struct {
 	Out  io.Writer
 	Exec LiveExec
-	// Workload overrides scale/rollout backend (tests). When nil, resolved from cfg.Run.Execution.
+	// Workload overrides scale/rollout backend (tests). When nil, resolved from cfg.Run.Execution
+	// and cached under mu. The engine constructs one LiveRunner per invocation and runs pipeline
+	// steps sequentially, so the cache is not contended across goroutines in normal use.
 	Workload executor.Workload
 
-	mu          sync.Mutex
+	mu          sync.Mutex // guards cachedWL / cachedWLKey only
 	cachedWL    executor.Workload
 	cachedWLKey string
 }

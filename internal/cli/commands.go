@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -57,55 +58,44 @@ func newAnalyzeCmd() *cobra.Command {
 	}
 }
 
-func newDownCmd() *cobra.Command {
+type pipelineRunFunc func(ctx context.Context, eng *engine.Engine, cfg *config.Config) error
+
+func buildPipelineCmd(use, short, label string, run pipelineRunFunc) *cobra.Command {
 	return &cobra.Command{
-		Use:   "down",
-		Short: "Run the configured shutdown pipeline",
+		Use:   use,
+		Short: short,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load(cfgFile)
 			if err != nil {
 				return fmt.Errorf("load config: %w", err)
 			}
 			writeDeferredFeatureWarnings(cmd.ErrOrStderr(), cfg)
-			return runPipelineCommand(cmd, "down", cfg, func(eng *engine.Engine, cfg *config.Config) error {
-				return eng.RunDown(cmd.Context(), cfg)
+			return runPipelineCommand(cmd, label, cfg, func(eng *engine.Engine, cfg *config.Config) error {
+				return run(cmd.Context(), eng, cfg)
 			})
 		},
 	}
+}
+
+func newDownCmd() *cobra.Command {
+	return buildPipelineCmd("down", "Run the configured shutdown pipeline", "down",
+		func(ctx context.Context, eng *engine.Engine, cfg *config.Config) error {
+			return eng.RunDown(ctx, cfg)
+		})
 }
 
 func newUpCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "up",
-		Short: "Run the configured startup pipeline",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Load(cfgFile)
-			if err != nil {
-				return fmt.Errorf("load config: %w", err)
-			}
-			writeDeferredFeatureWarnings(cmd.ErrOrStderr(), cfg)
-			return runPipelineCommand(cmd, "up", cfg, func(eng *engine.Engine, cfg *config.Config) error {
-				return eng.RunUp(cmd.Context(), cfg)
-			})
-		},
-	}
+	return buildPipelineCmd("up", "Run the configured startup pipeline", "up",
+		func(ctx context.Context, eng *engine.Engine, cfg *config.Config) error {
+			return eng.RunUp(ctx, cfg)
+		})
 }
 
 func newResetCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "reset",
-		Short: "Run down then up",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Load(cfgFile)
-			if err != nil {
-				return fmt.Errorf("load config: %w", err)
-			}
-			writeDeferredFeatureWarnings(cmd.ErrOrStderr(), cfg)
-			return runPipelineCommand(cmd, "reset", cfg, func(eng *engine.Engine, cfg *config.Config) error {
-				return eng.RunReset(cmd.Context(), cfg)
-			})
-		},
-	}
+	return buildPipelineCmd("reset", "Run down then up", "reset",
+		func(ctx context.Context, eng *engine.Engine, cfg *config.Config) error {
+			return eng.RunReset(ctx, cfg)
+		})
 }
 
 func newTargetCmd() *cobra.Command {

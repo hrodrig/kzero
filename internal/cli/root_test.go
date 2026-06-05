@@ -303,6 +303,51 @@ run:
 	}
 }
 
+func TestTargetCmd_printsKubernetesTarget(t *testing.T) {
+	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
+	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
+	if err := os.WriteFile(cfgPath, []byte(`
+schema_version: "1.0"
+pipelines:
+  down: []
+run:
+  mode: "dry-run"
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout bytes.Buffer
+	cmd := newRootCmd()
+	cmd.SetOut(&stdout)
+	cmd.SetErr(&stdout)
+	cmd.SetArgs([]string{"target", "--config", cfgPath})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	out := stdout.String()
+	for _, want := range []string{
+		"Kubernetes target:",
+		"  context: test-context",
+		"  api_server: https://test.kubernetes.local",
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("stdout missing %q; full output: %q", want, out)
+		}
+	}
+}
+
+func TestPipeline_missingConfigFile(t *testing.T) {
+	for _, sub := range []string{"down", "up", "reset"} {
+		t.Run(sub, func(t *testing.T) {
+			cmd := newRootCmd()
+			cmd.SetArgs([]string{sub, "--config", filepath.Join(t.TempDir(), "missing.yaml")})
+			if err := cmd.Execute(); err == nil {
+				t.Fatal("expected config load error")
+			}
+		})
+	}
+}
+
 func TestReset_dryRunRunsDownThenUp(t *testing.T) {
 	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")

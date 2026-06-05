@@ -44,3 +44,46 @@ func TestDryRunner_LogIncludesClientID(t *testing.T) {
 		t.Fatalf("expected client_id in logs, got %q", buf.String())
 	}
 }
+
+func TestDryRunner_RunHook_skipsEmptyAndHonoursCancel(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+	r := &DryRunner{Out: &buf}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run"}}
+
+	if err := r.RunHook(context.Background(), cfg, "pre", ""); err != nil {
+		t.Fatal(err)
+	}
+	if buf.Len() != 0 {
+		t.Fatalf("empty hook should not log, got %q", buf.String())
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if err := r.RunHook(ctx, cfg, "pre", "./hooks/x.sh"); err == nil {
+		t.Fatal("expected cancelled hook error")
+	}
+}
+
+func TestDryRunner_ReleaseDownPlansHelmUninstall(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+	r := &DryRunner{Out: &buf}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run"}}
+	step := config.PipelineStep{
+		Ref:       "release.monitoring/kube-prometheus-stack",
+		Type:      "release",
+		Namespace: "monitoring",
+		Name:      "kube-prometheus-stack",
+	}
+
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step); err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "helm uninstall monitoring/kube-prometheus-stack") {
+		t.Fatalf("expected helm uninstall plan, got: %q", out)
+	}
+}

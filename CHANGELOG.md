@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.6] - 2026-06-05
+
+### Changed
+
+- **CLI:** `down`, `up`, and `reset` share `buildPipelineCmd` (less duplication).
+- **Engine:** document `LiveRunner` workload cache thread-safety (one runner per invocation, sequential steps).
+
+### Added
+
+- **Tests:** raise `internal/cli`, `internal/cluster`, and `internal/engine` coverage above 80%; total statement coverage **84%**.
+- **Ports:** sync FreeBSD and OpenBSD port Makefiles to **0.5.6**.
+
 ## [0.5.5] - 2026-06-05
 
 ### Added
@@ -141,7 +153,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.5.5...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.5.6...HEAD
+[0.5.6]: https://github.com/hrodrig/kzero/compare/v0.5.5...v0.5.6
 [0.5.5]: https://github.com/hrodrig/kzero/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/hrodrig/kzero/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/hrodrig/kzero/compare/v0.5.2...v0.5.3
