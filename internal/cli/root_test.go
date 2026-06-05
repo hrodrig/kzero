@@ -28,7 +28,7 @@ func TestRootCommand_HasExpectedSubcommands(t *testing.T) {
 	// Do not use t.Parallel: newRootCmd binds package-level cfgFile and
 	// registers cobra.OnInitialize, which races under go test -race.
 	cmd := newRootCmd()
-	expected := []string{"analyze", "target", "down", "up", "reset", "version"}
+	expected := []string{"analyze", "target", "notify", "down", "up", "reset", "version"}
 	for _, name := range expected {
 		if _, _, err := cmd.Find([]string{name}); err != nil {
 			t.Fatalf("expected subcommand %q to exist: %v", name, err)
@@ -108,7 +108,7 @@ run:
 	}
 }
 
-func TestAnalyze_sampleStyleListsStepsAndDeferredOnStdout(t *testing.T) {
+func TestAnalyze_sampleStyleListsStepsOnStdout(t *testing.T) {
 	stubClusterValidationSkipped(t)
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`
@@ -146,19 +146,17 @@ notify:
 		"release.monitoring/kube-prometheus-stack",
 		"helm uninstall --wait --ignore-not-found",
 		"script: helm-assets/kube-prometheus-stack.sh",
-		"Deferred (accepted by schema",
-		"notify.slack.enabled",
 	} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("stdout missing %q; full output: %q", want, out)
 		}
 	}
-	if strings.Contains(stderr.String(), "Deferred") {
-		t.Fatalf("deferred summary should be on stdout, not stderr: %q", stderr.String())
+	if strings.Contains(out, "Deferred (accepted by schema") {
+		t.Fatalf("notify is implemented; unexpected deferred block: %q", out)
 	}
 }
 
-func TestAnalyze_deferredFeatureWarningsOnStderr(t *testing.T) {
+func TestAnalyze_notifyEnabledNoDeferredWarning(t *testing.T) {
 	stubClusterValidationSkipped(t)
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`
@@ -166,8 +164,6 @@ schema_version: "1.0"
 pipelines:
   down:
     - deployment.argocd/argocd-server
-retry:
-  attempts: 2
 run:
   mode: "dry-run"
 notify:
@@ -185,13 +181,8 @@ notify:
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
-	errOut := stderr.String()
-	for _, want := range []string{
-		"warning: notify.slack.enabled",
-	} {
-		if !strings.Contains(errOut, want) {
-			t.Fatalf("stderr missing %q; full stderr: %q", want, errOut)
-		}
+	if strings.Contains(stderr.String(), "warning: notify.") {
+		t.Fatalf("unexpected notify deferred warning: %q", stderr.String())
 	}
 }
 

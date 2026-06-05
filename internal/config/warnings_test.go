@@ -1,7 +1,6 @@
 package config
 
 import (
-	"reflect"
 	"testing"
 )
 
@@ -21,21 +20,16 @@ func TestDeferredFeatureWarnings_minimalDryRun(t *testing.T) {
 	}
 }
 
-func TestDeferredFeatureWarnings_allSignals(t *testing.T) {
+func TestDeferredFeatureWarnings_notifyEnabledNoWarning(t *testing.T) {
 	cfg := &Config{
-		Run:   RunConfig{Mode: "dry-run"},
-		Retry: RetryConfig{Attempts: 3},
+		Run: RunConfig{Mode: "dry-run"},
 		Notify: NotifyConfig{
 			Slack:   ChannelConfig{Enabled: true},
 			Discord: ChannelConfig{Enabled: true},
+			Teams:   ChannelConfig{Enabled: true},
 		},
 	}
-	got := DeferredFeatureWarnings(cfg)
-	want := []string{
-		"notify.slack.enabled is true but Slack notifications are not implemented yet",
-		"notify.discord.enabled is true but Discord notifications are not implemented yet",
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("warnings mismatch\n got: %#v\nwant: %#v", got, want)
+	if got := DeferredFeatureWarnings(cfg); len(got) != 0 {
+		t.Fatalf("expected no warnings for implemented notify channels, got %q", got)
 	}
 }

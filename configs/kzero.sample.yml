@@ -40,15 +40,26 @@ hooks:
   post-up: ./hooks/post-up.sh
   on-error: ./hooks/on-error.sh
 
-# Notifications (deferred — see docs/ROADMAP.md 0.6.x #18).
-# Planned channels: slack, teams, pagerduty, webhook (generic), discord.
+# Notifications (live mode only for pipelines). Test without a pipeline: kzero notify test -c <file>
+# Events: pipeline.start, pipeline.success, pipeline.error (plus notify.test via notify test).
 notify:
+  on_error: true
   slack:
     enabled: false
     webhook_url: ""
   discord:
     enabled: false
     webhook_url: ""
+  teams:
+    enabled: false
+    webhook_url: ""
+  pagerduty:
+    enabled: false
+    routing_key: ""
+  webhook:
+    enabled: false
+    url: ""
+    headers: {}
 
 pipelines:
   # Steps: compact strings (<kind>.<namespace>/<name>), maps on up for extra options,

@@ -2,18 +2,22 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/notify"
 	"github.com/hrodrig/kzero/internal/retry"
 )
 
 // Engine runs phased pipelines using a Runner (dry-run or live).
 type Engine struct {
-	Runner Runner
-	Out    io.Writer
+	Runner  Runner
+	Out     io.Writer
+	Command string    // CLI command name: down, up, reset (for notify metadata)
+	Started time.Time // pipeline start time (for notify metadata)
 }
 
 // New builds an Engine for cfg.Run.Mode, writing dry-run / log lines to out.
@@ -59,30 +63,30 @@ func (e *Engine) RunReset(ctx context.Context, cfg *config.Config) error {
 
 func (e *Engine) runDown(ctx context.Context, cfg *config.Config) error {
 	if err := e.Runner.RunHook(ctx, cfg, "pre-down", cfg.Hooks.PreDown); err != nil {
-		return finishWithError(ctx, e.Runner, cfg, err)
+		return finishWithError(ctx, e, cfg, &PipelineError{Hook: "pre-down", Err: err})
 	}
 	for i, step := range cfg.Pipelines.Down {
 		if err := e.runPipelineStepWithRetry(ctx, cfg, PhaseDown, i, step); err != nil {
-			return finishWithError(ctx, e.Runner, cfg, err)
+			return finishWithError(ctx, e, cfg, &PipelineError{Phase: string(PhaseDown), Index: i, Ref: step.Ref, Err: err})
 		}
 	}
 	if err := e.Runner.RunHook(ctx, cfg, "post-down", cfg.Hooks.PostDown); err != nil {
-		return finishWithError(ctx, e.Runner, cfg, err)
+		return finishWithError(ctx, e, cfg, &PipelineError{Hook: "post-down", Err: err})
 	}
 	return nil
 }
 
 func (e *Engine) runUp(ctx context.Context, cfg *config.Config) error {
 	if err := e.Runner.RunHook(ctx, cfg, "pre-up", cfg.Hooks.PreUp); err != nil {
-		return finishWithError(ctx, e.Runner, cfg, err)
+		return finishWithError(ctx, e, cfg, &PipelineError{Hook: "pre-up", Err: err})
 	}
 	for i, step := range cfg.Pipelines.Up {
 		if err := e.runPipelineStepWithRetry(ctx, cfg, PhaseUp, i, step); err != nil {
-			return finishWithError(ctx, e.Runner, cfg, err)
+			return finishWithError(ctx, e, cfg, &PipelineError{Phase: string(PhaseUp), Index: i, Ref: step.Ref, Err: err})
 		}
 	}
 	if err := e.Runner.RunHook(ctx, cfg, "post-up", cfg.Hooks.PostUp); err != nil {
-		return finishWithError(ctx, e.Runner, cfg, err)
+		return finishWithError(ctx, e, cfg, &PipelineError{Hook: "post-up", Err: err})
 	}
 	return nil
 }
@@ -121,12 +125,30 @@ func (e *Engine) runPipelineStepWithRetry(ctx context.Context, cfg *config.Confi
 	return lastErr
 }
 
-func finishWithError(ctx context.Context, runner Runner, cfg *config.Config, err error) error {
+func finishWithError(ctx context.Context, eng *Engine, cfg *config.Config, err error) error {
+	dispatchPipelineError(ctx, eng, cfg, err)
 	if cfg.Hooks.OnError == "" {
 		return err
 	}
-	if hookErr := runner.RunHook(ctx, cfg, "on-error", cfg.Hooks.OnError); hookErr != nil {
+	if hookErr := eng.Runner.RunHook(ctx, cfg, "on-error", cfg.Hooks.OnError); hookErr != nil {
 		return fmt.Errorf("%w: on-error hook: %v", err, hookErr)
 	}
 	return err
+}
+
+func dispatchPipelineError(ctx context.Context, eng *Engine, cfg *config.Config, err error) {
+	if eng == nil || err == nil {
+		return
+	}
+	started := eng.Started
+	if started.IsZero() {
+		started = time.Now()
+	}
+	meta := notify.MetaFromConfig(cfg, eng.Command, started, time.Since(started))
+	meta.Error = err.Error()
+	var pe *PipelineError
+	if errors.As(err, &pe) {
+		meta.FailedStep = pe.FailedStep()
+	}
+	_ = notify.Dispatch(ctx, cfg, notify.EventError, meta, nil)
 }

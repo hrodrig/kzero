@@ -1,6 +1,6 @@
 # Plan 0.6.0 — operator-ready band
 
-**Status:** in progress — **PR1** (#20 operator audit) implemented on `develop` (uncommitted); merge order below  
+**Status:** in progress — **PR1** shipped on `develop`; **PR2** (notify) in progress; merge order below  
 **Target release:** `v0.6.0` on `main` after `make release-check`  
 **Roadmap band:** [ROADMAP.md](ROADMAP.md) **0.6.x** items **#16–#22** (+ **#22bis** SPEC doc); remainder may continue as **0.6.1+**
 
@@ -113,7 +113,7 @@ notify:
 
 **CLI:** remove deferred warnings for implemented channels; warn only for enabled-but-unknown keys.
 
-**Acceptance:** integration test with `httptest.Server` records POST; live E2E manual with Slack webhook test channel.
+**Acceptance:** integration test with `httptest.Server` records POST; **`kzero notify test`** sends to enabled channels without running a pipeline; live E2E manual with Slack webhook test channel.
 
 ---
 

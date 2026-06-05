@@ -7,12 +7,5 @@ func DeferredFeatureWarnings(cfg *Config) []string {
 	if cfg == nil {
 		return nil
 	}
-	var out []string
-	if cfg.Notify.Slack.Enabled {
-		out = append(out, "notify.slack.enabled is true but Slack notifications are not implemented yet")
-	}
-	if cfg.Notify.Discord.Enabled {
-		out = append(out, "notify.discord.enabled is true but Discord notifications are not implemented yet")
-	}
-	return out
+	return nil
 }

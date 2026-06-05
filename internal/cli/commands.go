@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/hrodrig/kzero/internal/cluster"
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/engine"
+	"github.com/hrodrig/kzero/internal/notify"
 	"github.com/spf13/cobra"
 )
 
@@ -29,11 +31,26 @@ func writeKubernetesTarget(w io.Writer, cfg *config.Config) error {
 
 func runPipelineCommand(cmd *cobra.Command, command string, cfg *config.Config, run func(*engine.Engine, *config.Config) error) error {
 	return runTimed(cmd.ErrOrStderr(), command, cfg.Run.Color, func() error {
+		started := time.Now()
 		if err := writeKubernetesTarget(cmd.OutOrStdout(), cfg); err != nil {
 			return err
 		}
+		ctx := cmd.Context()
+		if notify.AnyEnabled(cfg) {
+			meta := notify.MetaFromConfig(cfg, command, started, 0)
+			_ = notify.Dispatch(ctx, cfg, notify.EventStart, meta, nil)
+		}
 		eng := engine.New(cfg, cmd.OutOrStdout())
-		return run(eng, cfg)
+		eng.Command = command
+		eng.Started = started
+		if err := run(eng, cfg); err != nil {
+			return err
+		}
+		if notify.AnyEnabled(cfg) {
+			meta := notify.MetaFromConfig(cfg, command, started, time.Since(started))
+			_ = notify.Dispatch(ctx, cfg, notify.EventSuccess, meta, nil)
+		}
+		return nil
 	})
 }
 

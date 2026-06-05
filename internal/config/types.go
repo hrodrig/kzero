@@ -44,13 +44,28 @@ type HooksConfig struct {
 }
 
 type NotifyConfig struct {
-	Slack   ChannelConfig `mapstructure:"slack"`
-	Discord ChannelConfig `mapstructure:"discord"`
+	OnError   *bool                `mapstructure:"on_error"`
+	Slack     ChannelConfig        `mapstructure:"slack"`
+	Discord   ChannelConfig        `mapstructure:"discord"`
+	Teams     ChannelConfig        `mapstructure:"teams"`
+	PagerDuty PagerDutyConfig      `mapstructure:"pagerduty"`
+	Webhook   GenericWebhookConfig `mapstructure:"webhook"`
 }
 
 type ChannelConfig struct {
 	Enabled    bool   `mapstructure:"enabled"`
 	WebhookURL string `mapstructure:"webhook_url"`
+}
+
+type PagerDutyConfig struct {
+	Enabled    bool   `mapstructure:"enabled"`
+	RoutingKey string `mapstructure:"routing_key"`
+}
+
+type GenericWebhookConfig struct {
+	Enabled bool              `mapstructure:"enabled"`
+	URL     string            `mapstructure:"url"`
+	Headers map[string]string `mapstructure:"headers"`
 }
 
 type PipelinesConfig struct {
