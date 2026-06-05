@@ -112,7 +112,7 @@ Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subpr
 |---|------|--------|
 | 16 | **`log/slog`** with `--log-format json|text`. | Pending (PR3 — before verify) |
 | 17 | **Secret redaction** in logs and optional `--no-env-passthrough` for hooks. | Pending (0.6.1+; minimal notify redaction in PR2) |
-| 18 | **`notify`**: implement common outbound channels—**Slack**, **Microsoft Teams**, **PagerDuty**, and a **generic webhook** (plus **Discord** already in schema). Fire on pipeline start/end and optionally on error; redact secrets in payloads. | In progress (PR2) |
+| 18 | **`notify`**: implement common outbound channels—**Slack**, **Microsoft Teams**, **PagerDuty**, and a **generic webhook** (plus **Discord** already in schema). Fire on pipeline start/end and optionally on error; redact secrets in payloads. **`kzero notify test`** verifies channels without a pipeline. | Done (PR2, develop) |
 | 19 | **Preflight connectivity**: before mutating resources, verify API reachability (e.g. list nodes or equivalent) and fail fast with a clear message. | Pending (PR6) |
 | 20 | **Operator audit**: include **OS username** and **UID** in the **`Kubernetes target:`** block and expose **`KZERO_OS_USER`** / **`KZERO_OS_UID`** (or equivalent) to hooks and subprocesses. Complements **`client.id`**. | Done (PR1, develop) |
 | 21 | **`verify` mode** after `up`: structured readiness report (e.g. JSON). | Pending (PR4 — after slog) |
