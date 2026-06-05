@@ -71,8 +71,8 @@ This subsection documents **observable behavior in the codebase today** (strictl
 
 1. **Sequential pipeline steps:** For `kzero down` / `kzero up` / `kzero reset`, each entry in `pipelines.down` or `pipelines.up` runs **after** the previous step completes successfully. Steps do **not** run in parallel. Fail-fast: the first failing hook or step aborts the phase (see §5). On **down**, `deployment` / `statefulset` steps set replicas without waiting for pods to terminate unless a step defines its own wait semantics via hooks or future fields.
 2. **`retry.attempts` and `retry.delay`:** In **`run.mode: live`**, each **pipeline step** (pre-hook, main step, post-hook as one unit) may be retried up to **`retry.attempts`** times. After failure *n*, the engine waits **`retry.delay × 2^(n−1)`** (capped at **2m**) before the next try. Retries apply only to **transient** errors (API timeout/conflict/429/503, `context.DeadlineExceeded`, common connection/timeout strings). **`ErrNotFound`**, **`ErrForbidden`**, and **`context.Canceled`** are not retried. **`dry-run`** does not retry. A line `[retry] pipeline …` is written to the command output stream when a retry occurs.
-3. **`notify.slack` / `notify.discord`:** Parsed and stored; the engine **does not** send webhooks or other notifications.
-4. **CLI warnings:** After a successful config load, `kzero analyze`, `kzero down`, `kzero up`, and `kzero reset` print **non-fatal warnings** to **stderr** when `notify.slack.enabled` / `notify.discord.enabled` is true, because those settings are not honored by the v1 engine yet.
+3. **`notify`:** Parsed and stored; the engine **does not** send notifications yet. Schema v1 includes **`slack`** and **`discord`**; planned channels (see [ROADMAP.md](ROADMAP.md) **0.6.x #18**) include **Microsoft Teams**, **PagerDuty**, and a **generic webhook** in addition to Slack/Discord.
+4. **CLI warnings:** After a successful config load, `kzero analyze`, `kzero down`, `kzero up`, and `kzero reset` print **non-fatal warnings** to **stderr** when a **`notify.*.enabled`** channel is true but not implemented yet.
 
 ### Workload execution backend (`run.execution`)
 

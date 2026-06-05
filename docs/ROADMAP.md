@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-06-04 (bands **0.3.x**, **0.4.x**, and **0.5.x** items **#12–#13** closed for **v0.5.3**)
+**Last reviewed:** 2026-06-05 (bands **0.5.x**–**0.7.x** refined for native executor, notifications, and extended step types)
 
 ### Versioning note
 
@@ -15,20 +15,24 @@ The first **public** releases are **0.2.0** onward (there was no prior `1.0.x` l
 
 ### Strategic direction
 
-The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`**: `shell` (default), **`native`** (client-go scale + rollout wait), or **`auto`** (native with shell fallback). Phase hooks, **`release.*`**, and **`custom:`** remain **shell-backed**.
+The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`**: `shell` (default), **`native`** (client-go scale + rollout wait), or **`auto`** (native with shell fallback).
 
-**Completed bands:** **0.3.x** (operator honesty), **0.4.x** (native client + analyze validation + server-side dry-run on native). **0.5.x** retry and sequential-only contract (**#12–#13**) shipped through **v0.5.3**.
+**Target architecture (single container image):** expand the **native executor** so the published **distroless** image does not require separate `kubectl` / `helm` binaries on `PATH`. Workloads already use **client-go**; planned extensions include **in-cluster command execution** (`remotecommand`), **PVC lifecycle** via the API, **preflight connectivity** checks, and a **Helm SDK** path for **`release.*`** (install/uninstall/wait and optional OCI registry authentication). Phase hooks and **`custom:`** shell scripts remain valid on hosts with a shell; **containerized** runs should prefer **declarative pipeline steps** over `.sh` inside the image.
+
+**Log capture** before or after pipelines is **out of scope** for the engine—invoke external tools via phase hooks when operators need archives.
+
+**Completed bands:** **0.3.x** (operator honesty), **0.4.x** (native client + analyze validation + server-side dry-run on native). **0.5.x** retry, **`client.id`**, live audit logs, and sequential-only contract shipped through **v0.5.6**.
 
 **Current focus (planned work):**
 
 | Band | Open items |
 |------|------------|
-| **0.5.x** | **#15** shell subprocess error taxonomy (**#14** done in **0.5.4**) |
-| **0.6.x** | slog, secret redaction, **`notify`**, post-up **`verify`** |
-| **0.7.x** | Cosign/SBOM, coverage gate in **`release-check`**, more step types, `custom:` / release ergonomics |
-| **1.0.0** | Helm SDK (optional), default **native** when `run.execution` omitted, PVC patterns, **kind**/envtest CI |
+| **0.5.x** | **#15** shell subprocess error taxonomy |
+| **0.6.x** | slog, secret redaction, **multi-channel `notify`**, **preflight** API checks, **OS user/uid** audit, post-up **`verify`** |
+| **0.7.x** | **`exec`** (run command in pod), **`pvc` delete**, **Helm SDK** + registry auth, Cosign/SBOM, extended step types |
+| **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI |
 
-**Helm** stays on **workspace scripts** until an optional Helm SDK executor (**1.0.0 #25**). **`release.*`**, **`custom:`**, and phase hooks may keep using shell even when workload steps default to native.
+**Helm** stays on **workspace scripts** until the **Helm SDK** executor lands (**0.7.x #24**). Shell-backed hooks remain for operator-maintained scripts on the host.
 
 ---
 
@@ -46,6 +50,8 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.5.1** | **`run.color`** for timing-line ANSI styling; **server-side dry-run** on native/auto scale steps (roadmap **0.4.x** #11). |
 | **0.5.2** | **Per-step retry** with exponential backoff on transient errors (roadmap **0.5.x** #12). |
 | **0.5.3** | **`run.worker_concurrency` removed** from contract; pipeline execution **strictly sequential** (roadmap **0.5.x** #13 closed). |
+| **0.5.5** | **`[live]`** action logs, **`started_at`** / **`client_id`** in **`Kubernetes target:`**, release hook env fix, pipeline wait docs and reference hooks. |
+| **0.5.6** | Pipeline command factorization, coverage housekeeping, BSD port sync. |
 
 ---
 
@@ -55,7 +61,7 @@ Close the gap between **schema** and **engine** before larger execution changes.
 
 | # | Item | Status |
 |---|------|--------|
-| 1 | **CLI warnings** for config the engine does not honor: `retry.attempts > 1`, `notify.{slack,discord}.enabled` (and formerly `worker_concurrency`; removed from contract in 0.5.3). | **Done** (0.2.2) |
+| 1 | **CLI warnings** for config the engine does not honor: deferred **`notify.*`** channels (and formerly `worker_concurrency`; removed from contract in 0.5.3). **`retry`** is implemented since **0.5.2**. | **Done** (0.2.2) |
 | 2 | **Explicit allow-list** for compact pipeline step kinds at parse time. | **Done** (0.2.1) |
 | 3 | **Richer `analyze` output**: list normalized steps and summarize deferred schema fields. | **Done** (0.2.3) |
 | 4 | **DaemonSet**: not a built-in scalable kind; document `custom:` workaround. | **Done** (0.2.1) |
@@ -97,28 +103,32 @@ Applies to **both** executors where relevant; subprocess classification still ma
 
 ---
 
-## 0.6.x — observability and notifications
+## 0.6.x — observability, notifications, and preflight
 
 | # | Item | Status |
 |---|------|--------|
 | 16 | **`log/slog`** with `--log-format json|text`. | Pending |
 | 17 | **Secret redaction** in logs and optional `--no-env-passthrough` for hooks. | Pending |
-| 18 | **Implement `notify`** (Slack and Discord webhooks as promised by schema). | Pending |
-| 19 | **`verify` mode** after `up`: structured readiness report (e.g. JSON). | Pending |
+| 18 | **`notify`**: implement common outbound channels—**Slack**, **Microsoft Teams**, **PagerDuty**, and a **generic webhook** (plus **Discord** already in schema). Fire on pipeline start/end and optionally on error; redact secrets in payloads. | Pending |
+| 19 | **Preflight connectivity**: before mutating resources, verify API reachability (e.g. list nodes or equivalent) and fail fast with a clear message. | Pending |
+| 20 | **Operator audit**: include **OS username** and **UID** in the **`Kubernetes target:`** block and expose **`KZERO_OS_USER`** / **`KZERO_OS_UID`** (or equivalent) to hooks and subprocesses. Complements **`client.id`**. | Pending |
+| 21 | **`verify` mode** after `up`: structured readiness report (e.g. JSON). | Pending |
 
 ---
 
-## 0.7.x — supply chain and extended pipeline steps
+## 0.7.x — native cluster operations and Helm SDK
 
-Broader **flush** operations beyond scale-to-zero, building on the native client from **0.4.x**.
+Broader pipeline primitives via **client-go** and **helm.sh/helm/v3**, keeping a **single distroless image** without fork/exec to external `kubectl` / `helm` for built-in step types.
 
 | # | Item | Status |
 |---|------|--------|
-| 20 | **Cosign signing** and **SBOM** (e.g. Syft) in the GoReleaser pipeline. | Pending |
-| 21 | **Raise coverage target** (e.g. 85%+) and fold **`make cover-check`** into **`make release-check`** when sustainable. | Pending |
-| 22 | **Additional step types**: `job`, `cronjob` (suspend), safe generic **patch** / scale patterns for CRDs. Prefer native executor; shell fallback where needed. | Pending |
-| 23 | **`custom:` parity**: pass `KZERO_PHASE` and step metadata to the main custom script (same as per-step hooks / release scripts). | Pending |
-| 24 | **Release script ergonomics**: optional non-flat paths under `helm.workspace` (e.g. `monitoring/kube-prometheus-stack.sh`) without breaking flat `name.sh` convention. | Pending |
+| 22 | **`exec` step type**: run a command (and optional stdin) inside a named pod/container via **remotecommand**—covers SQL, admin CLIs, and other in-cluster maintenance without a one-off truncate primitive. | Pending |
+| 23 | **`pvc` step type**: delete named PVCs (or labeled sets) via the API for data-reset pipelines. | Pending |
+| 24 | **Helm SDK executor** for **`release.*`**: `upgrade --install` / uninstall with wait; optional **OCI registry login** from config (no separate operator image). | Pending |
+| 25 | **Cosign signing** and **SBOM** (e.g. Syft) in the GoReleaser pipeline. | Pending |
+| 26 | **Additional step types**: `job`, `cronjob` (suspend), safe generic **patch** / scale patterns for CRDs. Prefer native executor; shell fallback where needed. | Pending |
+| 27 | **`custom:` parity**: pass `KZERO_PHASE` and step metadata to the main custom script (same as per-step hooks / release scripts). | Pending |
+| 28 | **Release script ergonomics**: optional non-flat paths under `helm.workspace` (e.g. `monitoring/kube-prometheus-stack.sh`) without breaking flat `name.sh` convention. | Pending |
 
 ---
 
@@ -128,10 +138,9 @@ Major when YAML **`schema_version`**, executor behavior, and step types are stab
 
 | # | Item | Status |
 |---|------|--------|
-| 25 | **Helm SDK executor** (optional): `helm upgrade` / uninstall without maintainer `.sh` wrappers, behind explicit config. | Pending |
-| 26 | **Default native execution** for workload steps when `run.execution` is omitted (shell opt-in). | Pending |
-| 27 | **PVC / StatefulSet data strategy** documented as pipeline patterns (snapshot, wipe, init-job) — not necessarily core primitives on day one. | Pending |
-| 28 | **Integration tests** with **kind** or envtest in CI, with documented flake policy and runtime budget. | Pending |
+| 29 | **Default native execution** for workload steps when `run.execution` is omitted (shell opt-in). | Pending |
+| 30 | **PVC / StatefulSet data strategy** documented as pipeline patterns (snapshot, wipe, init-job) beyond core delete primitives. | Pending |
+| 31 | **Integration tests** with **kind** or envtest in CI, with documented flake policy and runtime budget. | Pending |
 
 ---
 

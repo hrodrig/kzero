@@ -39,6 +39,8 @@ hooks:
   post-up: ./hooks/post-up.sh
   on-error: ./hooks/on-error.sh
 
+# Notifications (deferred — see docs/ROADMAP.md 0.6.x #18).
+# Planned channels: slack, teams, pagerduty, webhook (generic), discord.
 notify:
   slack:
     enabled: false
