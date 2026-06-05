@@ -109,7 +109,7 @@ func (e *Engine) runPipelineStepWithRetry(ctx context.Context, cfg *config.Confi
 			return lastErr
 		}
 		wait := retry.Backoff(cfg.Retry.Delay, try)
-		retry.LogRetry(e.Out, string(phase), index, step.Ref, try, max, wait, lastErr)
+		retry.LogRetry(e.Out, cfg, string(phase), index, step.Ref, try, max, wait, lastErr)
 		timer := time.NewTimer(wait)
 		select {
 		case <-ctx.Done():

@@ -23,7 +23,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 
 | Band | Open items |
 |------|------------|
-| **0.5.x** | **#14** `client.id` in logs / hook env; **#15** shell subprocess error taxonomy |
+| **0.5.x** | **#15** shell subprocess error taxonomy (**#14** done in **0.5.4**) |
 | **0.6.x** | slog, secret redaction, **`notify`**, post-up **`verify`** |
 | **0.7.x** | Cosign/SBOM, coverage gate in **`release-check`**, more step types, `custom:` / release ergonomics |
 | **1.0.0** | Helm SDK (optional), default **native** when `run.execution` omitted, PVC patterns, **kind**/envtest CI |
@@ -84,7 +84,7 @@ Introduced an **`Executor`** abstraction and workload steps against the API inst
 
 ## 0.5.x — execution engine (retries; sequential contract)
 
-Items **#12–#13** are **done** (**v0.5.2** / **v0.5.3**). Remaining open work: **#14–#15**.
+Items **#12–#14** are **done** (**v0.5.2** / **v0.5.3** / **v0.5.4**). Remaining open work: **#15**.
 
 Applies to **both** executors where relevant; subprocess classification still matters for hooks and scripts.
 
@@ -92,7 +92,7 @@ Applies to **both** executors where relevant; subprocess classification still ma
 |---|------|--------|
 | 12 | **Retry** with exponential backoff for transient failures, wired to `cfg.Retry`. | **Done** (0.5.2) |
 | 13 | **Pipeline parallelism** (`run.worker_concurrency`, worker pools, parallel waves). | **Removed from contract** (0.5.3) — engine stays **strictly sequential**; use step order and `custom:` for operator-controlled batching. |
-| 14 | **Propagate `client.id`** into structured logs and hook environment (e.g. `KZERO_CLIENT_ID`). | Pending |
+| 14 | **Propagate `client.id`** into structured logs and hook environment (e.g. `KZERO_CLIENT_ID`). | **Done** (0.5.4) |
 | 15 | **Subprocess error taxonomy** for shell path (exit codes, common stderr patterns) when native path is not used. | Pending |
 
 ---

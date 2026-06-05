@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/correlation"
 	"github.com/hrodrig/kzero/internal/executor"
 )
 
@@ -28,7 +29,7 @@ func NewDryRunner(cfg *config.Config, out io.Writer) Runner {
 	wl, err := executor.NewNativeForDryRun(cfg)
 	if err != nil {
 		if out != nil {
-			_, _ = fmt.Fprintf(out, "[dry-run] server-side dry-run unavailable (%v); planning scale steps only\n", err)
+			_, _ = fmt.Fprintf(out, "[dry-run] %sserver-side dry-run unavailable (%v); planning scale steps only\n", correlation.LogPrefix(cfg), err)
 		}
 		return dr
 	}
@@ -51,12 +52,12 @@ func (r *DryRunner) runNativeDryRunScale(ctx context.Context, cfg *config.Config
 	if err := r.nativeWL.Scale(opCtx, step.Type, step.Namespace, step.Name, replicas); err != nil {
 		return fmt.Errorf("dry-run native scale %s: %w", step.Ref, err)
 	}
-	if _, err := fmt.Fprintf(r.Out, "[dry-run] native scale %s -> %d replicas (server-side dry-run ok)\n", step.Ref, replicas); err != nil {
+	if _, err := fmt.Fprintf(r.Out, "[dry-run] %snative scale %s -> %d replicas (server-side dry-run ok)\n", correlation.LogPrefix(cfg), step.Ref, replicas); err != nil {
 		return err
 	}
 	if phase == PhaseUp && step.WaitForReady {
 		timeout := rolloutTimeout(cfg, step)
-		if _, err := fmt.Fprintf(r.Out, "[dry-run] native would wait for rollout %s (timeout %s)\n", step.Ref, timeout); err != nil {
+		if _, err := fmt.Fprintf(r.Out, "[dry-run] %snative would wait for rollout %s (timeout %s)\n", correlation.LogPrefix(cfg), step.Ref, timeout); err != nil {
 			return err
 		}
 	}

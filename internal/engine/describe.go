@@ -20,13 +20,18 @@ func DescribeStep(step config.PipelineStep) string {
 }
 
 // FormatStepPlanLine formats a step for analyze output, including optional metadata.
-func FormatStepPlanLine(step config.PipelineStep, helmWorkspace string) string {
+// phase is the pipeline phase name ("down" or "up") for release step hints.
+func FormatStepPlanLine(step config.PipelineStep, helmWorkspace string, phase string) string {
 	base := DescribeStep(step)
 	var extras []string
 
-	if step.Type == "release" && strings.TrimSpace(helmWorkspace) != "" {
-		script := filepath.Join(strings.TrimSpace(helmWorkspace), step.Name+".sh")
-		extras = append(extras, fmt.Sprintf("script: %s", script))
+	if step.Type == "release" {
+		if phase == string(PhaseDown) {
+			extras = append(extras, "helm uninstall --wait --ignore-not-found")
+		} else if strings.TrimSpace(helmWorkspace) != "" {
+			script := filepath.Join(strings.TrimSpace(helmWorkspace), step.Name+".sh")
+			extras = append(extras, fmt.Sprintf("script: %s", script))
+		}
 	}
 
 	if step.PreStep != "" {

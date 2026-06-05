@@ -121,6 +121,7 @@ pipelines:
     - release.monitoring/kube-prometheus-stack
   up:
     - deployment.argocd/argocd-server
+    - release.monitoring/kube-prometheus-stack
 run:
   mode: "dry-run"
 notify:
@@ -143,7 +144,8 @@ notify:
 		"[down]",
 		"[up]",
 		"release.monitoring/kube-prometheus-stack",
-		"helm-assets/kube-prometheus-stack.sh",
+		"helm uninstall --wait --ignore-not-found",
+		"script: helm-assets/kube-prometheus-stack.sh",
 		"Deferred (accepted by schema",
 		"notify.slack.enabled",
 	} {

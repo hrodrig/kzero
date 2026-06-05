@@ -36,7 +36,7 @@ func TestFormatStepPlanLine_releaseAndOptions(t *testing.T) {
 		WaitForReady: true,
 		Timeout:      2 * time.Minute,
 	}
-	got := FormatStepPlanLine(step, "./helm")
+	got := FormatStepPlanLine(step, "./helm", "up")
 	if !strings.Contains(got, "statefulset.db/pg") {
 		t.Fatalf("missing ref: %q", got)
 	}
@@ -50,8 +50,13 @@ func TestFormatStepPlanLine_releaseAndOptions(t *testing.T) {
 		Namespace: "mon",
 		Name:      "prom",
 	}
-	got = FormatStepPlanLine(release, "./helm-assets")
+	got = FormatStepPlanLine(release, "./helm-assets", "up")
 	if !strings.Contains(got, "script: helm-assets/prom.sh") {
 		t.Fatalf("missing script path: %q", got)
+	}
+
+	got = FormatStepPlanLine(release, "./helm-assets", "down")
+	if !strings.Contains(got, "helm uninstall") {
+		t.Fatalf("missing uninstall hint: %q", got)
 	}
 }

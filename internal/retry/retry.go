@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/correlation"
 	"github.com/hrodrig/kzero/internal/executor"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
@@ -88,8 +89,8 @@ func IsRetriable(err error) bool {
 	return false
 }
 
-// LogRetry writes a human-readable retry line when out is non-nil.
-func LogRetry(out io.Writer, phase string, index int, stepRef string, try, max int, wait time.Duration, err error) {
+// LogRetry writes a structured retry line when out is non-nil.
+func LogRetry(out io.Writer, cfg *config.Config, phase string, index int, stepRef string, try, max int, wait time.Duration, err error) {
 	if out == nil {
 		return
 	}
@@ -97,6 +98,6 @@ func LogRetry(out io.Writer, phase string, index int, stepRef string, try, max i
 	if ref == "" {
 		ref = fmt.Sprintf("index %d", index)
 	}
-	_, _ = fmt.Fprintf(out, "[retry] pipeline %s step %s attempt %d/%d failed (%v); retrying in %s\n",
-		phase, ref, try, max, err, wait.Round(time.Millisecond))
+	_, _ = fmt.Fprintf(out, "[retry] %spipeline %s step %s attempt %d/%d failed (%v); retrying in %s\n",
+		correlation.LogPrefix(cfg), phase, ref, try, max, err, wait.Round(time.Millisecond))
 }

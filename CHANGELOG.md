@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-06-04
+
+### Added
+
+- **`client.id` propagation:** when set, engine log lines (`[dry-run]`, `[retry]`, native dry-run) include a **`client_id=`** field; hook, custom, and release scripts receive **`KZERO_CLIENT_ID`** in their environment. Override via **`KZERO_CLIENT_ID`** on config load. Roadmap **#14** done.
+- **Docs:** [docs/examples/pipeline-order-and-integrity.md](docs/examples/pipeline-order-and-integrity.md) and reference hook [docs/examples/hooks/wait-deployment-scale-down.sh](docs/examples/hooks/wait-deployment-scale-down.sh); README and SPEC clarify sequential `down` order vs pod termination; sample profile includes `deployment.app/consumer` → `producer` example.
+
+### Changed
+
+- **`release.*` on `down`:** live mode runs **`helm uninstall <release> -n <namespace> --wait --ignore-not-found`** instead of executing `<helm.workspace>/<release>.sh`. **`up`** still runs the install script. `kzero analyze` shows `helm uninstall` in the down plan.
+
 ## [0.5.3] - 2026-06-04
 
 ### Removed

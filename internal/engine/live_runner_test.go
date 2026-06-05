@@ -117,7 +117,7 @@ func rolloutHasTimeout(roll []string, prefix string) bool {
 	return false
 }
 
-func TestLiveRunner_ReleaseScriptInvokesShWithPhase(t *testing.T) {
+func TestLiveRunner_ReleaseDownHelmUninstall(t *testing.T) {
 	t.Parallel()
 
 	dir := t.TempDir()
@@ -146,18 +146,55 @@ func TestLiveRunner_ReleaseScriptInvokesShWithPhase(t *testing.T) {
 		Name:      "prom",
 	}
 
+	cfg.Command = config.CommandConfig{Helm: "/bin/helm"}
+
 	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step); err != nil {
 		t.Fatal(err)
 	}
 	if len(calls) != 1 {
 		t.Fatalf("expected 1 call, got %v", calls)
 	}
-	if calls[0][0] != "/bin/sh" || calls[0][1] != script || calls[0][2] != "down" {
-		t.Fatalf("expected /bin/sh script down, got %v", calls[0])
+	if calls[0][0] != "/bin/helm" || calls[0][1] != "uninstall" || calls[0][2] != "prom" {
+		t.Fatalf("expected helm uninstall prom, got %v", calls[0])
 	}
 	env := envs[0]
 	if !envHas(env, "KZERO_PHASE=down") || !envHas(env, "KZERO_RELEASE_NAME=prom") || !envHas(env, "KZERO_RELEASE_NAMESPACE=monitoring") {
 		t.Fatalf("missing KZERO_* env, got %v", env)
+	}
+}
+
+func TestLiveRunner_ReleaseUpRunsInstallScript(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	script := filepath.Join(dir, "prom.sh")
+	if err := os.WriteFile(script, []byte("#!/bin/sh\necho ok\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	var calls [][]string
+	r := &LiveRunner{
+		Exec: func(ctx context.Context, argv0 string, args, env []string, d string) ([]byte, error) {
+			calls = append(calls, append([]string{argv0}, args...))
+			return nil, nil
+		},
+	}
+	cfg := &config.Config{
+		Run:  config.RunConfig{Mode: "live"},
+		Helm: config.HelmConfig{Workspace: dir},
+	}
+	step := config.PipelineStep{
+		Ref:       "release.monitoring/prom",
+		Type:      "release",
+		Namespace: "monitoring",
+		Name:      "prom",
+	}
+
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseUp, 0, step); err != nil {
+		t.Fatal(err)
+	}
+	if len(calls) != 1 || calls[0][0] != "/bin/sh" || calls[0][1] != script || calls[0][2] != "up" {
+		t.Fatalf("expected /bin/sh script up, got %v", calls)
 	}
 }
 
@@ -219,6 +256,34 @@ func TestLiveRunner_PerStepPreRunsBeforeKubectlWithStepEnv(t *testing.T) {
 	want := []string{"/bin/kubectl", "scale", "deployment/app", "-n", "ns", "--replicas", "0"}
 	if !reflect.DeepEqual(calls[1], want) {
 		t.Fatalf("kubectl argv\ngot:  %#v\nwant: %#v", calls[1], want)
+	}
+}
+
+func TestLiveRunner_HookEnvIncludesClientID(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	script := filepath.Join(dir, "hook.sh")
+	if err := os.WriteFile(script, []byte("#!/bin/sh\necho ok\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	var env []string
+	r := &LiveRunner{
+		Exec: func(ctx context.Context, argv0 string, args, e []string, d string) ([]byte, error) {
+			env = e
+			return nil, nil
+		},
+	}
+	cfg := &config.Config{
+		Client: config.ClientConfig{ID: "pilot-ns"},
+		Run:    config.RunConfig{Mode: "live"},
+	}
+	if err := r.RunHook(context.Background(), cfg, "pre-down", script); err != nil {
+		t.Fatal(err)
+	}
+	if !envHas(env, "KZERO_CLIENT_ID=pilot-ns") {
+		t.Fatalf("missing KZERO_CLIENT_ID, got %v", env)
 	}
 }
 

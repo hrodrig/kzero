@@ -136,6 +136,26 @@ and `daemonset-enable.sh` removes that nodeSelector key. A future minor release 
   - Example (custom step with hooks):
     - `custom: ./hooks/main.sh` plus sibling YAML keys `pre:` and `post:` under the same list item.
 
+### Ordered steps vs full termination on `down`
+
+YAML list order only ensures step *i+1* starts after step *i* succeeds. For `deployment` / `statefulset` on **`down`**, the main action is replica count **0**; the engine does **not** wait for pods to terminate unless you add per-step hooks (or a future first-class wait field).
+
+**Example (downstream workload must not scale until upstream pods are gone):**
+
+```yaml
+pipelines:
+  down:
+    - deployment.app/consumer:
+        post: ./hooks/wait-deployment-scale-down.sh
+    - deployment.app/producer
+```
+
+The `post` script typically runs `kubectl rollout status deployment/consumer` (see [examples/hooks/wait-deployment-scale-down.sh](examples/hooks/wait-deployment-scale-down.sh)). If `post` fails, `producer` is never scaled.
+
+**`wait_for_ready`** applies on **`up`** after scale-up, not for pod drain on **`down`**.
+
+More examples (StatefulSet `pre` before scale, assert scripts): [examples/pipeline-order-and-integrity.md](examples/pipeline-order-and-integrity.md).
+
 ### Per-step `pre` / `post` behavior (live mode)
 
 For each pipeline step, when `run.mode` is `live`:
@@ -150,6 +170,7 @@ If `pre` fails, the main action and `post` for that step do not run; the phase f
 
 | Variable | Meaning |
 |----------|---------|
+| `KZERO_CLIENT_ID` | Set when `client.id` is configured (same value as YAML / `KZERO_CLIENT_ID` env override) |
 | `KZERO_PHASE` | `down` or `up` |
 | `KZERO_PIPELINE_STEP_INDEX` | Zero-based index of this step in the phase’s pipeline list |
 | `KZERO_STEP_HOOK` | `pre` or `post` |
@@ -158,6 +179,8 @@ If `pre` fails, the main action and `post` for that step do not run; the phase f
 | `KZERO_STEP_TYPE`, `KZERO_STEP_NAMESPACE`, `KZERO_STEP_NAME` | Set for `deployment`, `statefulset`, and `release` steps |
 
 Release steps still receive release-specific variables on the **release** script invocation (`KZERO_RELEASE_NAME`, `KZERO_RELEASE_NAMESPACE`, etc., as implemented); per-step hooks use the table above for correlation.
+
+**Engine log lines** (`[dry-run]`, `[retry]`, native dry-run messages) include a **`client_id=`** field when `client.id` is set (values with spaces are quoted).
 
 ### Per-step hooks in `dry-run`
 

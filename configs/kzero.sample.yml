@@ -11,7 +11,7 @@ schema_version: "1.0"
 # it is intentionally omitted here because it is often unnecessary for workload-only resets.
 #
 # Credentials: use env vars or a secret manager; never commit secrets. Viper env prefix: KZERO_
-# (e.g. KZERO_HELM_WORKSPACE, KZERO_NOTIFY_SLACK_WEBHOOK_URL).
+# (e.g. KZERO_CLIENT_ID, KZERO_HELM_WORKSPACE, KZERO_NOTIFY_SLACK_WEBHOOK_URL).
 
 cluster:
   name: "example-cluster"
@@ -23,7 +23,7 @@ cluster:
 helm:
   workspace: "./helm-assets"
 
-# Optional label for run metadata (logs, notifications).
+# Optional label for run metadata (engine logs: client_id=…; hooks: KZERO_CLIENT_ID).
 client:
   id: ""
 
@@ -51,8 +51,13 @@ pipelines:
   # Steps: compact strings (<kind>.<namespace>/<name>), maps on up for extra options,
   # or { custom: <script> }. Optional per-step hooks (pre/post) run shell scripts immediately
   # before/after that step's main action (post runs only if the main action succeeds).
+  # On down, list order is sequential; scale-to-0 does not wait for pods unless you add post/pre hooks.
+  # See docs/examples/pipeline-order-and-integrity.md
   down:
     - deployment.argocd/argocd-server
+    - deployment.app/consumer:
+        post: ./hooks/wait-deployment-scale-down.sh
+    - deployment.app/producer
     - statefulset.database/postgresql:
         pre: ./hooks/before-pg-scale.sh
         post: ./hooks/after-pg-scale.sh
@@ -61,6 +66,12 @@ pipelines:
 
   up:
     - release.monitoring/kube-prometheus-stack
+    - deployment.app/producer:
+        replicas: 1
+        wait_for_ready: true
+    - deployment.app/consumer:
+        replicas: 1
+        wait_for_ready: true
     - statefulset.database/postgresql:
         replicas: 3
         wait_for_ready: true

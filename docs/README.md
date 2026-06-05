@@ -7,6 +7,8 @@
 | [diagrams.md](diagrams.md) | Mermaid diagrams: CLI vs engine, phase ordering, `reset`, failure path |
 | [demo-kzero.yaml](demo-kzero.yaml) | Minimal YAML used by [demo.tape](demo.tape) (VHS) |
 | [demo.tape](demo.tape) | VHS tape to record [demo.gif](demo.gif) |
+| [examples/pipeline-order-and-integrity.md](examples/pipeline-order-and-integrity.md) | Ordered `down` steps, `wait_for_ready` limits, per-step `post` examples |
+| [examples/hooks/wait-deployment-scale-down.sh](examples/hooks/wait-deployment-scale-down.sh) | Reference `post` hook after scale-to-zero on a Deployment |
 
 Diagrams render on GitHub and in most Markdown viewers that support **Mermaid**.
 

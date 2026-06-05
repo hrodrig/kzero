@@ -25,3 +25,22 @@ func TestDryRunner_CustomScriptIsPlannedOnly(t *testing.T) {
 		t.Fatalf("unexpected output: %q", out)
 	}
 }
+
+func TestDryRunner_LogIncludesClientID(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+	cfg := &config.Config{
+		Run:    config.RunConfig{Mode: "dry-run"},
+		Client: config.ClientConfig{ID: "lab"},
+	}
+	r := &DryRunner{Out: &buf}
+	step := config.PipelineStep{Custom: "./hooks/x.sh"}
+
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "client_id=lab") {
+		t.Fatalf("expected client_id in logs, got %q", buf.String())
+	}
+}

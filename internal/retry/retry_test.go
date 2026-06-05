@@ -143,10 +143,11 @@ func TestIsRetriable_messageSubstrings(t *testing.T) {
 func TestLogRetry_writesLine(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer
-	LogRetry(&buf, "down", 2, "deployment.ns/app", 1, 3, 8*time.Second, errors.New("boom"))
+	cfg := &config.Config{Client: config.ClientConfig{ID: "e2e"}}
+	LogRetry(&buf, cfg, "down", 2, "deployment.ns/app", 1, 3, 8*time.Second, errors.New("boom"))
 	got := buf.String()
 	for _, want := range []string{
-		"[retry]", "pipeline down", "deployment.ns/app", "attempt 1/3", "boom", "8s",
+		"[retry]", "client_id=e2e", "pipeline down", "deployment.ns/app", "attempt 1/3", "boom", "8s",
 	} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("missing %q in %q", want, got)
@@ -156,13 +157,13 @@ func TestLogRetry_writesLine(t *testing.T) {
 
 func TestLogRetry_nilWriterNoPanic(t *testing.T) {
 	t.Parallel()
-	LogRetry(nil, "up", 0, "", 1, 2, time.Second, errors.New("x"))
+	LogRetry(nil, nil, "up", 0, "", 1, 2, time.Second, errors.New("x"))
 }
 
 func TestLogRetry_emptyStepRefUsesIndex(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer
-	LogRetry(&buf, "up", 5, "", 2, 5, time.Second, errors.New("x"))
+	LogRetry(&buf, nil, "up", 5, "", 2, 5, time.Second, errors.New("x"))
 	if !strings.Contains(buf.String(), "index 5") {
 		t.Fatalf("got %q", buf.String())
 	}

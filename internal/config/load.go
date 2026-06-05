@@ -92,6 +92,7 @@ func bindConfigEnv(v *viper.Viper) {
 		"run.timeout",
 		"run.operation_timeout",
 		"helm.workspace",
+		"client.id",
 		"command.kubectl",
 		"command.helm",
 	} {

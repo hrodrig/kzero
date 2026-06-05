@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/correlation"
 	"github.com/hrodrig/kzero/internal/executor"
 )
 
@@ -28,12 +29,19 @@ func kubectlPath(cfg *config.Config) string {
 	return "kubectl"
 }
 
+func helmPath(cfg *config.Config) string {
+	if p := strings.TrimSpace(cfg.Command.Helm); p != "" {
+		return p
+	}
+	return "helm"
+}
+
 func (r *LiveRunner) envFor(cfg *config.Config) []string {
 	env := os.Environ()
 	if k := strings.TrimSpace(cfg.Run.Kubeconfig); k != "" {
 		env = append(env, "KUBECONFIG="+k)
 	}
-	return env
+	return correlation.AppendEnv(cfg, env)
 }
 
 func (r *LiveRunner) runProcess(ctx context.Context, argv0 string, args, env []string, dir string) ([]byte, error) {
@@ -96,9 +104,41 @@ func (r *LiveRunner) workloadFor(cfg *config.Config) (executor.Workload, error) 
 }
 
 func (r *LiveRunner) runReleaseScript(ctx context.Context, cfg *config.Config, phase Phase, step config.PipelineStep) error {
+	if phase == PhaseDown {
+		return r.runHelmUninstall(ctx, cfg, step)
+	}
+	return r.runHelmInstallScript(ctx, cfg, phase, step)
+}
+
+func (r *LiveRunner) runHelmUninstall(ctx context.Context, cfg *config.Config, step config.PipelineStep) error {
+	opCtx, cancel := withOpTimeout(ctx, cfg)
+	defer cancel()
+
+	helmBin := helmPath(cfg)
+	args := []string{
+		"uninstall", step.Name,
+		"-n", step.Namespace,
+		"--wait",
+		"--ignore-not-found",
+	}
+	env := r.envFor(cfg)
+	env = append(env,
+		"KZERO_PHASE=down",
+		"KZERO_RELEASE_NAME="+step.Name,
+		"KZERO_RELEASE_NAMESPACE="+step.Namespace,
+	)
+	out, err := r.runProcess(opCtx, helmBin, args, env, ".")
+	r.writeOutput(out)
+	if err != nil {
+		return fmt.Errorf("helm uninstall %s/%s: %w", step.Namespace, step.Name, err)
+	}
+	return nil
+}
+
+func (r *LiveRunner) runHelmInstallScript(ctx context.Context, cfg *config.Config, phase Phase, step config.PipelineStep) error {
 	ws := strings.TrimSpace(cfg.Helm.Workspace)
 	if ws == "" {
-		return fmt.Errorf("helm.workspace is empty (required for release step %s)", step.Ref)
+		return fmt.Errorf("helm.workspace is empty (required for release step %s on up)", step.Ref)
 	}
 	script := filepath.Join(ws, step.Name+".sh")
 	st, err := os.Stat(script)

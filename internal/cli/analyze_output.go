@@ -123,7 +123,7 @@ func printPipelinePhase(w io.Writer, phase string, steps []config.PipelineStep, 
 		return err
 	}
 	for i, step := range steps {
-		line := engine.FormatStepPlanLine(step, helmWorkspace)
+		line := engine.FormatStepPlanLine(step, helmWorkspace, phase)
 		if _, err := fmt.Fprintf(w, "  %d: %s\n", i, line); err != nil {
 			return err
 		}

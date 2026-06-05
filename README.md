@@ -2,7 +2,7 @@
 
 <a id="top"></a>
 
-[![Version](https://img.shields.io/badge/version-0.5.3-blue.svg)](https://github.com/hrodrig/kzero/releases)
+[![Version](https://img.shields.io/badge/version-0.5.4-blue.svg)](https://github.com/hrodrig/kzero/releases)
 [![GitHub release](https://img.shields.io/github/v/release/hrodrig/kzero)](https://github.com/hrodrig/kzero/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -52,6 +52,7 @@ Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.
 - [Releases and CI](#releases-and-ci)
 - [Development](#development)
 - [Per-step `pre` / `post` (example)](#per-step-pre-post-example)
+- [Pipeline order and integrity on `down`](#pipeline-order-and-integrity-on-down)
 - [Get involved](#get-involved)
 - [License](#license)
 
@@ -244,7 +245,7 @@ Full schema, validation, and acceptance criteria: **[docs/SPECIFICATIONS.md](doc
 | **`kubeconfig`** | Path passed to **`kubectl`** / **`helm`**; empty uses the process environment / default kubeconfig search. |
 | **`operation_timeout`** | Per-operation ceiling (e.g. **`45s`**) for individual kubectl/helm calls inside a step. |
 
-Pipeline steps always run **sequentially** in YAML order (no parallel execution). See [SPEC — Current engine](docs/SPECIFICATIONS.md#current-engine-sequencing-retry-and-concurrency).
+Pipeline steps always run **sequentially** in YAML order (no parallel execution). On **`down`**, workload steps scale to **0** without waiting for pods to exit unless you add per-step **`post`** (or **`pre`** on the next step). See [Pipeline order and integrity on `down`](#pipeline-order-and-integrity-on-down) and [SPEC — Current engine](docs/SPECIFICATIONS.md#current-engine-sequencing-retry-and-concurrency).
 
 ### `retry`
 
@@ -268,14 +269,14 @@ Optional fields on a **map** step (same YAML mapping as the step ref, alongside 
 |-------|------------|---------|
 | **`pre`** / **`post`** | workload, `release`, **`custom`** | Shell scripts run immediately before / after the main action; **`post`** only if the main action succeeds. |
 | **`replicas`** | mainly **`up`** / scale targets | Target replica count (integer). |
-| **`wait_for_ready`** | workloads with readiness | If **`true`**, wait for rollout / ready condition (see SPEC). |
+| **`wait_for_ready`** | workloads on **`up`** | If **`true`**, wait for rollout / ready after scale-up. **Not** used to wait for pod termination on **`down`**. |
 | **`timeout`** | step-level override | Go duration string (e.g. **`10m`**) for that step’s bounded wait / operations. |
 
 [↑ Back to top](#top)
 
 ## Environment and precedence
 
-- **`KZERO_`** environment variables override values from the loaded YAML (**Viper** `AutomaticEnv`). Nested keys use underscores (for example **`run.mode`** → **`KZERO_RUN_MODE`**).
+- **`KZERO_`** environment variables override values from the loaded YAML (**Viper** `AutomaticEnv`). Nested keys use underscores (for example **`run.mode`** → **`KZERO_RUN_MODE`**, **`client.id`** → **`KZERO_CLIENT_ID`**).
 - **`--config /path/to/kzero.yaml`** selects that file explicitly. When omitted, the default file is **`./kzero.yaml`** (must exist; there is no built-in fallback path).
 
 [↑ Back to top](#top)
@@ -346,6 +347,20 @@ pipelines:
 ```
 
 Here `pre-scale-purge.sh` runs **before** `kubectl scale` for `job-queue` (so the pod can still accept `kubectl exec` or similar). Optional `post` runs **after** a successful scale (or other main action for that step).
+
+## <a id="pipeline-order-and-integrity-on-down"></a>Pipeline order and integrity on `down`
+
+List order defines **when** each step runs, not automatic “wait until pods are gone.” For **`down`**, use a **`post`** hook after the upstream workload if the next step must not start until termination finishes:
+
+```yaml
+pipelines:
+  down:
+    - deployment.app/consumer:
+        post: ./hooks/wait-deployment-scale-down.sh
+    - deployment.app/producer
+```
+
+Reference hook script: [`docs/examples/hooks/wait-deployment-scale-down.sh`](docs/examples/hooks/wait-deployment-scale-down.sh). Full walkthrough (StatefulSet `pre`/`post`, optional guards): [`docs/examples/pipeline-order-and-integrity.md`](docs/examples/pipeline-order-and-integrity.md).
 
 **Custom** step with hooks (same list item, multiple keys):
 

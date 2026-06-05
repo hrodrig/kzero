@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/correlation"
 	"github.com/hrodrig/kzero/internal/executor"
 )
 
@@ -27,7 +28,7 @@ func (r *DryRunner) RunHook(ctx context.Context, cfg *config.Config, label, scri
 		return fmt.Errorf("hook %s: %w", label, ctx.Err())
 	default:
 	}
-	_, _ = fmt.Fprintf(r.Out, "[dry-run] hook %s: %s\n", label, scriptPath)
+	_, _ = fmt.Fprintf(r.Out, "[dry-run] %shook %s: %s\n", correlation.LogPrefix(cfg), label, scriptPath)
 	return nil
 }
 
@@ -50,8 +51,16 @@ func (r *DryRunner) RunPipelineStep(ctx context.Context, cfg *config.Config, pha
 		}
 	}
 
+	if step.Type == "release" && phase == PhaseDown {
+		if _, err := fmt.Fprintf(r.Out, "[dry-run] %shelm uninstall %s/%s (--wait --ignore-not-found)\n",
+			correlation.LogPrefix(cfg), step.Namespace, step.Name); err != nil {
+			return err
+		}
+		return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
+	}
+
 	desc := DescribeStep(step)
-	if _, err := fmt.Fprintf(r.Out, "[dry-run] pipeline %s step %d: %s\n", phase, index, desc); err != nil {
+	if _, err := fmt.Fprintf(r.Out, "[dry-run] %spipeline %s step %d: %s\n", correlation.LogPrefix(cfg), phase, index, desc); err != nil {
 		return err
 	}
 	return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
