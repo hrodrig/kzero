@@ -60,6 +60,7 @@ kzero stays **generic** and **configuration-driven**: the engine interprets vali
 - `pipelines.down` / `pipelines.up` list items; map-valued steps may include `pre` / `post` (per-step hook script paths), `replicas`, `wait_for_ready`, `timeout` where documented in §3
 - `notify` (optional; outbound HTTP in **live** mode — see § notify)
 - `verify` (optional; post-up readiness — see § **`kzero verify`**)
+- `infra_probe` (optional; pre-destructive probe — see § **`kzero probe`**)
 - `retry.attempts`, `retry.delay` (loaded; engine behavior: see subsection below)
 - `run.kubeconfig`, `run.mode`, `run.execution`, `run.timeout`, `run.operation_timeout`
 
@@ -188,6 +189,47 @@ If `pre` fails, the main action and `post` for that step do not run; the phase f
 
 Release `.sh` scripts also receive `KZERO_PHASE` on install (see engine implementation).
 
+## Helm workspace contract (`helm.workspace`)
+
+**0.6.x** documents the flat script layout used today; **0.7.x** Helm SDK (#25) may add hierarchical paths and OCI auth **without** silently breaking this contract.
+
+### Script resolution
+
+| Pipeline step | Live **up** | Live **down** |
+|---------------|-------------|---------------|
+| `release.<namespace>/<name>` | `/bin/sh <helm.workspace>/<name>.sh` with first arg `up` | `helm uninstall <name> -n <namespace> --wait --ignore-not-found` (engine; not the `.sh`) |
+
+Rules:
+
+- **Basename = release name** — `release.monitoring/kube-prometheus-stack` → `<helm.workspace>/kube-prometheus-stack.sh` (namespace in the step ref is **not** part of the filename).
+- **Required when** any `pipelines` or `infra_probe.pipeline` step uses `release.*` (`helm.workspace` validation error if missing).
+- **Path** may be relative to the process working directory or absolute; operators often set an absolute path in CI/cron.
+- **Analyze** prints `script: <helm.workspace>/<name>.sh` for each `release.*` **up** step.
+
+### Release install script environment
+
+Release `.sh` scripts (probe or production) receive at least:
+
+| Variable | Meaning |
+|----------|---------|
+| `KZERO_PHASE` | `up` when the script runs (install/upgrade) |
+| `KZERO_RELEASE_NAME` | Release **name** from the step ref |
+| `KZERO_RELEASE_NAMESPACE` | Namespace from the step ref |
+| `KZERO_CLIENT_ID` | When `client.id` is set |
+| `KZERO_OS_USER`, `KZERO_OS_UID` | Operator audit (see target block) |
+
+Per-step `pre` / `post` on `release.*` steps use the same hook env table (including `KZERO_RELEASE_*`).
+
+### Operator responsibilities
+
+- Maintain one `.sh` per release name (install/upgrade logic, values files, `helm --wait`, registry auth).
+- **Infra probe** charts follow the same layout (see [examples/infra-probe.md](examples/infra-probe.md)); kzero does not ship mandatory probe charts.
+- **0.7.x** may add SDK-driven install without `.sh`; configs that keep using `.sh` must continue to resolve `<helm.workspace>/<name>.sh` as today.
+
+## Preflight (live `down` / `up` / `reset`)
+
+Before phase hooks in **live** mode, the engine calls the Kubernetes API (`Discovery().ServerVersion()`). Failure aborts with **`preflight: cannot reach Kubernetes API:`** (or kubeconfig load error). **Dry-run** prints a single plan line (`preflight: would verify Kubernetes API reachability`) and does not call the API. **`kzero analyze`** may emit a **warning** on stderr when preflight would fail in live mode (non-fatal).
+
 **Engine log lines** (`[dry-run]`, `[retry]`, native dry-run messages) include a **`client_id=`** field when `client.id` is set (values with spaces are quoted). **`[live]`** lines omit **`client_id=`** (audit identity is printed once in the **`Kubernetes target:`** block, together with **`os_user`** and **`os_uid`**). **`[live]`** lines are emitted before scale, rollout wait, Helm uninstall, release scripts, and hook/custom script execution. Hook, custom, and release subprocesses receive **`KZERO_CLIENT_ID`** (when configured), **`KZERO_OS_USER`**, and **`KZERO_OS_UID`** in their environment.
 
 ### Per-step hooks in `dry-run`
@@ -285,15 +327,17 @@ Cookbook: [examples/infra-probe.md](examples/infra-probe.md). Reference assets: 
 ## `kzero down`
 Execution order:
 0. **`infra_probe`** gate when configured (**`live`** only; see above)
-1. `hooks.pre-down` (if set)
-2. `pipelines.down` in strict list order; **each** step runs its optional `pre` script, then the step action, then its optional `post` script (see §3 Pipeline syntax).
-3. `hooks.post-down` (only if step execution succeeded)
+1. **Preflight** API reachability (**`live`**: fail-fast; **`dry-run`**: plan line)
+2. `hooks.pre-down` (if set)
+3. `pipelines.down` in strict list order; **each** step runs its optional `pre` script, then the step action, then its optional `post` script (see §3 Pipeline syntax).
+4. `hooks.post-down` (only if step execution succeeded)
 
 ## `kzero up`
 Execution order:
-1. `hooks.pre-up` (if set)
-2. `pipelines.up` in strict list order; each step may run `pre` / `post` scripts as for `down`.
-3. `hooks.post-up` (only if step execution succeeded)
+1. **Preflight** (same as `down`)
+2. `hooks.pre-up` (if set)
+3. `pipelines.up` in strict list order; each step may run `pre` / `post` scripts as for `down`.
+4. `hooks.post-up` (only if step execution succeeded)
 
 ## `kzero reset`
 Execution order:

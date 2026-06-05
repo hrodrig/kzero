@@ -207,12 +207,22 @@ infra_probe:
 
 ## Release 0.6.0
 
-1. Complete PR1–PR6 on `develop`  
-2. Update [ROADMAP.md](ROADMAP.md) Shipped row + tick items  
-3. `VERSION` → `0.6.0`; CHANGELOG; README badge  
-4. `make port-freebsd-sync` + `make port-openbsd-sync`  
-5. Re-record VHS if CLI output changed materially  
-6. Merge `develop` → `main`; tag `v0.6.0`  
+**When:** after PR6 merges on `develop` and `make release-check` is green (not before).
+
+### Checklist (operator)
+
+1. **Code complete** — PR1–PR6 on `develop`; `make test`, `make lint`, `make cover-check` (≥80%).  
+2. **ROADMAP** — move **0.6.x** highlights to **Shipped** table; trim open **0.6.x** rows.  
+3. **VERSION** — set `VERSION` to `0.6.0` (no `v` prefix in file).  
+4. **CHANGELOG** — move `[Unreleased]` **0.6.x** bullets under `## [0.6.0] - YYYY-MM-DD`.  
+5. **README** — static version badge `0.6.0`; scan [Releases and CI](README.md#releases-and-ci) for new commands (`probe`, `--log-format`, `verify`, `notify test`).  
+6. **BSD ports** — `make port-freebsd-sync` + `make port-openbsd-sync` (from repo root; reads `VERSION`).  
+7. **VHS demo** — if `kzero version` or help changed: `make build && export PATH="$(pwd)/bin:$PATH" && bash -c "vhs docs/demo.tape"` → commit `docs/demo.gif` (see [docs/README.md](README.md#terminal-demo-vhs)).  
+8. **Release gate** — `make release-check` (lint, test, cover-check, govulncheck, Grype/docker-scan; requires Docker).  
+9. **Merge** — `develop` → `main` on GitHub (or locally then push).  
+10. **Tag** — `git tag -a v0.6.0 -m "Release 0.6.0"` on `main`; `git push origin v0.6.0`.  
+11. **CI** — Release workflow runs `make release-check` + GoReleaser (binaries, `.deb`/`.rpm`, `ghcr.io/hrodrig/kzero`).  
+12. **Verify** — GitHub Releases page; optional `make snapshot` smoke on branch before tag.  
 
 ---
 

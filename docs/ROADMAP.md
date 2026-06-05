@@ -30,7 +30,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | Band | Open items |
 |------|------------|
 | **0.5.x** | **Closed** (last item **#15** in **v0.5.7**) |
-| **0.6.x** | slog, secret redaction, **multi-channel `notify`**, **preflight**, **infra probe** gate, **OS user/uid** audit, post-up **`verify`** |
+| **0.6.x** | **Closed** pending **v0.6.0** tag (notify, slog, verify, infra probe, preflight, OS audit, Helm workspace SPEC) |
 | **0.7.x** | **`exec`**, **`pvc` delete**, **Helm SDK**, **probe checks native**, scheduling/affinity sanity, Cosign/SBOM, extended step types |
 | **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI |
 
@@ -113,11 +113,11 @@ Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subpr
 | 16 | **`log/slog`** with `--log-format json|text`. | Done (PR3, develop) |
 | 17 | **Secret redaction** in logs and optional `--no-env-passthrough` for hooks. | Pending (0.6.1+; minimal notify redaction in PR2) |
 | 18 | **`notify`**: implement common outbound channels—**Slack**, **Microsoft Teams**, **PagerDuty**, and a **generic webhook** (plus **Discord** already in schema). Fire on pipeline start/end and optionally on error; redact secrets in payloads. **`kzero notify test`** verifies channels without a pipeline. | Done (PR2, develop) |
-| 19 | **Preflight connectivity**: before mutating resources, verify API reachability (e.g. list nodes or equivalent) and fail fast with a clear message. | Pending (PR6) |
+| 19 | **Preflight connectivity**: before mutating resources, verify API reachability (e.g. list nodes or equivalent) and fail fast with a clear message. | **Done** (develop, 0.6.x PR6) |
 | 20 | **Operator audit**: include **OS username** and **UID** in the **`Kubernetes target:`** block and expose **`KZERO_OS_USER`** / **`KZERO_OS_UID`** (or equivalent) to hooks and subprocesses. Complements **`client.id`**. | Done (PR1, develop) |
 | 21 | **`verify` mode** after `up`: structured readiness report (e.g. JSON). | Done (PR4, develop) |
 | 22 | **Infra probe** before destructive **`down`** / **`reset`**: optional **`infra_probe`** config and **`kzero probe`** runs a **declarative mini-pipeline** (operator-maintained dummy **`release.*`** + PVC) to confirm storage/Helm can provision before wiping real PVCs and core releases. Fail-fast; optional result cache TTL. | **Done** (develop, 0.6.x PR5) |
-| 22bis | **Helm workspace contract in SPEC**: document flat **`<helm.workspace>/<release>.sh`** naming, env vars, and analyze/live resolution **before** **0.7.x #25** (Helm SDK) extends paths/OCI. | Pending (PR6) |
+| 22bis | **Helm workspace contract in SPEC**: document flat **`<helm.workspace>/<release>.sh`** naming, env vars, and analyze/live resolution **before** **0.7.x #25** (Helm SDK) extends paths/OCI. | **Done** (develop, 0.6.x PR6) |
 
 ---
 

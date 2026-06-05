@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Preflight** (**0.6.x #19**): live **`down`** / **`up`** / **`reset`** verify Kubernetes API reachability before phase hooks; dry-run plan line; **`analyze`** stderr warning when preflight would fail.
+- **Helm workspace contract** (**0.6.x #22bis**): SPEC documents flat **`<helm.workspace>/<release>.sh`**, env vars, and operator responsibilities before **0.7.x** Helm SDK.
 - **`kzero probe`** / **`infra_probe`** (**0.6.x #22**): declarative mini-pipeline (up → checks → down); optional gate before **`down`** / **`reset`** in live mode; checks **`pvc_bound`**, **`release_ready`**; result cache via **`cache_ttl`** and **`run.probe_cache_dir`**.
 - **Docs:** [docs/examples/infra-probe.md](docs/examples/infra-probe.md) — probe goals (registry, creds, volumes), gate, cache; anonymous Redis reference under [docs/examples/infra-probe/](docs/examples/infra-probe/) (operator may use it or supply any chart).
 - **`kzero verify`** (**0.6.x #21**): post-up readiness checks (`workloads_ready`, `nodes_ready`); text/JSON report; **`run.verify`** auto-runs after successful **`up`** / **`reset`** in live mode.

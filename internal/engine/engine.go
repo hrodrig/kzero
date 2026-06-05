@@ -62,6 +62,9 @@ func (e *Engine) RunReset(ctx context.Context, cfg *config.Config) error {
 }
 
 func (e *Engine) runDown(ctx context.Context, cfg *config.Config) error {
+	if err := e.runPreflight(ctx, cfg); err != nil {
+		return finishWithError(ctx, e, cfg, &PipelineError{Err: err})
+	}
 	if err := e.Runner.RunHook(ctx, cfg, "pre-down", cfg.Hooks.PreDown); err != nil {
 		return finishWithError(ctx, e, cfg, &PipelineError{Hook: "pre-down", Err: err})
 	}
@@ -77,6 +80,9 @@ func (e *Engine) runDown(ctx context.Context, cfg *config.Config) error {
 }
 
 func (e *Engine) runUp(ctx context.Context, cfg *config.Config) error {
+	if err := e.runPreflight(ctx, cfg); err != nil {
+		return finishWithError(ctx, e, cfg, &PipelineError{Err: err})
+	}
 	if err := e.Runner.RunHook(ctx, cfg, "pre-up", cfg.Hooks.PreUp); err != nil {
 		return finishWithError(ctx, e, cfg, &PipelineError{Hook: "pre-up", Err: err})
 	}

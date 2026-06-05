@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -8,6 +9,7 @@ import (
 	"github.com/hrodrig/kzero/internal/cluster"
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/engine"
+	"github.com/hrodrig/kzero/internal/preflight"
 	"github.com/hrodrig/kzero/internal/validate"
 )
 
@@ -31,7 +33,13 @@ func printAnalyzePlan(w, errW io.Writer, cfg *config.Config, configPath string) 
 	if err := printDeferredSummary(w, cfg); err != nil {
 		return err
 	}
-	return validate.PrintClusterValidation(w, errW, cfg, validate.DefaultClientFactory)
+	if err := validate.PrintClusterValidation(w, errW, cfg, validate.DefaultClientFactory); err != nil {
+		return err
+	}
+	if w := preflight.AnalyzeWarning(context.Background(), cfg, validate.DefaultClientFactory); w != "" {
+		_, _ = fmt.Fprintf(errW, "warning: %s\n", w)
+	}
+	return nil
 }
 
 func printAnalyzeHeader(w io.Writer, cfg *config.Config, configPath string) error {
