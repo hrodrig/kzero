@@ -28,8 +28,8 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | Band | Open items |
 |------|------------|
 | **0.5.x** | **Closed** (last item **#15** in **v0.5.7**) |
-| **0.6.x** | slog, secret redaction, **multi-channel `notify`**, **preflight** API checks, **OS user/uid** audit, post-up **`verify`** |
-| **0.7.x** | **`exec`** (run command in pod), **`pvc` delete**, **Helm SDK** + registry auth, Cosign/SBOM, extended step types |
+| **0.6.x** | slog, secret redaction, **multi-channel `notify`**, **preflight**, **infra probe** gate, **OS user/uid** audit, post-up **`verify`** |
+| **0.7.x** | **`exec`**, **`pvc` delete**, **Helm SDK**, **probe checks native**, scheduling/affinity sanity, Cosign/SBOM, extended step types |
 | **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI |
 
 **Helm** stays on **workspace scripts** until the **Helm SDK** executor lands (**0.7.x #24**). Shell-backed hooks remain for operator-maintained scripts on the host.
@@ -112,6 +112,7 @@ Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subpr
 | 19 | **Preflight connectivity**: before mutating resources, verify API reachability (e.g. list nodes or equivalent) and fail fast with a clear message. | Pending |
 | 20 | **Operator audit**: include **OS username** and **UID** in the **`Kubernetes target:`** block and expose **`KZERO_OS_USER`** / **`KZERO_OS_UID`** (or equivalent) to hooks and subprocesses. Complements **`client.id`**. | Pending |
 | 21 | **`verify` mode** after `up`: structured readiness report (e.g. JSON). | Pending |
+| 22 | **Infra probe** before destructive **`down`** / **`reset`**: optional **`infra_probe`** config and **`kzero probe`** (or equivalent flag) runs a **declarative mini-pipeline** (operator-maintained dummy **`release.*`** + PVC) to confirm storage/Helm can provision before wiping real PVCs and core releases. Fail-fast; optional result cache TTL. | Pending |
 
 ---
 
@@ -121,13 +122,15 @@ Broader pipeline primitives via **client-go** and **helm.sh/helm/v3**, keeping a
 
 | # | Item | Status |
 |---|------|--------|
-| 22 | **`exec` step type**: run a command (and optional stdin) inside a named pod/container via **remotecommand**—covers SQL, admin CLIs, and other in-cluster maintenance without a one-off truncate primitive. | Pending |
-| 23 | **`pvc` step type**: delete named PVCs (or labeled sets) via the API for data-reset pipelines. | Pending |
-| 24 | **Helm SDK executor** for **`release.*`**: `upgrade --install` / uninstall with wait; optional **OCI registry login** from config (no separate operator image). | Pending |
-| 25 | **Cosign signing** and **SBOM** (e.g. Syft) in the GoReleaser pipeline. | Pending |
-| 26 | **Additional step types**: `job`, `cronjob` (suspend), safe generic **patch** / scale patterns for CRDs. Prefer native executor; shell fallback where needed. | Pending |
-| 27 | **`custom:` parity**: pass `KZERO_PHASE` and step metadata to the main custom script (same as per-step hooks / release scripts). | Pending |
-| 28 | **Release script ergonomics**: optional non-flat paths under `helm.workspace` (e.g. `monitoring/kube-prometheus-stack.sh`) without breaking flat `name.sh` convention. | Pending |
+| 23 | **`exec` step type**: run a command (and optional stdin) inside a named pod/container via **remotecommand**—covers SQL, admin CLIs, and other in-cluster maintenance without a one-off truncate primitive. | Pending |
+| 24 | **`pvc` step type**: delete named PVCs (or labeled sets) via the API for data-reset pipelines. | Pending |
+| 25 | **Helm SDK executor** for **`release.*`**: `upgrade --install` / uninstall with wait; optional **OCI registry login** from config (no separate operator image). | Pending |
+| 26 | **Infra probe (native checks)**: PVC **Bound** wait, optional in-volume write/read, and probe teardown using built-in step types (extends **0.6.x #22** for distroless/single-binary runs). | Pending |
+| 27 | **Scheduling / affinity sanity** (optional probe or **`verify`** check): detect pods **Pending** due to node selectors, affinity, or taints after maintenance—separate from storage probe. | Pending |
+| 28 | **Cosign signing** and **SBOM** (e.g. Syft) in the GoReleaser pipeline. | Pending |
+| 29 | **Additional step types**: `job`, `cronjob` (suspend), safe generic **patch** / scale patterns for CRDs. Prefer native executor; shell fallback where needed. | Pending |
+| 30 | **`custom:` parity**: pass `KZERO_PHASE` and step metadata to the main custom script (same as per-step hooks / release scripts). | Pending |
+| 31 | **Release script ergonomics**: optional non-flat paths under `helm.workspace` (e.g. `monitoring/kube-prometheus-stack.sh`) without breaking flat `name.sh` convention. | Pending |
 
 ---
 
@@ -137,9 +140,9 @@ Major when YAML **`schema_version`**, executor behavior, and step types are stab
 
 | # | Item | Status |
 |---|------|--------|
-| 29 | **Default native execution** for workload steps when `run.execution` is omitted (shell opt-in). | Pending |
-| 30 | **PVC / StatefulSet data strategy** documented as pipeline patterns (snapshot, wipe, init-job) beyond core delete primitives. | Pending |
-| 31 | **Integration tests** with **kind** or envtest in CI, with documented flake policy and runtime budget. | Pending |
+| 32 | **Default native execution** for workload steps when `run.execution` is omitted (shell opt-in). | Pending |
+| 33 | **PVC / StatefulSet data strategy** documented as pipeline patterns (snapshot, wipe, init-job) beyond core delete primitives. | Pending |
+| 34 | **Integration tests** with **kind** or envtest in CI, with documented flake policy and runtime budget. | Pending |
 
 ---
 
