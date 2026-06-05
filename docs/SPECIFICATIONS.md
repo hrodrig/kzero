@@ -96,7 +96,7 @@ Compact step references (`<kind>.<namespace>/<name>`) in `pipelines.down` and `p
 |------|-------------|-----------|
 | `deployment` | scale to 0 (`shell`: `kubectl scale`; `native`: API update) | scale to N (default 1; optional `wait_for_ready` → rollout wait) |
 | `statefulset` | scale to 0 | scale to N (default 1; optional `wait_for_ready` → rollout wait) |
-| `release` | `<helm.workspace>/<name>.sh down` | `<helm.workspace>/<name>.sh up` |
+| `release` | `helm uninstall <name> -n <namespace> --wait --ignore-not-found` (live); dry-run logs the same | `<helm.workspace>/<name>.sh` (install/upgrade script) |
 
 `daemonset` is **not** a built-in kind in v1 because the Kubernetes API server does not expose a `/scale` subresource for DaemonSet, so `kubectl scale daemonset/...` returns `Error from server (NotFound): the server could not find the requested resource`. Configs that reference `daemonset.<ns>/<name>` are rejected at parse time.
 
@@ -208,7 +208,7 @@ In order (omit lines when the corresponding config value is empty):
 1. **Header:** `Config`, `Schema`, `Run mode`; optional `Cluster`, `Client id`, `Run timeout`, `Helm workspace`.
 2. **Phase hooks:** one line per set hook (`Hook pre-down:`, `Hook post-down:`, `Hook pre-up:`, `Hook post-up:`, `Hook on-error:`).
 3. **Counts:** `Pipeline steps: down=N up=M`.
-4. **`[down]`** section: for each step, `  <index>: <normalized step>` where the label uses the compact ref (e.g. `deployment.ns/app`) or `custom: <path>`. Optional parenthetical metadata: `pre`, `post`, `replicas`, `wait_for_ready`, `timeout`; for `release.*` steps, `script: <helm.workspace>/<release>.sh`.
+4. **`[down]`** section: for each step, `  <index>: <normalized step>` where the label uses the compact ref (e.g. `deployment.ns/app`) or `custom: <path>`. Optional parenthetical metadata: `pre`, `post`, `replicas`, `wait_for_ready`, `timeout`; for `release.*` steps on **down**, `helm uninstall --wait --ignore-not-found`; on **up**, `script: <helm.workspace>/<release>.sh`.
 5. **`[up]`** section: same format as `[down]`.
 6. **`Deferred`** block (only if any deferred field is set): heading `Deferred (accepted by schema; not implemented by v1 engine):` followed by bullet lines summarizing the same messages as stderr warnings.
 7. **`Cluster validation`** (only when the config lists at least one `deployment` or `statefulset` step **and** a Kubernetes client can be built from `run.kubeconfig` / default loading rules): heading `Cluster validation:` followed by one line per unique workload ref (`  OK  <ref>` or `  FAIL  <ref> (<reason>)`). Checks use a read-only **Get** (existence and `spec.replicas` set). If any line is **FAIL**, `analyze` exits non-zero. If the client cannot be loaded, a **non-fatal** note is printed to **stderr** (`cluster validation skipped (...)`) and exit code stays **0** (plan-only mode).
