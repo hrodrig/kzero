@@ -104,6 +104,8 @@ Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subpr
 
 ## 0.6.x — observability, notifications, and preflight
 
+**Implementation plan:** [plan-0.6.0.md](plan-0.6.0.md) (target **`v0.6.0`**, PR order PR1–PR6).
+
 | # | Item | Status |
 |---|------|--------|
 | 16 | **`log/slog`** with `--log-format json|text`. | Pending |
