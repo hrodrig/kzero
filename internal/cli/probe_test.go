@@ -6,9 +6,13 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/hrodrig/kzero/internal/cluster"
 )
 
 func TestProbeCmd_dryRun(t *testing.T) {
+	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
+
 	dir := t.TempDir()
 	cfgPath := filepath.Join(dir, "kzero.yaml")
 	cfg := `

@@ -39,7 +39,6 @@ func TestRunDown_dryRunPreflightBeforeHooks(t *testing.T) {
 }
 
 func TestRunDown_livePreflightBlocksPipeline(t *testing.T) {
-	t.Parallel()
 	old := validate.DefaultClientFactory
 	validate.DefaultClientFactory = func(string) (kubernetes.Interface, error) {
 		return nil, errors.New("api down")
@@ -65,7 +64,6 @@ func TestRunDown_livePreflightBlocksPipeline(t *testing.T) {
 }
 
 func TestRunDown_livePreflightOk(t *testing.T) {
-	t.Parallel()
 	old := validate.DefaultClientFactory
 	validate.DefaultClientFactory = func(string) (kubernetes.Interface, error) {
 		return fake.NewSimpleClientset(), nil

@@ -424,7 +424,6 @@ func stubLivePreflightOK(t *testing.T) {
 }
 
 func TestRunDown_retriesTransientPipelineStep(t *testing.T) {
-	t.Parallel()
 	stubLivePreflightOK(t)
 
 	rec := &RecordingRunner{
@@ -460,7 +459,6 @@ func TestRunDown_retriesTransientPipelineStep(t *testing.T) {
 }
 
 func TestRunDown_doesNotRetryNotFound(t *testing.T) {
-	t.Parallel()
 	stubLivePreflightOK(t)
 
 	rec := &RecordingRunner{
