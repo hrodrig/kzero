@@ -7,14 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.5] - 2026-06-05
+
 ### Added
 
 - **`make release-check`** now runs **`cover-check`** (minimum statement coverage gate, default 80%).
 - **CLI integration test** `TestClientID_e2eAnalyzeAndDownDryRun`: `client.id` on `analyze` stdout and `client_id=` in `down` dry-run logs.
+- **`[live]`** structured action lines (scale, rollout wait, Helm uninstall, release scripts, hooks) for operator visibility.
+- **`client.id` audit:** **`client_id:`** in the **`Kubernetes target:`** block (once per command); **`[dry-run]`** / **`[retry]`** lines include **`client_id=`**; **`KZERO_CLIENT_ID`** in hook/script environments.
+- **`Kubernetes target:`** includes **`started_at:`** (RFC3339) on pipeline commands (`target`, `down`, `up`, `reset`).
+- **Docs:** [docs/examples/automation-and-pipelines.md](docs/examples/automation-and-pipelines.md) — CI/cron, live mode, auto-confirm for YES-gated wrappers.
+- **Docs:** [docs/examples/waiting-between-pipeline-steps.md](docs/examples/waiting-between-pipeline-steps.md) — Helm `--wait`, `post` on `release.*`, `wait_for_ready`, master/slave `pre` hook.
+- **Reference hooks:** [wait-helm-release-ready.sh](docs/examples/hooks/wait-helm-release-ready.sh), [wait-master-ready.sh](docs/examples/hooks/wait-master-ready.sh).
 
 ### Fixed
 
-- **Docs:** CHANGELOG compare links for 0.5.2–0.5.4; SPEC `release` down action documents `helm uninstall` (0.5.4 behavior).
+- **`KZERO_RELEASE_NAME`** / **`KZERO_RELEASE_NAMESPACE`** on per-step `pre`/`post` hooks for `release.*` steps.
+- **[wait-helm-release-ready.sh](docs/examples/hooks/wait-helm-release-ready.sh):** use `kubectl rollout status` / `kubectl wait` (`helm status` has no `--wait`).
+- **Docs:** CHANGELOG compare links for 0.5.2–0.5.4; SPEC `release` down documents `helm uninstall` (0.5.4 behavior).
 
 ## [0.5.4] - 2026-06-04
 
@@ -131,7 +141,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.5.4...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.5.5...HEAD
+[0.5.5]: https://github.com/hrodrig/kzero/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/hrodrig/kzero/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/hrodrig/kzero/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/hrodrig/kzero/compare/v0.5.1...v0.5.2

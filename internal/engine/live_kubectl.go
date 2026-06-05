@@ -71,11 +71,14 @@ func (r *LiveRunner) runScaledWorkload(ctx context.Context, cfg *config.Config, 
 	}
 
 	replicas := int32(scaleReplicas(phase, step))
+	r.logLive(cfg, "scale %s -> %d replicas", step.Ref, replicas)
 	if err := wl.Scale(opCtx, step.Type, step.Namespace, step.Name, replicas); err != nil {
 		return err
 	}
 	if phase == PhaseUp && step.WaitForReady {
-		return wl.WaitRollout(opCtx, step.Type, step.Namespace, step.Name, rolloutTimeout(cfg, step))
+		timeout := rolloutTimeout(cfg, step)
+		r.logLive(cfg, "wait rollout %s (timeout %s)", step.Ref, timeout)
+		return wl.WaitRollout(opCtx, step.Type, step.Namespace, step.Name, timeout)
 	}
 	return nil
 }
@@ -127,6 +130,7 @@ func (r *LiveRunner) runHelmUninstall(ctx context.Context, cfg *config.Config, s
 		"KZERO_RELEASE_NAME="+step.Name,
 		"KZERO_RELEASE_NAMESPACE="+step.Namespace,
 	)
+	r.logLive(cfg, "helm uninstall %s/%s (--wait --ignore-not-found)", step.Namespace, step.Name)
 	out, err := r.runProcess(opCtx, helmBin, args, env, ".")
 	r.writeOutput(out)
 	if err != nil {
@@ -158,6 +162,7 @@ func (r *LiveRunner) runHelmInstallScript(ctx context.Context, cfg *config.Confi
 		"KZERO_RELEASE_NAME="+step.Name,
 		"KZERO_RELEASE_NAMESPACE="+step.Namespace,
 	)
+	r.logLive(cfg, "release script %s (%s)", script, phase)
 	out, err := r.runProcess(opCtx, "/bin/sh", []string{script, string(phase)}, env, ws)
 	r.writeOutput(out)
 	if err != nil {

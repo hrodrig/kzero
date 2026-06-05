@@ -154,6 +154,8 @@ The `post` script typically runs `kubectl rollout status deployment/consumer` (s
 
 **`wait_for_ready`** applies on **`up`** after scale-up, not for pod drain on **`down`**.
 
+**Waiting between steps on `up`** (Helm `--wait` in release scripts, `post` on `release.*`, `wait_for_ready` on workloads): [examples/waiting-between-pipeline-steps.md](examples/waiting-between-pipeline-steps.md).
+
 More examples (StatefulSet `pre` before scale, assert scripts): [examples/pipeline-order-and-integrity.md](examples/pipeline-order-and-integrity.md).
 
 ### Per-step `pre` / `post` behavior (live mode)
@@ -177,10 +179,11 @@ If `pre` fails, the main action and `post` for that step do not run; the phase f
 | `KZERO_STEP_REF` | Set when the step has a compact ref (e.g. `deployment.ns/app`) |
 | `KZERO_STEP_CUSTOM` | Set when the step is a `custom` script path |
 | `KZERO_STEP_TYPE`, `KZERO_STEP_NAMESPACE`, `KZERO_STEP_NAME` | Set for `deployment`, `statefulset`, and `release` steps |
+| `KZERO_RELEASE_NAME`, `KZERO_RELEASE_NAMESPACE` | Set for **`release`** steps (per-step `pre`/`post` and release `.sh` scripts) |
 
-Release steps still receive release-specific variables on the **release** script invocation (`KZERO_RELEASE_NAME`, `KZERO_RELEASE_NAMESPACE`, etc., as implemented); per-step hooks use the table above for correlation.
+Release `.sh` scripts also receive `KZERO_PHASE` on install (see engine implementation).
 
-**Engine log lines** (`[dry-run]`, `[retry]`, native dry-run messages) include a **`client_id=`** field when `client.id` is set (values with spaces are quoted).
+**Engine log lines** (`[dry-run]`, `[retry]`, native dry-run messages) include a **`client_id=`** field when `client.id` is set (values with spaces are quoted). **`[live]`** lines omit **`client_id=`** (audit identity is printed once in the **`Kubernetes target:`** block). **`[live]`** lines are emitted before scale, rollout wait, Helm uninstall, release scripts, and hook/custom script execution. Hook, custom, and release subprocesses still receive **`KZERO_CLIENT_ID`** in their environment.
 
 ### Per-step hooks in `dry-run`
 

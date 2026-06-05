@@ -77,6 +77,7 @@ users:
 	}
 
 	cfg := &config.Config{
+		Client:  config.ClientConfig{ID: "ops-team-a"},
 		Cluster: config.ClusterConfig{Name: "develop", Environment: "dev"},
 		Run:     config.RunConfig{Kubeconfig: kc},
 	}
@@ -87,6 +88,8 @@ users:
 	out := buf.String()
 	for _, want := range []string{
 		"Kubernetes target:",
+		"  started_at:",
+		"  client_id: ops-team-a",
 		"  context: dev",
 		"  cluster: dev-cluster",
 		"  api_server: https://dev.local",

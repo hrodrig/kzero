@@ -70,6 +70,7 @@ func (r *LiveRunner) runPipelineStepHook(ctx context.Context, cfg *config.Config
 	defer cancel()
 
 	label := pipelineStepHookLabel(phase, index, hookKind)
+	r.logLive(cfg, "hook %s: %s", label, scriptPath)
 	env := r.stepHookEnv(cfg, phase, index, hookKind, step)
 	out, err := r.runProcess(opCtx, "/bin/sh", []string{scriptPath}, env, ".")
 	r.writeOutput(out)
@@ -98,6 +99,12 @@ func (r *LiveRunner) stepHookEnv(cfg *config.Config, phase Phase, index int, hoo
 		env = append(env, "KZERO_STEP_NAMESPACE="+step.Namespace)
 		env = append(env, "KZERO_STEP_NAME="+step.Name)
 	}
+	if step.Type == "release" && step.Namespace != "" && step.Name != "" {
+		env = append(env,
+			"KZERO_RELEASE_NAMESPACE="+step.Namespace,
+			"KZERO_RELEASE_NAME="+step.Name,
+		)
+	}
 	return env
 }
 
@@ -105,6 +112,7 @@ func (r *LiveRunner) execScript(ctx context.Context, cfg *config.Config, label, 
 	opCtx, cancel := withOpTimeout(ctx, cfg)
 	defer cancel()
 
+	r.logLive(cfg, "hook %s: %s", label, scriptPath)
 	out, err := r.runProcess(opCtx, "/bin/sh", []string{scriptPath}, r.envFor(cfg), ".")
 	r.writeOutput(out)
 	if err != nil {

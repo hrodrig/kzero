@@ -117,5 +117,6 @@ Release steps on **`down`** show `helm uninstall --wait --ignore-not-found` in t
 
 ## Related
 
+- [waiting-between-pipeline-steps.md](waiting-between-pipeline-steps.md) — Helm `--wait`, `post` on `release.*`, `wait_for_ready` on `up`
 - [README — Per-step pre/post](../../README.md#per-step-pre-post-example)
 - [SPEC — Current engine sequencing](../SPECIFICATIONS.md#current-engine-sequencing-retry-and-concurrency)

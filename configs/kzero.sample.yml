@@ -65,7 +65,10 @@ pipelines:
     - custom: ./hooks/example-custom.sh
 
   up:
-    - release.monitoring/kube-prometheus-stack
+    # Infra: wait between releases — see docs/examples/waiting-between-pipeline-steps.md
+    # (§1 --wait in <release>.sh, §2 post hook, §3 wait_for_ready on workloads below)
+    - release.monitoring/kube-prometheus-stack:
+        post: ./hooks/wait-helm-release-ready.sh
     - deployment.app/producer:
         replicas: 1
         wait_for_ready: true

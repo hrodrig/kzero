@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
 	"k8s.io/client-go/tools/clientcmd"
@@ -83,12 +84,18 @@ func Print(w io.Writer, cfg *config.Config) error {
 	}
 	lines := []string{
 		"Kubernetes target:",
+		fmt.Sprintf("  started_at: %s", time.Now().Format(time.RFC3339)),
+	}
+	if cfg != nil && strings.TrimSpace(cfg.Client.ID) != "" {
+		lines = append(lines, fmt.Sprintf("  client_id: %s", cfg.Client.ID))
+	}
+	lines = append(lines,
 		fmt.Sprintf("  context: %s", t.ContextName),
 		fmt.Sprintf("  cluster: %s", t.ClusterName),
 		fmt.Sprintf("  namespace: %s", t.Namespace),
 		fmt.Sprintf("  api_server: %s", t.Server),
 		fmt.Sprintf("  kubeconfig: %s", t.KubeconfigPath),
-	}
+	)
 	if cfg != nil && (cfg.Cluster.Name != "" || cfg.Cluster.Environment != "") {
 		lines = append(lines, fmt.Sprintf(
 			"  config_metadata: name=%q environment=%q (YAML label only; not verified against the API)",

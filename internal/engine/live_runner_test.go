@@ -259,6 +259,110 @@ func TestLiveRunner_PerStepPreRunsBeforeKubectlWithStepEnv(t *testing.T) {
 	}
 }
 
+func TestLiveRunner_ReleasePostHookGetsReleaseEnv(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	post := filepath.Join(dir, "post.sh")
+	if err := os.WriteFile(post, []byte("#!/bin/sh\necho ok\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	script := filepath.Join(dir, "prom.sh")
+	if err := os.WriteFile(script, []byte("#!/bin/sh\necho ok\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	var postEnv []string
+	r := &LiveRunner{
+		Exec: func(ctx context.Context, argv0 string, args, env []string, d string) ([]byte, error) {
+			if len(args) > 0 && args[0] == post {
+				postEnv = env
+			}
+			return nil, nil
+		},
+	}
+	cfg := &config.Config{
+		Run:  config.RunConfig{Mode: "live"},
+		Helm: config.HelmConfig{Workspace: dir},
+	}
+	step := config.PipelineStep{
+		Ref:       "release.monitoring/prom",
+		Type:      "release",
+		Namespace: "monitoring",
+		Name:      "prom",
+		PostStep:  post,
+	}
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseUp, 5, step); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		"KZERO_RELEASE_NAME=prom",
+		"KZERO_RELEASE_NAMESPACE=monitoring",
+		"KZERO_STEP_HOOK=post",
+		"KZERO_STEP_NAME=prom",
+	} {
+		if !envHas(postEnv, want) {
+			t.Fatalf("missing %s in post hook env, got %v", want, postEnv)
+		}
+	}
+}
+
+func TestLiveRunner_LogsClientIDOnScale(t *testing.T) {
+	t.Parallel()
+
+	var buf strings.Builder
+	r := &LiveRunner{
+		Out: &buf,
+		Exec: func(ctx context.Context, argv0 string, args, env []string, dir string) ([]byte, error) {
+			return nil, nil
+		},
+	}
+	cfg := &config.Config{
+		Client:  config.ClientConfig{ID: "audit-runner"},
+		Run:     config.RunConfig{Mode: "live"},
+		Command: config.CommandConfig{Kubectl: "kubectl"},
+	}
+	step := config.PipelineStep{
+		Ref: "deployment.ns/app", Type: "deployment", Namespace: "ns", Name: "app",
+	}
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "[live] scale deployment.ns/app -> 0 replicas") {
+		t.Fatalf("expected live scale log, got %q", buf.String())
+	}
+	if strings.Contains(buf.String(), "client_id=") {
+		t.Fatalf("live lines must not repeat client_id (see Kubernetes target block), got %q", buf.String())
+	}
+}
+
+func TestLiveRunner_LogsClientIDOnHelmUninstall(t *testing.T) {
+	t.Parallel()
+
+	var buf strings.Builder
+	r := &LiveRunner{
+		Out: &buf,
+		Exec: func(ctx context.Context, argv0 string, args, env []string, dir string) ([]byte, error) {
+			return nil, nil
+		},
+	}
+	cfg := &config.Config{
+		Client:  config.ClientConfig{ID: "audit-runner"},
+		Run:     config.RunConfig{Mode: "live"},
+		Command: config.CommandConfig{Helm: "helm"},
+	}
+	step := config.PipelineStep{
+		Ref: "release.monitoring/prom", Type: "release", Namespace: "monitoring", Name: "prom",
+	}
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step); err != nil {
+		t.Fatal(err)
+	}
+	want := "[live] helm uninstall monitoring/prom"
+	if !strings.Contains(buf.String(), want) {
+		t.Fatalf("expected %q in log, got %q", want, buf.String())
+	}
+}
+
 func TestLiveRunner_HookEnvIncludesClientID(t *testing.T) {
 	t.Parallel()
 

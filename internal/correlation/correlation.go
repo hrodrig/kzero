@@ -1,4 +1,4 @@
-// Package correlation propagates client.id into hook environments and engine log lines.
+// Package correlation propagates client.id into hook environments, [dry-run]/[retry] log lines, and the Kubernetes target block.
 package correlation
 
 import (
