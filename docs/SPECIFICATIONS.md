@@ -256,8 +256,35 @@ Read-only readiness checks after **`up`** (no mutations).
 
 JSON report shape: `{ "outcome", "cluster_name", "client_id", "checks": [{ "name", "ok", "items": [{ "ref", "ok", "detail" }] }] }`.
 
+## `kzero probe` / `infra_probe`
+
+Optional **mini-pipeline** run before destructive **`down`** / **`reset`** to confirm **operator-maintained** platform paths still work: Helm/OCI chart pull, container registry (and **imagePullSecrets** if used), PVC **Bound** (StorageClass/CSI), and probe **`helm upgrade --install`** success. **kzero** does not ship a mandatory probe chart—you use the [anonymous Redis reference](examples/infra-probe/kzero-probe-redis.sh) or any **`release.*`** / **`custom:`** steps you define.
+
+```yaml
+infra_probe:
+  enabled: false
+  before: ["reset"]       # default when enabled; include "down" to gate both
+  fail_fast: true         # default true; false logs and continues main pipeline on probe failure
+  cache_ttl: 0            # e.g. 30m — skip probe when last success is within TTL (live only)
+  pipeline:
+    up: [release.<ns>/probe-storage, ...]
+    down: [release.<ns>/probe-storage, ...]
+  checks:
+    - pvc_bound: <namespace>/<claim>
+    - release_ready: true
+```
+
+- **`kzero probe`**: runs **`pipeline.up`** → **`checks`** → **`pipeline.down`** (no main pipeline, no phase hooks).
+- **Gate** (**`live`** only): when **`infra_probe.enabled`** and the command is listed in **`before`**, probe runs **before** the main pipeline (after **`Kubernetes target:`** and optional **`notify`** start).
+- **Checks** (live): **`pvc_bound`** — PVC **`Status.Phase == Bound`**; **`release_ready`** — probe **`up`** completed without error.
+- **Cache**: timestamp file under **`run.probe_cache_dir`** or OS user cache **`…/kzero/probe/probe-cache.json`**; invalidated when pipeline/check fingerprint changes.
+- Probe steps use the same engine path as main pipelines (shell Helm/scripts until **0.7.x** SDK).
+
+Cookbook: [examples/infra-probe.md](examples/infra-probe.md). Reference assets: [examples/infra-probe/](examples/infra-probe/).
+
 ## `kzero down`
 Execution order:
+0. **`infra_probe`** gate when configured (**`live`** only; see above)
 1. `hooks.pre-down` (if set)
 2. `pipelines.down` in strict list order; **each** step runs its optional `pre` script, then the step action, then its optional `post` script (see §3 Pipeline syntax).
 3. `hooks.post-down` (only if step execution succeeded)
@@ -270,6 +297,7 @@ Execution order:
 
 ## `kzero reset`
 Execution order:
+0. **`infra_probe`** gate when configured (**`live`** only; before main `down`)
 1. full `down` sequence
 2. full `up` sequence
 

@@ -1,0 +1,28 @@
+# Minimal kzero fragment: infra_probe using the reference Redis probe chart.
+# Merge into your kzero.yaml. Copy kzero-probe-redis.{sh,values.yaml} to helm.workspace.
+#
+# You may use this reference as-is, fork it, or point infra_probe at any other
+# release/custom steps (MariaDB, RabbitMQ, busybox+PVC, etc.).
+
+schema_version: "1.0"
+
+helm:
+  workspace: "./helm-assets"
+
+infra_probe:
+  enabled: false
+  before: ["reset"]
+  fail_fast: true
+  cache_ttl: 30m
+  pipeline:
+    up:
+      - release.probe-ns/probe-redis
+    down:
+      - release.probe-ns/probe-redis
+  checks:
+    - pvc_bound: probe-ns/redis-data-probe-redis-master-0
+    - release_ready: true
+
+run:
+  mode: dry-run
+  probe_cache_dir: ""

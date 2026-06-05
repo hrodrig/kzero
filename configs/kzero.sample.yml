@@ -104,6 +104,24 @@ verify:
     - nodes_ready
   format: text   # text | json (CLI --log-format overrides for output)
 
+# Infra probe: optional gate before destructive down/reset (live only when enabled).
+# Goal: validate registry, image pull creds, StorageClass/PVC, Helm install — not app workloads.
+# Use docs/examples/infra-probe/ (anonymous Redis reference) or your own chart/scripts.
+# Standalone: kzero probe -c <file>
+infra_probe:
+  enabled: false
+  before: ["reset"]          # default when enabled; add "down" to gate both
+  fail_fast: true
+  cache_ttl: 0               # e.g. 30m to skip repeat probes after success
+  pipeline:
+    up:
+      - release.probe-ns/probe-redis
+    down:
+      - release.probe-ns/probe-redis
+  checks:
+    - pvc_bound: probe-ns/redis-data-probe-redis-master-0
+    - release_ready: true
+
 retry:
   attempts: 3
   delay: 8s
@@ -113,5 +131,6 @@ run:
   mode: "dry-run"
   color: "auto"   # elapsed-time line: auto | always | never (NO_COLOR disables)
   verify: false   # when true, run kzero verify after successful up / reset
+  probe_cache_dir: ""   # default: OS user cache dir (kzero/probe); set for shared cache path
   timeout: 25m
   operation_timeout: 45s

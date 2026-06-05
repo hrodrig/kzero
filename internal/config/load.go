@@ -32,6 +32,7 @@ type rawConfig struct {
 	Hooks         HooksConfig            `mapstructure:"hooks"`
 	Notify        NotifyConfig           `mapstructure:"notify"`
 	Verify        VerifyConfig           `mapstructure:"verify"`
+	InfraProbe    map[string]interface{} `mapstructure:"infra_probe"`
 	Pipelines     map[string]interface{} `mapstructure:"pipelines"`
 	Retry         RetryConfig            `mapstructure:"retry"`
 	Run           RunConfig              `mapstructure:"run"`
@@ -77,6 +78,9 @@ func Load(path string) (*Config, error) {
 	if err := parsePipelines(cfg, raw.Pipelines); err != nil {
 		return nil, err
 	}
+	if err := parseInfraProbe(cfg, raw.InfraProbe); err != nil {
+		return nil, err
+	}
 	if err := validate(cfg); err != nil {
 		return nil, err
 	}
@@ -100,6 +104,8 @@ func bindConfigEnv(v *viper.Viper) {
 		"run.verify",
 		"verify.enabled",
 		"verify.format",
+		"infra_probe.enabled",
+		"run.probe_cache_dir",
 	} {
 		_ = v.BindEnv(key)
 	}
@@ -327,7 +333,213 @@ func validate(cfg *Config) error {
 	if err := validateHelmWorkspaceForReleases(cfg); err != nil {
 		return err
 	}
-	return validateVerify(cfg)
+	if err := validateVerify(cfg); err != nil {
+		return err
+	}
+	return validateInfraProbe(cfg)
+}
+
+func parseInfraProbe(cfg *Config, raw map[string]interface{}) error {
+	if raw == nil {
+		return nil
+	}
+	if err := parseInfraProbeScalars(cfg, raw); err != nil {
+		return err
+	}
+	if err := parseInfraProbePipeline(cfg, raw); err != nil {
+		return err
+	}
+	if v, ok := raw["checks"]; ok {
+		checks, err := parseProbeChecks(v)
+		if err != nil {
+			return fmt.Errorf("parse infra_probe.checks: %w", err)
+		}
+		cfg.InfraProbe.Checks = checks
+	}
+	return nil
+}
+
+func parseInfraProbeScalars(cfg *Config, raw map[string]interface{}) error {
+	if v, ok := raw["enabled"]; ok {
+		enabled, err := parseBool(v)
+		if err != nil {
+			return fmt.Errorf("parse infra_probe.enabled: %w", err)
+		}
+		cfg.InfraProbe.Enabled = enabled
+	}
+	if v, ok := raw["before"]; ok {
+		before, err := parseStringList(v)
+		if err != nil {
+			return fmt.Errorf("parse infra_probe.before: %w", err)
+		}
+		cfg.InfraProbe.Before = before
+	}
+	if v, ok := raw["fail_fast"]; ok {
+		ff, err := parseBool(v)
+		if err != nil {
+			return fmt.Errorf("parse infra_probe.fail_fast: %w", err)
+		}
+		cfg.InfraProbe.FailFast = ff
+		cfg.infraProbeFailFastSet = true
+	}
+	if v, ok := raw["cache_ttl"]; ok {
+		ttl, err := parseDuration(v)
+		if err != nil {
+			return fmt.Errorf("parse infra_probe.cache_ttl: %w", err)
+		}
+		cfg.InfraProbe.CacheTTL = ttl
+	}
+	return nil
+}
+
+func parseInfraProbePipeline(cfg *Config, raw map[string]interface{}) error {
+	v, ok := raw["pipeline"]
+	if !ok {
+		return nil
+	}
+	pipeMap, ok := v.(map[string]interface{})
+	if !ok {
+		return errors.New("parse infra_probe.pipeline: must be an object")
+	}
+	if up, ok := pipeMap["up"]; ok {
+		steps, err := parsePipelineList(up)
+		if err != nil {
+			return fmt.Errorf("parse infra_probe.pipeline.up: %w", err)
+		}
+		cfg.InfraProbe.Pipeline.Up = steps
+	}
+	if down, ok := pipeMap["down"]; ok {
+		steps, err := parsePipelineList(down)
+		if err != nil {
+			return fmt.Errorf("parse infra_probe.pipeline.down: %w", err)
+		}
+		cfg.InfraProbe.Pipeline.Down = steps
+	}
+	return nil
+}
+
+func parseBool(v interface{}) (bool, error) {
+	switch b := v.(type) {
+	case bool:
+		return b, nil
+	default:
+		return false, fmt.Errorf("must be boolean")
+	}
+}
+
+func parseStringList(v interface{}) ([]string, error) {
+	items, ok := v.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("must be a list")
+	}
+	out := make([]string, 0, len(items))
+	for i, item := range items {
+		s, ok := item.(string)
+		if !ok || strings.TrimSpace(s) == "" {
+			return nil, fmt.Errorf("item %d: must be a non-empty string", i)
+		}
+		out = append(out, strings.TrimSpace(s))
+	}
+	return out, nil
+}
+
+func parseDuration(v interface{}) (time.Duration, error) {
+	switch d := v.(type) {
+	case string:
+		return time.ParseDuration(d)
+	case int:
+		return time.Duration(d), nil
+	case int64:
+		return time.Duration(d), nil
+	case float64:
+		return time.Duration(d), nil
+	default:
+		return 0, fmt.Errorf("must be duration string")
+	}
+}
+
+func parseProbeChecks(v interface{}) ([]ProbeCheck, error) {
+	items, ok := v.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("must be a list")
+	}
+	out := make([]ProbeCheck, 0, len(items))
+	for i, item := range items {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("item %d: must be an object", i)
+		}
+		if len(m) != 1 {
+			return nil, fmt.Errorf("item %d: must have exactly one key", i)
+		}
+		for k, val := range m {
+			switch k {
+			case "pvc_bound":
+				s, ok := val.(string)
+				if !ok || strings.TrimSpace(s) == "" {
+					return nil, fmt.Errorf("item %d: pvc_bound must be a non-empty string", i)
+				}
+				out = append(out, ProbeCheck{PVCBound: strings.TrimSpace(s)})
+			case "release_ready":
+				b, err := parseBool(val)
+				if err != nil {
+					return nil, fmt.Errorf("item %d: release_ready %w", i, err)
+				}
+				if !b {
+					return nil, fmt.Errorf("item %d: release_ready must be true when set", i)
+				}
+				out = append(out, ProbeCheck{ReleaseReady: true})
+			default:
+				return nil, fmt.Errorf("item %d: unknown check %q (want pvc_bound or release_ready)", i, k)
+			}
+		}
+	}
+	return out, nil
+}
+
+func validateInfraProbe(cfg *Config) error {
+	p := &cfg.InfraProbe
+	if !p.Enabled {
+		return nil
+	}
+	if !cfg.infraProbeFailFastSet {
+		p.FailFast = true
+	}
+	if len(p.Before) == 0 {
+		p.Before = []string{"reset"}
+	}
+	for _, c := range p.Before {
+		switch c {
+		case "reset", "down":
+		default:
+			return fmt.Errorf("infra_probe.before: unknown command %q (want reset, down)", c)
+		}
+	}
+	if len(p.Pipeline.Up) == 0 {
+		return errors.New("infra_probe.enabled requires pipeline.up")
+	}
+	if pipelinesContainRelease(p.Pipeline.Up) || pipelinesContainRelease(p.Pipeline.Down) {
+		if strings.TrimSpace(cfg.Helm.Workspace) == "" {
+			return errors.New("helm.workspace is required when infra_probe pipeline includes release steps")
+		}
+	}
+	for _, c := range p.Checks {
+		if c.PVCBound != "" {
+			if _, _, err := splitPVCRef(c.PVCBound); err != nil {
+				return fmt.Errorf("infra_probe.checks: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+func splitPVCRef(ref string) (string, string, error) {
+	ref = strings.TrimSpace(ref)
+	parts := strings.SplitN(ref, "/", 2)
+	if len(parts) != 2 || strings.TrimSpace(parts[0]) == "" || strings.TrimSpace(parts[1]) == "" {
+		return "", "", fmt.Errorf("pvc_bound must be namespace/name, got %q", ref)
+	}
+	return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]), nil
 }
 
 func validateVerify(cfg *Config) error {

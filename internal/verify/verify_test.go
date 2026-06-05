@@ -142,8 +142,8 @@ func TestPrint_text(t *testing.T) {
 	r := Report{
 		Outcome: OutcomeFailed,
 		Checks: []CheckResult{{
-			Name: CheckWorkloadsReady,
-			OK:   false,
+			Name:  CheckWorkloadsReady,
+			OK:    false,
 			Items: []Item{{Ref: "deployment.ns/app", OK: false, Detail: "0/1 ready"}},
 		}},
 	}

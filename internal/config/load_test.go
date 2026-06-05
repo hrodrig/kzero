@@ -380,3 +380,176 @@ run:
 		t.Fatalf("expected run.execution validation error, got %v", err)
 	}
 }
+
+func TestLoadConfig_InfraProbe(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+helm:
+  workspace: ./helm
+pipelines:
+  down:
+    - deployment.ns/app
+infra_probe:
+  enabled: true
+  before: ["down", "reset"]
+  cache_ttl: 15m
+  pipeline:
+    up:
+      - release.probe-ns/probe-storage
+    down:
+      - release.probe-ns/probe-storage
+  checks:
+    - pvc_bound: probe-ns/probe-pvc
+    - release_ready: true
+run:
+  mode: "dry-run"
+  probe_cache_dir: /tmp/kzero-probe
+`)
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if !cfg.InfraProbe.Enabled {
+		t.Fatal("expected enabled")
+	}
+	if !cfg.InfraProbe.FailFast {
+		t.Fatal("expected default fail_fast true")
+	}
+	if cfg.InfraProbe.CacheTTL != 15*time.Minute {
+		t.Fatalf("cache_ttl: got %v", cfg.InfraProbe.CacheTTL)
+	}
+	if len(cfg.InfraProbe.Pipeline.Up) != 1 || cfg.InfraProbe.Pipeline.Up[0].Name != "probe-storage" {
+		t.Fatalf("pipeline.up: %#v", cfg.InfraProbe.Pipeline.Up)
+	}
+	if len(cfg.InfraProbe.Checks) != 2 {
+		t.Fatalf("checks: %#v", cfg.InfraProbe.Checks)
+	}
+	if cfg.Run.ProbeCacheDir != "/tmp/kzero-probe" {
+		t.Fatalf("probe_cache_dir: %q", cfg.Run.ProbeCacheDir)
+	}
+}
+
+func TestLoadConfig_InfraProbeValidationErrors(t *testing.T) {
+	t.Parallel()
+
+	base := `
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.ns/app
+infra_probe:
+  enabled: true
+run:
+  mode: dry-run
+`
+	if _, err := Load(writeTempConfig(t, base)); err == nil || !strings.Contains(err.Error(), "pipeline.up") {
+		t.Fatalf("expected pipeline.up required, got %v", err)
+	}
+
+	withBefore := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.ns/app
+infra_probe:
+  enabled: true
+  before: ["up"]
+  pipeline:
+    up:
+      - deployment.ns/app
+run:
+  mode: dry-run
+`)
+	if _, err := Load(withBefore); err == nil || !strings.Contains(err.Error(), "before") {
+		t.Fatalf("expected before validation error, got %v", err)
+	}
+
+	badPVC := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.ns/app
+infra_probe:
+  enabled: true
+  pipeline:
+    up:
+      - deployment.ns/app
+  checks:
+    - pvc_bound: invalid
+run:
+  mode: dry-run
+`)
+	if _, err := Load(badPVC); err == nil || !strings.Contains(err.Error(), "pvc_bound") {
+		t.Fatalf("expected pvc_bound validation error, got %v", err)
+	}
+
+	releaseNoHelm := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.ns/app
+infra_probe:
+  enabled: true
+  pipeline:
+    up:
+      - release.ns/probe
+run:
+  mode: dry-run
+`)
+	if _, err := Load(releaseNoHelm); err == nil || !strings.Contains(err.Error(), "helm.workspace") {
+		t.Fatalf("expected helm.workspace error, got %v", err)
+	}
+}
+
+func TestLoadConfig_InfraProbeDefaultBefore(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.ns/app
+infra_probe:
+  enabled: true
+  pipeline:
+    up:
+      - deployment.ns/probe
+run:
+  mode: dry-run
+`)
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.InfraProbe.Before) != 1 || cfg.InfraProbe.Before[0] != "reset" {
+		t.Fatalf("default before: %#v", cfg.InfraProbe.Before)
+	}
+}
+
+func TestLoadConfig_InfraProbeFailFastFalse(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.ns/app
+infra_probe:
+  enabled: true
+  fail_fast: false
+  pipeline:
+    up:
+      - deployment.ns/probe
+run:
+  mode: dry-run
+`)
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.InfraProbe.FailFast {
+		t.Fatal("expected explicit fail_fast false")
+	}
+}

@@ -11,6 +11,7 @@ import (
 	"github.com/hrodrig/kzero/internal/engine"
 	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/notify"
+	"github.com/hrodrig/kzero/internal/probe"
 	"github.com/spf13/cobra"
 )
 
@@ -50,6 +51,11 @@ func runPipelineCommand(cmd *cobra.Command, command string, cfg *config.Config, 
 		eng := engine.New(cfg, emit)
 		eng.Command = command
 		eng.Started = started
+		if probe.ShouldGate(cfg, command) {
+			if err := runInfraProbeGate(cmd, cfg, eng, command); err != nil {
+				return err
+			}
+		}
 		if err := run(eng, cfg); err != nil {
 			return err
 		}

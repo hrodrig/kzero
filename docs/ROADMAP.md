@@ -116,7 +116,7 @@ Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subpr
 | 19 | **Preflight connectivity**: before mutating resources, verify API reachability (e.g. list nodes or equivalent) and fail fast with a clear message. | Pending (PR6) |
 | 20 | **Operator audit**: include **OS username** and **UID** in the **`Kubernetes target:`** block and expose **`KZERO_OS_USER`** / **`KZERO_OS_UID`** (or equivalent) to hooks and subprocesses. Complements **`client.id`**. | Done (PR1, develop) |
 | 21 | **`verify` mode** after `up`: structured readiness report (e.g. JSON). | Done (PR4, develop) |
-| 22 | **Infra probe** before destructive **`down`** / **`reset`**: optional **`infra_probe`** config and **`kzero probe`** (or equivalent flag) runs a **declarative mini-pipeline** (operator-maintained dummy **`release.*`** + PVC) to confirm storage/Helm can provision before wiping real PVCs and core releases. Fail-fast; optional result cache TTL. | Pending (PR5) |
+| 22 | **Infra probe** before destructive **`down`** / **`reset`**: optional **`infra_probe`** config and **`kzero probe`** runs a **declarative mini-pipeline** (operator-maintained dummy **`release.*`** + PVC) to confirm storage/Helm can provision before wiping real PVCs and core releases. Fail-fast; optional result cache TTL. | **Done** (develop, 0.6.x PR5) |
 | 22bis | **Helm workspace contract in SPEC**: document flat **`<helm.workspace>/<release>.sh`** naming, env vars, and analyze/live resolution **before** **0.7.x #25** (Helm SDK) extends paths/OCI. | Pending (PR6) |
 
 ---

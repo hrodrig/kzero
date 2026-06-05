@@ -61,7 +61,7 @@ Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.
 ## Features
 
 - **Configuration-first** (`schema_version: "1.0"`): pipelines and hooks live in config, not hardcoded playbooks.
-- **Commands**: `analyze`, `target`, `notify test`, `verify`, `down`, `up`, `reset`, `version` — global **`--log-format text|json`** on pipeline output (see SPEC). (`reset` = full `down` then `up`; if `down` fails, `up` does not run). Every pipeline command prints a **`Kubernetes target:`** block (`started_at`, optional `client_id`, context, cluster, API server, kubeconfig path) before work starts. **`kzero notify test`** verifies outbound **`notify.*`** channels without running a pipeline. **`analyze`** optionally checks the API that each `deployment` / `statefulset` in the plan exists when kubeconfig loads.
+- **Commands**: `analyze`, `target`, `notify test`, `verify`, `probe`, `down`, `up`, `reset`, `version` — global **`--log-format text|json`** on pipeline output (see SPEC). (`reset` = full `down` then `up`; if `down` fails, `up` does not run). Every pipeline command prints a **`Kubernetes target:`** block (`started_at`, optional `client_id`, context, cluster, API server, kubeconfig path) before work starts. **`kzero notify test`** verifies outbound **`notify.*`** channels without running a pipeline. **`analyze`** optionally checks the API that each `deployment` / `statefulset` in the plan exists when kubeconfig loads.
 - **Phase hooks**: `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error` (shell script paths).
 - **Per-step hooks** (`pre` / `post`): optional shell scripts for a **single** pipeline step—run immediately before and after that step’s main action; **`post` runs only if the main action succeeds**.
 - **Step types**: compact refs (`deployment.ns/name`, `statefulset.ns/name`), `release.ns/name` (scripts under `helm.workspace`), and `custom: ./script.sh` (with optional sibling `pre` / `post` keys on the same YAML mapping). DaemonSet is **not** supported as a built-in kind because `kubectl scale` rejects it (no `/scale` subresource); use a `custom:` step with `kubectl patch` to set a `nodeSelector` that drains the pods.
@@ -214,6 +214,14 @@ kzero verify -c ./kzero.yaml --log-format json
 ```
 
 Set **`run.verify: true`** to run verify automatically after a successful **`up`** or **`reset`** in **`live`** mode.
+
+### Infra probe (pre-destructive gate)
+
+```bash
+kzero probe --config ./kzero.yaml
+```
+
+Optional **`infra_probe`** runs a throwaway mini-pipeline before **`down`** / **`reset`** in **`live`** mode (registry, image pull, PVC/StorageClass, Helm install). Use the [anonymous Redis reference](docs/examples/infra-probe/) or your own probe chart. Cookbook: [docs/examples/infra-probe.md](docs/examples/infra-probe.md).
 
 ### Explicit config path
 

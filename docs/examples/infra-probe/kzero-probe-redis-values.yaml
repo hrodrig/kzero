@@ -1,0 +1,48 @@
+# Reference values for infra_probe (copy to helm.workspace; edit freely).
+# fullnameOverride probe-redis → PVC: redis-data-probe-redis-master-0 in probe-ns
+#
+# Operator responsibilities:
+#   - image registry / credentials (imagePullSecrets, private mirrors)
+#   - StorageClass, volume size, PVC retention on helm uninstall
+#   - auth secrets if your chart requires them
+#
+# kzero only runs this script on probe up and helm uninstall on probe down.
+
+---
+fullnameOverride: "probe-redis"
+global:
+  imagePullSecrets: []
+  security:
+    allowInsecureImages: true
+image:
+  registry: docker.io
+  repository: bitnamilegacy/redis
+  tag: 8.2.1-debian-12-r0
+architecture: standalone
+auth:
+  enabled: false
+  usePasswordFiles: false
+commonConfiguration: |-
+  appendonly yes
+  save ""
+  maxmemory 128mb
+  maxmemory-policy allkeys-lru
+master:
+  persistence:
+    enabled: true
+    size: 1Gi
+  persistentVolumeClaimRetentionPolicy:
+    enabled: true
+    whenScaled: Retain
+    whenDeleted: Delete
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 25m
+      memory: 64Mi
+replica:
+  replicaCount: 0
+metrics:
+  enabled: false

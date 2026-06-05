@@ -4,17 +4,20 @@ import "time"
 
 // Config is the root configuration contract for kzero v1.
 type Config struct {
-	SchemaVersion string          `mapstructure:"schema_version"`
-	Cluster       ClusterConfig   `mapstructure:"cluster"`
-	Helm          HelmConfig      `mapstructure:"helm"`
-	Client        ClientConfig    `mapstructure:"client"`
-	Command       CommandConfig   `mapstructure:"command"`
-	Hooks         HooksConfig     `mapstructure:"hooks"`
-	Notify        NotifyConfig    `mapstructure:"notify"`
-	Verify        VerifyConfig    `mapstructure:"verify"`
-	Pipelines     PipelinesConfig `mapstructure:"pipelines"`
-	Retry         RetryConfig     `mapstructure:"retry"`
-	Run           RunConfig       `mapstructure:"run"`
+	SchemaVersion string           `mapstructure:"schema_version"`
+	Cluster       ClusterConfig    `mapstructure:"cluster"`
+	Helm          HelmConfig       `mapstructure:"helm"`
+	Client        ClientConfig     `mapstructure:"client"`
+	Command       CommandConfig    `mapstructure:"command"`
+	Hooks         HooksConfig      `mapstructure:"hooks"`
+	Notify        NotifyConfig     `mapstructure:"notify"`
+	Verify        VerifyConfig     `mapstructure:"verify"`
+	InfraProbe    InfraProbeConfig `mapstructure:"infra_probe"`
+	Pipelines     PipelinesConfig  `mapstructure:"pipelines"`
+	Retry         RetryConfig      `mapstructure:"retry"`
+	Run           RunConfig        `mapstructure:"run"`
+
+	infraProbeFailFastSet bool
 }
 
 // VerifyConfig controls post-up readiness checks (`kzero verify`).
@@ -22,6 +25,28 @@ type VerifyConfig struct {
 	Enabled bool     `mapstructure:"enabled"`
 	Checks  []string `mapstructure:"checks"`
 	Format  string   `mapstructure:"format"`
+}
+
+// InfraProbeConfig gates destructive commands with a mini-pipeline + optional checks.
+type InfraProbeConfig struct {
+	Enabled  bool                `mapstructure:"enabled"`
+	Before   []string            `mapstructure:"before"`
+	FailFast bool                `mapstructure:"fail_fast"`
+	CacheTTL time.Duration       `mapstructure:"cache_ttl"`
+	Pipeline ProbePipelineConfig `mapstructure:"pipeline"`
+	Checks   []ProbeCheck        `mapstructure:"checks"`
+}
+
+// ProbePipelineConfig is the declarative probe up/down step list.
+type ProbePipelineConfig struct {
+	Up   []PipelineStep
+	Down []PipelineStep
+}
+
+// ProbeCheck is one post-probe-up validation (pvc_bound, release_ready).
+type ProbeCheck struct {
+	PVCBound     string `mapstructure:"pvc_bound"`
+	ReleaseReady bool   `mapstructure:"release_ready"`
 }
 
 type ClusterConfig struct {
@@ -113,4 +138,6 @@ type RunConfig struct {
 	OperationTimeout time.Duration `mapstructure:"operation_timeout"`
 	// Verify runs kzero verify after a successful up or reset (non-zero exit on failure).
 	Verify bool `mapstructure:"verify"`
+	// ProbeCacheDir stores infra probe cache files (empty = OS temp dir).
+	ProbeCacheDir string `mapstructure:"probe_cache_dir"`
 }
