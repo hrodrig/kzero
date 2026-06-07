@@ -1,6 +1,6 @@
 # Waiting between pipeline steps
 
-How to make step *i+1* start only after step *i* is **fully ready**—not merely submitted. Examples use placeholder names (`cloudbridge`, `postgresql`, `./helm-assets/`).
+How to make step *i+1* start only after step *i* is **fully ready**—not merely submitted. Examples use placeholder names (`platform`, `postgresql`, `./helm-assets/`).
 
 kzero always runs pipeline steps **sequentially** (fail-fast). What you must add is a **readiness gate** when the main action returns before the cluster is healthy (typical for Helm without `--wait`).
 
@@ -9,9 +9,9 @@ kzero always runs pipeline steps **sequentially** (fail-fast). What you must add
 ```yaml
 pipelines:
   up:
-    - release.cloudbridge/postgresql
-    - release.cloudbridge/rabbitmq
-    - release.cloudbridge/redis-eviction
+    - release.platform/postgresql
+    - release.platform/rabbitmq
+    - release.platform/redis-eviction
 ```
 
 Step 2 starts only after step 1’s **whole unit** succeeds: optional `pre` → main action → optional `post`. If step 1 fails, step 2 never runs.
@@ -33,7 +33,7 @@ Add **`--wait`** (and usually **`--timeout`**) to each `helm upgrade --install` 
 set -euo pipefail
 
 helm upgrade --install postgresql oci://registry.example.com/helm/postgresql \
-  --namespace cloudbridge \
+  --namespace platform \
   --wait \
   --timeout 15m \
   -f ./postgresql-values.yaml
@@ -43,7 +43,7 @@ helm upgrade --install postgresql oci://registry.example.com/helm/postgresql \
 
 ```bash
 helm upgrade --install rabbitmq oci://registry.example.com/helm/rabbitmq \
-  --namespace cloudbridge \
+  --namespace platform \
   --wait \
   --timeout 15m \
   -f ./rabbitmq-values.yaml
@@ -59,8 +59,8 @@ helm upgrade --install rabbitmq oci://registry.example.com/helm/rabbitmq \
 ```yaml
 pipelines:
   up:
-    - release.cloudbridge/postgresql
-    - release.cloudbridge/rabbitmq
+    - release.platform/postgresql
+    - release.platform/rabbitmq
 ```
 
 kzero runs `postgresql.sh`, waits for it to exit, then runs `rabbitmq.sh`.
@@ -79,11 +79,11 @@ helm:
 
 pipelines:
   up:
-    - release.cloudbridge/postgresql:
+    - release.platform/postgresql:
         post: ./hooks/wait-helm-release-ready.sh
-    - release.cloudbridge/rabbitmq:
+    - release.platform/rabbitmq:
         post: ./hooks/wait-helm-release-ready.sh
-    - release.cloudbridge/redis-eviction:
+    - release.platform/redis-eviction:
         post: ./hooks/wait-helm-release-ready.sh
 ```
 
@@ -105,7 +105,7 @@ RabbitMQ does not start until both succeed.
 | `KZERO_PHASE` | `up` |
 | `KZERO_STEP_TYPE` | `release` |
 | `KZERO_RELEASE_NAME` | `postgresql` |
-| `KZERO_RELEASE_NAMESPACE` | `cloudbridge` |
+| `KZERO_RELEASE_NAMESPACE` | `platform` |
 | `KZERO_CLIENT_ID` | your `client.id` when set |
 
 Optional: `export KZERO_HELM_WAIT_TIMEOUT=20m` before `kzero up` to override the hook default.
@@ -118,8 +118,8 @@ Optional: `export KZERO_HELM_WAIT_TIMEOUT=20m` before `kzero up` to override the
 **`analyze` plan** shows the hook:
 
 ```text
-  0: release.cloudbridge/postgresql (script: ./helm-assets/postgresql.sh, post: ./hooks/wait-helm-release-ready.sh)
-  1: release.cloudbridge/rabbitmq (script: ./helm-assets/rabbitmq.sh, post: ./hooks/wait-helm-release-ready.sh)
+  0: release.platform/postgresql (script: ./helm-assets/postgresql.sh, post: ./hooks/wait-helm-release-ready.sh)
+  1: release.platform/rabbitmq (script: ./helm-assets/rabbitmq.sh, post: ./hooks/wait-helm-release-ready.sh)
 ```
 
 ---
@@ -131,19 +131,19 @@ For workload steps (not `release.*`), use map form with **`wait_for_ready: true`
 ```yaml
 pipelines:
   up:
-    - release.cloudbridge/postgresql:
+    - release.platform/postgresql:
         post: ./hooks/wait-helm-release-ready.sh
-    - release.cloudbridge/rabbitmq:
+    - release.platform/rabbitmq:
         post: ./hooks/wait-helm-release-ready.sh
-    - deployment.cloudbridge/config-service:
+    - deployment.platform/config-service:
         replicas: 1
         wait_for_ready: true
         timeout: 10m
-    - deployment.cloudbridge/webui:
+    - deployment.platform/webui:
         replicas: 3
         wait_for_ready: true
         timeout: 15m
-    - statefulset.cloudbridge/data-extractor-slave:
+    - statefulset.platform/data-extractor-slave:
         replicas: 4
         wait_for_ready: true
         timeout: 20m
@@ -167,11 +167,11 @@ When **masters** (`deployment/…`) scale earlier in the list and **slaves** (`s
 - **`pre: ./hooks/wait-master-ready.sh`** on each `*-slave` step before scale-up (derives `deployment/<name>` from `…-slave`)
 
 ```yaml
-    - deployment.cloudbridge/data-extractor:
+    - deployment.platform/data-extractor:
         replicas: 1
         wait_for_ready: true
     # ... other steps ...
-    - statefulset.cloudbridge/data-extractor-slave:
+    - statefulset.platform/data-extractor-slave:
         pre: ./hooks/wait-master-ready.sh
         replicas: 4
         wait_for_ready: true
@@ -187,21 +187,21 @@ Reference: [hooks/wait-master-ready.sh](hooks/wait-master-ready.sh).
 pipelines:
   up:
     # §1 inside each .sh (--wait) + §2 post hook for validation/audit
-    - release.cloudbridge/postgresql:
+    - release.platform/postgresql:
         post: ./hooks/wait-helm-release-ready.sh
-    - release.cloudbridge/rabbitmq:
+    - release.platform/rabbitmq:
         post: ./hooks/wait-helm-release-ready.sh
-    - release.cloudbridge/jobstore-data-extractor:
+    - release.platform/jobstore-data-extractor:
         post: ./hooks/wait-helm-release-ready.sh
     # §3 workload rollout wait
-    - deployment.cloudbridge/vaultunsealer:
+    - deployment.platform/vaultunsealer:
         replicas: 1
         wait_for_ready: true
         timeout: 10m
-    - deployment.cloudbridge/config-service:
+    - deployment.platform/config-service:
         replicas: 1
         wait_for_ready: true
-    - deployment.cloudbridge/webui:
+    - deployment.platform/webui:
         replicas: 3
         wait_for_ready: true
         timeout: 15m

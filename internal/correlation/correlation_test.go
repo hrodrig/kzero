@@ -24,10 +24,10 @@ func TestAppendEnv(t *testing.T) {
 	if got[0] != "HOME=/tmp" {
 		t.Fatalf("got %v", got)
 	}
-	got = AppendEnv(&config.Config{Client: config.ClientConfig{ID: "cbpi-dev"}}, base)
+	got = AppendEnv(&config.Config{Client: config.ClientConfig{ID: "pilot-dev"}}, base)
 	var hasClient bool
 	for _, e := range got {
-		if e == "KZERO_CLIENT_ID=cbpi-dev" {
+		if e == "KZERO_CLIENT_ID=pilot-dev" {
 			hasClient = true
 		}
 	}
