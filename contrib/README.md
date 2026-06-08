@@ -12,7 +12,13 @@ GoReleaser **nfpm** integration produces, per Linux architecture:
 - **`contrib/deb/prerm.sh`** — no-op (CLI-only package)
 - **`contrib/deb/postrm.sh`** — on **`apt purge`**, removes **`/etc/kzero`** so no stale config remains
 
-**Tarballs / zip:** the **`archives`** section in `.goreleaser.yaml` emits **`*.tar.gz`** (and **`*.zip`** on Windows), including **FreeBSD** and **OpenBSD** builds. Each archive includes **`share/doc/kzero/LICENSE`** and **`share/examples/kzero/kzero.sample.yml`** (same layout as the BSD port distfiles).
+**Tarballs / zip:** the **`archives`** section in `.goreleaser.yaml` emits **`*.tar.gz`** (and **`*.zip`** on Windows), including **FreeBSD** and **OpenBSD** builds. Each archive includes **`share/man/man1/kzero.1`**, **`share/doc/kzero/LICENSE`**, and **`share/examples/kzero/kzero.sample.yml`** (same layout as the BSD port distfiles).
+
+**Linux packages:** **`.deb`** and **`.rpm`** install **`/usr/share/man/man1/kzero.1.gz`** in addition to **`/usr/bin/kzero`** and **`/etc/kzero/kzero.yaml`**.
+
+**Homebrew:** GoReleaser publishes **`Casks/kzero.rb`** to **[hrodrig/homebrew-kzero](https://github.com/hrodrig/homebrew-kzero)** on each tagged release (`brew install hrodrig/kzero/kzero`). Requires **`HOMEBREW_TAP_TOKEN`** in the kzero repo (see README **Releases and CI**).
+
+Local install from a clone: **`make install-man`** ( **`MANDIR=/usr/share/man`** for system-wide).
 
 ## FreeBSD and OpenBSD ports
 

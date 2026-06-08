@@ -1,0 +1,165 @@
+.\" kzero(1) - declarative Kubernetes workload pipelines
+.\" Manual page for kzero
+.TH KZERO 1 "2026-06-07" "kzero v0.6.1" "User Commands"
+.SH NAME
+kzero \- declarative Kubernetes workload shutdown and startup pipelines
+.SH SYNOPSIS
+.B kzero
+.I command
+[\fIoptions\fR]
+.SH DESCRIPTION
+.B kzero
+is a Go CLI that runs ordered
+.B down
+,
+.B up
+, and
+.B reset
+pipelines from a YAML profile. Operators scale Deployments and StatefulSets,
+run Helm release helper scripts, and invoke custom shell steps with phase and
+per-step hooks. Configuration is validated before cluster mutations; use
+.B analyze
+and
+.B run.mode: dry-run
+to review plans first.
+.PP
+kzero is not self-contained: workload steps may call
+.BR kubectl ,
+use client-go (
+.BR run.execution:
+.BR native ),
+or run
+.BR /bin/sh
+for hooks,
+.B custom:
+steps, and
+.B release.*
+scripts (which typically invoke
+.BR helm ).
+Install
+.BR kubectl
+and
+.BR helm
+on the host when your profile requires them.
+.PP
+Operator deployment patterns (bastion, cron, kind e2e): see
+.IR https://github.com/hrodrig/kzero-selfhosted .
+Full schema:
+.IR https://github.com/hrodrig/kzero/blob/main/docs/SPECIFICATIONS.md .
+.SH COMMANDS
+.TP
+.B analyze
+Validate config and print a normalized execution plan (no cluster mutations).
+.TP
+.B target
+Print the Kubernetes target block (context, cluster, kubeconfig path).
+.TP
+.B notify test
+POST to enabled
+.B notify.*
+channels without running a pipeline.
+.TP
+.B verify
+Run post-up readiness checks (
+.B workloads_ready
+,
+.BR nodes_ready ).
+.TP
+.B probe
+Run the optional
+.B infra_probe
+mini-pipeline (registry, PVC, Helm checks).
+.TP
+.B down
+Run
+.B hooks.pre-down
+, then
+.B pipelines.down
+, then
+.B hooks.post-down
+(fail-fast).
+.TP
+.B up
+Run
+.B hooks.pre-up
+, then
+.B pipelines.up
+, then
+.B hooks.post-up
+.
+.TP
+.B reset
+Run full
+.B down
+then
+.B up
+; if
+.B down
+fails,
+.B up
+does not run.
+.TP
+.B version
+Print version, commit, build date, and branch.
+.SH OPTIONS
+Global flags apply to all commands:
+.TP
+.BR \-c " , " \-\-config " \fIpath\fR"
+Config file path. Default when omitted:
+.IR ./kzero.yaml .
+After a Linux package install, use
+.IR /etc/kzero/kzero.yaml
+or copy the sample to the working directory.
+.TP
+.BR \-\-log\-format " \fItext|json\fR"
+Structured logging for pipeline commands (default
+.BR text ).
+.SH ENVIRONMENT
+Variables with prefix
+.B KZERO_
+override YAML when loaded (see SPEC). Examples:
+.BR KZERO_RUN_MODE ,
+.BR KZERO_RUN_KUBECONFIG ,
+.BR KZERO_COMMAND_KUBECTL ,
+.BR KZERO_COMMAND_HELM .
+.SH FILES
+.TP
+.I ./kzero.yaml
+Default config in the current working directory.
+.TP
+.I /etc/kzero/kzero.yaml
+Example profile installed by Linux
+.BR .deb /
+.BR .rpm
+packages (
+.B config|noreplace
+on upgrade).
+.TP
+.I share/examples/kzero/kzero.sample.yml
+Sample profile inside release tarballs.
+.SH EXAMPLES
+.TP
+Validate and print plan:
+.RS
+kzero analyze \-\-config ./kzero.yaml
+.RE
+.TP
+Dry-run shutdown pipeline:
+.RS
+kzero down \-\-config ./kzero.yaml
+.RE
+.TP
+Live reset (after review):
+.RS
+export KZERO_RUN_MODE=live
+kzero reset \-\-config ./kzero.yaml
+.RE
+.SH EXIT STATUS
+0 on success; non-zero on config validation errors, hook failures, or pipeline step failures.
+.SH SEE ALSO
+.BR kubectl (1),
+.BR helm (1)
+.PP
+Project: https://github.com/hrodrig/kzero
+.SH AUTHOR
+Hermes Rodríguez <https://github.com/hrodrig>

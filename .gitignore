@@ -30,6 +30,8 @@
 
 # OpenBSD port: distinfo is generated with makesum in a ports checkout (not in repo)
 contrib/openbsd/port/distinfo
+# GoReleaser before hook generates this for nfpm (.deb/.rpm)
+contrib/man/man1/kzero.1.gz
 
 # Source and documentation
 !cmd/

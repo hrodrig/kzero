@@ -1,5 +1,5 @@
 PORTNAME=	kzero
-PORTVERSION=	0.6.0
+PORTVERSION=	0.6.1
 DISTVERSIONPREFIX=	v
 CATEGORIES=	sysutils
 # Local test before release: copy the tarball into DISTDIR (see `make -V DISTDIR`
@@ -20,6 +20,8 @@ NO_ARCH=	yes
 
 do-install:
 	${INSTALL_PROGRAM} ${WRKDIR}/kzero ${STAGEDIR}${PREFIX}/bin/kzero
+	${MKDIR} ${STAGEDIR}${PREFIX}/share/man/man1
+	${INSTALL_MAN} ${WRKDIR}/share/man/man1/kzero.1 ${STAGEDIR}${PREFIX}/share/man/man1/
 	${MKDIR} ${STAGEDIR}${PREFIX}/share/doc/kzero
 	${INSTALL_DATA} ${WRKDIR}/share/doc/kzero/LICENSE ${STAGEDIR}${PREFIX}/share/doc/kzero/
 	${MKDIR} ${STAGEDIR}${PREFIX}/share/examples/kzero

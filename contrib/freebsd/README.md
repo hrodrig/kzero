@@ -38,4 +38,4 @@ After changing port files: `make deinstall && make clean && make install`.
 
 3. Copy into **DISTDIR** or use **`MASTER_SITES=file:///.../`** as in the [FreeBSD Porter's Handbook](https://docs.freebsd.org/en/books/porters-handbook/).
 
-The tarball contains: `kzero`, `share/doc/kzero/LICENSE`, `share/examples/kzero/kzero.sample.yml`.
+The tarball contains: `kzero`, `share/man/man1/kzero.1`, `share/doc/kzero/LICENSE`, `share/examples/kzero/kzero.sample.yml`.

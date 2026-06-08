@@ -1,3 +1,4 @@
 bin/kzero
+man/man1/kzero.1
 share/doc/kzero/LICENSE
 share/examples/kzero/kzero.sample.yml

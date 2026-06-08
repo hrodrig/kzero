@@ -6,6 +6,10 @@ version: 2
 
 project_name: kzero
 
+before:
+  hooks:
+    - sh -c 'gzip -c contrib/man/man1/kzero.1 > contrib/man/man1/kzero.1.gz'
+
 builds:
   - id: kzero
     main: ./cmd/kzero
@@ -40,6 +44,8 @@ archives:
         format: zip
     name_template: "{{ .ProjectName }}_{{ if .IsSnapshot }}v{{ .Version }}{{ else }}{{ .Tag }}{{ end }}_{{ .Os }}_{{ .Arch }}"
     files:
+      - src: contrib/man/man1/kzero.1
+        dst: share/man/man1/kzero.1
       - src: LICENSE
         dst: share/doc/kzero/LICENSE
       - src: configs/kzero.sample.yml
@@ -66,6 +72,8 @@ nfpms:
     builds:
       - kzero
     contents:
+      - src: contrib/man/man1/kzero.1.gz
+        dst: /usr/share/man/man1/
       # Example profile at a fixed path; operators edit after install. config|noreplace on upgrades.
       - src: configs/kzero.sample.yml
         dst: /etc/kzero/kzero.yaml
@@ -104,3 +112,32 @@ dockers_v2:
       org.opencontainers.image.description: "Declarative Kubernetes workload shutdown and startup pipelines"
       org.opencontainers.image.source: "https://github.com/hrodrig/kzero"
       org.opencontainers.image.version: "{{ .Version }}"
+
+# Homebrew: publish cask to https://github.com/hrodrig/homebrew-kzero (brew install hrodrig/kzero/kzero).
+# CI: set repo secret HOMEBREW_TAP_TOKEN (PAT with contents:write on the tap repo; GITHUB_TOKEN cannot push there).
+homebrew_casks:
+  - name: kzero
+    ids:
+      - default
+    directory: Casks
+    homepage: "https://github.com/hrodrig/kzero"
+    description: "Declarative Kubernetes workload down/up/reset pipelines from YAML"
+    commit_msg_template: "Brew cask update for {{ .ProjectName }} version {{ .Tag }}"
+    commit_author:
+      name: Hermes Rodríguez
+      email: hrodrig@usb.ve
+    repository:
+      owner: hrodrig
+      name: homebrew-kzero
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    url:
+      verified: "github.com/hrodrig/kzero/"
+    manpages:
+      - share/man/man1/kzero.1
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/kzero"]
+          end

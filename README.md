@@ -2,7 +2,7 @@
 
 <a id="top"></a>
 
-[![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)](https://github.com/hrodrig/kzero/releases)
+[![Version](https://img.shields.io/badge/version-0.6.1-blue.svg)](https://github.com/hrodrig/kzero/releases)
 [![GitHub release](https://img.shields.io/github/v/release/hrodrig/kzero)](https://github.com/hrodrig/kzero/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -134,7 +134,15 @@ Paste the block **as a whole**, or chain with `&&`, so **`apt` does not run** af
 
 **Docker:** `docker pull ghcr.io/hrodrig/kzero:v0.4.1` (match the image tag to the **[release](https://github.com/hrodrig/kzero/releases)** you want). Published images use **`gcr.io/distroless/static-debian12:nonroot`** (static **`kzero`** binary only: no shell, no BusyBox/Alpine runtime). **`Dockerfile`** in this repo uses the same final stage. Package: [ghcr.io/hrodrig/kzero](https://github.com/hrodrig/kzero/pkgs/container/kzero).
 
-**Homebrew** and **BSD packaging** helpers: when published, see **Releases** and **`contrib/README.md`**.
+**Homebrew** and **BSD packaging** helpers: see **[Install or update](#install-or-update)** and **`contrib/README.md`**.
+
+### Homebrew (macOS / Linux)
+
+```bash
+brew install hrodrig/kzero/kzero
+```
+
+Tap: **[hrodrig/homebrew-kzero](https://github.com/hrodrig/homebrew-kzero)** (cask updated automatically on each release).
 
 Then run **`kzero --config /etc/kzero/kzero.yaml analyze`** (or follow **[Quick start](#quick-start)** to build from a clone).
 
@@ -345,8 +353,10 @@ See **`SECURITY.md`** for reporting vulnerabilities.
 
 1. Work on **`develop`**; merge to **`main`** when ready.
 2. Before tagging: run **`make release-check`** (requires **Docker**): semver **`VERSION`**, **`make lint`** (gofmt, go vet, **gocyclo** ≤14), **`make test`**, **`make cover-check`** (≥80% statements by default), **`make security`** (govulncheck), **`make docker-scan`** (Grype on the image; use **`GRYPE_FAIL_ON`** to tune the gate, default **high**).
-3. On **`main`**: create an annotated tag (e.g. `git tag -a v0.4.1 -m "Release 0.4.1"`) and **`git push origin v0.4.1`**. The **Release** workflow runs **`make release-check`** then **GoReleaser** (binaries + **`ghcr.io/hrodrig/kzero`**).
+3. On **`main`**: create an annotated tag (e.g. `git tag -a v0.6.1 -m "Release 0.6.1"`) and **`git push origin v0.6.1`**. The **Release** workflow runs **`make release-check`** then **GoReleaser** (binaries, **`ghcr.io/hrodrig/kzero`**, and Homebrew cask to **[homebrew-kzero](https://github.com/hrodrig/homebrew-kzero)**).
 4. Local release after checks: **`make release`** (same as CI tail; **main** branch only).
+
+**GitHub Actions secret:** set **`HOMEBREW_TAP_TOKEN`** on **`hrodrig/kzero`** — a PAT with **`contents:write`** on **`hrodrig/homebrew-kzero`** (the default **`GITHUB_TOKEN`** cannot push to another repository). The release workflow fails early if this secret is missing.
 
 Snapshot builds (no git tag): **`make snapshot`** → artifacts under **`dist/`** (archives **`.tar.gz`** / **`.zip`**, Linux **`.deb`** / **`.rpm`**, checksums). See **`contrib/README.md`** for packaging notes.
 

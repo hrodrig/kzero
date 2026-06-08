@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-06-07
+
+### Added
+
+- **`contrib/man/man1/kzero.1`**: manual page for BSD ports, Linux packages, release tarballs, and **`man kzero`** after install.
+- **Homebrew cask** published to **[hrodrig/homebrew-kzero](https://github.com/hrodrig/homebrew-kzero)** on release (`brew install hrodrig/kzero/kzero`); requires **`HOMEBREW_TAP_TOKEN`** in CI (same pattern as pgwd).
+
+### Changed
+
+- Release **archives** and **`.deb`/`.rpm`** include **`share/man/man1/kzero.1`** (packages install **`/usr/share/man/man1/kzero.1.gz`**).
+- FreeBSD and OpenBSD port skeletons install the man page from distfiles.
+
 ## [0.6.0] - 2026-06-03
 
 ### Added
@@ -185,7 +197,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/hrodrig/kzero/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/hrodrig/kzero/compare/v0.5.7...v0.6.0
 [0.5.7]: https://github.com/hrodrig/kzero/compare/v0.5.6...v0.5.7
 [0.5.6]: https://github.com/hrodrig/kzero/compare/v0.5.5...v0.5.6

@@ -26,6 +26,7 @@ help:
 	@echo "  build           Build ./bin/kzero for current platform"
 	@echo "  build-all       Cross-compile to $(DIST)/ (linux, darwin, windows, freebsd, openbsd)"
 	@echo "  install         go install to \$$GOBIN"
+	@echo "  install-man     Install man page to \$$MANDIR/man1 (default /usr/local/share/man)"
 	@echo "  clean           Remove ./bin/kzero, coverage.out, and $(DIST)/"
 	@echo "  test            Unit tests (go test ./...)"
 	@echo "  cover           Unit tests with coverage.out"
@@ -46,7 +47,7 @@ help:
 	@echo ""
 	@echo "Current VERSION file: $$(cat VERSION 2>/dev/null | tr -d '\n\r' || echo '?')  (ldflags $(VERSION))"
 
-.PHONY: build build-all install clean test cover cover-check lint lint-fix tools security docker-build docker-scan release-check release snapshot dist-freebsd dist-openbsd port-freebsd-sync port-openbsd-sync
+.PHONY: build build-all install install-man clean test cover cover-check lint lint-fix tools security docker-build docker-scan release-check release snapshot dist-freebsd dist-openbsd port-freebsd-sync port-openbsd-sync
 
 build:
 	@mkdir -p bin
@@ -66,6 +67,13 @@ build-all:
 
 install:
 	go install -trimpath $(LDFLAGS) ./cmd/kzero
+
+MANDIR ?= /usr/local/share/man
+.PHONY: install-man
+install-man:
+	@mkdir -p $(MANDIR)/man1
+	@cp contrib/man/man1/kzero.1 $(MANDIR)/man1/
+	@echo "Installed man page to $(MANDIR)/man1/kzero.1"
 
 clean:
 	rm -f bin/$(BINARY) coverage.out
@@ -185,11 +193,12 @@ dist-freebsd:
 	mkdir -p "$(DIST)"; \
 	GOOS=freebsd GOARCH="$$arch" go build -trimpath $(LDFLAGS) -o "$$tmpbin" ./cmd/kzero; \
 	rm -rf "$$stage"; \
-	mkdir -p "$$stage/share/doc/kzero" "$$stage/share/examples/kzero"; \
+	mkdir -p "$$stage/share/man/man1" "$$stage/share/doc/kzero" "$$stage/share/examples/kzero"; \
 	cp "$$tmpbin" "$$stage/kzero"; \
 	rm -f "$$tmpbin"; \
 	cp LICENSE "$$stage/share/doc/kzero/LICENSE"; \
 	cp configs/kzero.sample.yml "$$stage/share/examples/kzero/kzero.sample.yml"; \
+	cp contrib/man/man1/kzero.1 "$$stage/share/man/man1/kzero.1"; \
 	tar -C "$$stage" -czf "$$out" .; \
 	rm -rf "$$stage"; \
 	echo "Wrote $$out"
@@ -210,11 +219,12 @@ dist-openbsd:
 	mkdir -p "$(DIST)"; \
 	GOOS=openbsd GOARCH="$$arch" go build -trimpath $(LDFLAGS) -o "$$tmpbin" ./cmd/kzero; \
 	rm -rf "$$stage"; \
-	mkdir -p "$$stage/share/doc/kzero" "$$stage/share/examples/kzero"; \
+	mkdir -p "$$stage/share/man/man1" "$$stage/share/doc/kzero" "$$stage/share/examples/kzero"; \
 	cp "$$tmpbin" "$$stage/kzero"; \
 	rm -f "$$tmpbin"; \
 	cp LICENSE "$$stage/share/doc/kzero/LICENSE"; \
 	cp configs/kzero.sample.yml "$$stage/share/examples/kzero/kzero.sample.yml"; \
+	cp contrib/man/man1/kzero.1 "$$stage/share/man/man1/kzero.1"; \
 	tar -C "$$stage" -czf "$$out" .; \
 	rm -rf "$$stage"; \
 	echo "Wrote $$out"
