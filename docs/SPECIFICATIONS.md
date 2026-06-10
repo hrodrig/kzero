@@ -154,7 +154,7 @@ pipelines:
     - deployment.app/producer
 ```
 
-The `post` script typically runs `kubectl rollout status deployment/consumer` (see [examples/hooks/wait-deployment-scale-down.sh](examples/hooks/wait-deployment-scale-down.sh)). If `post` fails, `producer` is never scaled.
+The `post` script typically runs `kubectl rollout status deployment/consumer` (see [kzero-selfhosted reference hook](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/examples/hooks/wait-deployment-scale-down.sh)). If `post` fails, `producer` is never scaled.
 
 **`wait_for_ready`** applies on **`up`** after scale-up, not for pod drain on **`down`**.
 
@@ -300,7 +300,7 @@ JSON report shape: `{ "outcome", "cluster_name", "client_id", "checks": [{ "name
 
 ## `kzero probe` / `infra_probe`
 
-Optional **mini-pipeline** run before destructive **`down`** / **`reset`** to confirm **operator-maintained** platform paths still work: Helm/OCI chart pull, container registry (and **imagePullSecrets** if used), PVC **Bound** (StorageClass/CSI), and probe **`helm upgrade --install`** success. **kzero** does not ship a mandatory probe chart—you use the [anonymous Redis reference](examples/infra-probe/kzero-probe-redis.sh) or any **`release.*`** / **`custom:`** steps you define.
+Optional **mini-pipeline** run before destructive **`down`** / **`reset`** to confirm **operator-maintained** platform paths still work: Helm/OCI chart pull, container registry (and **imagePullSecrets** if used), PVC **Bound** (StorageClass/CSI), and probe **`helm upgrade --install`** success. **kzero** does not ship a mandatory probe chart—you use the [anonymous Redis reference](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/examples/infra-probe/kzero-probe-redis.sh) in **kzero-selfhosted** or any **`release.*`** / **`custom:`** steps you define.
 
 ```yaml
 infra_probe:
@@ -322,7 +322,7 @@ infra_probe:
 - **Cache**: timestamp file under **`run.probe_cache_dir`** or OS user cache **`…/kzero/probe/probe-cache.json`**; invalidated when pipeline/check fingerprint changes.
 - Probe steps use the same engine path as main pipelines (shell Helm/scripts until **0.7.x** SDK).
 
-Cookbook: [examples/infra-probe.md](examples/infra-probe.md). Reference assets: [examples/infra-probe/](examples/infra-probe/).
+Cookbook: [examples/infra-probe.md](examples/infra-probe.md). Reference assets: [kzero-selfhosted/run/examples/infra-probe/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/infra-probe).
 
 ## `kzero down`
 Execution order:

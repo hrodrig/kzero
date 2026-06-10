@@ -2,7 +2,7 @@
 
 <a id="top"></a>
 
-[![Version](https://img.shields.io/badge/version-0.6.1-blue.svg)](https://github.com/hrodrig/kzero/releases)
+[![Version](https://img.shields.io/badge/version-0.6.2-blue.svg)](https://github.com/hrodrig/kzero/releases)
 [![GitHub release](https://img.shields.io/github/v/release/hrodrig/kzero)](https://github.com/hrodrig/kzero/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -32,7 +32,9 @@ Regenerate from the repo root: **[docs/README.md — Terminal demo](docs/README.
 
 Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (and **reset**) pipelines from YAML, with phase hooks, optional **per-step** `pre` / `post` scripts, `kubectl` scale targets, Helm release helper scripts, and custom steps.
 
-**Releases** ([GitHub Releases](https://github.com/hrodrig/kzero/releases)) ship standalone **binaries** and archives (**`.tar.gz`** / **`.zip`**), Linux **`.deb`** / **`.rpm`**, **Docker** images on **`ghcr.io/hrodrig/kzero`** (distroless runtime — see **[Install or update](#install-or-update)**), and **Homebrew** when published there. This repository does **not** ship Helm charts as a release artifact. Optional operator-focused extras live in **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)**.
+**Operator deployment (bastion, cron, kind e2e, docker run patterns):** **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)** — production paths and examples live there; **this** repo ships the CLI binary, packages, container image, and Homebrew cask only (same split as [pgwd](https://github.com/hrodrig/pgwd) / [pgwd-selfhosted](https://github.com/hrodrig/pgwd-selfhosted)).
+
+**Releases** ([GitHub Releases](https://github.com/hrodrig/kzero/releases)) ship standalone **binaries** and archives (**`.tar.gz`** / **`.zip`**), Linux **`.deb`** / **`.rpm`**, **Docker** images on **`ghcr.io/hrodrig/kzero`**, and **Homebrew** ([`brew install hrodrig/kzero/kzero`](#homebrew-macos--linux)). This repository does **not** ship Helm charts as a release artifact.
 
 Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md)**. **Planned work** (prioritized): **[docs/ROADMAP.md](docs/ROADMAP.md)**. **Diagrams** (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
 
@@ -42,6 +44,7 @@ Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.
 - [Features](#features)
 - [Requirements](#requirements)
 - [Install or update](#install-or-update)
+- [Operator deployment](#operator-deployment)
 - [Quick start](#quick-start)
 - [First run](#first-run)
 - [Usage examples](#usage-examples)
@@ -176,18 +179,31 @@ Use a **release tag** instead of `@latest` if you want a pinned version (for exa
 
 ## First run
 
-kzero reads **one YAML file** per invocation. If you omit **`--config`**, it loads **`./kzero.yaml`** from the **current working directory** (there is no automatic search under **`/etc`**—after a `.deb`/`.rpm` install use **`kzero --config /etc/kzero/kzero.yaml …`** or copy that file to **`./kzero.yaml`**).
+kzero reads **one YAML file** per invocation (default **`./kzero.yaml`**; after a `.deb`/`.rpm` install use **`kzero --config /etc/kzero/kzero.yaml`**).
 
-1. Start from **[`configs/kzero.sample.yml`](configs/kzero.sample.yml)** in a clone, from **`share/examples/kzero/kzero.sample.yml`** inside a **release tarball**, or from **`/etc/kzero/kzero.yaml`** after a Linux package install.
-2. Keep **`run.mode: dry-run`** until **`kzero analyze`** and pipeline plans match what you expect; switch to **`live`** only when ready ([docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md)).
-3. Set **`command.kubectl`** / **`command.helm`** to absolute paths for cron or minimal environments.
+1. Start from **[`configs/kzero.sample.yml`](configs/kzero.sample.yml)** (clone, release tarball, or **`/etc/kzero/kzero.yaml`**).
+2. Keep **`run.mode: dry-run`** until **`kzero analyze`** matches expectations; see [SPECIFICATIONS.md](docs/SPECIFICATIONS.md).
 
 ```bash
 cp configs/kzero.sample.yml kzero.yaml
-# Edit kzero.yaml: cluster, pipelines, helm.workspace, hook paths, notify, run.*
 kzero analyze
-kzero down
+kzero down    # dry-run when run.mode: dry-run
 ```
+
+For **bastion**, **cron**, **CI**, and **live** patterns: **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)** → [run/README.md](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/README.md).
+
+[↑ Back to top](#top)
+
+## Operator deployment
+
+| Goal | Start here |
+|------|------------|
+| **Bastion / cron / systemd** | [kzero-selfhosted/run/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run) — [standalone](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/standalone/README.md), [automation & CI](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/automation-and-pipelines.md) |
+| **`docker run`** (analyze / version; live limits) | [run/docker/README.md](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docker/README.md) |
+| **kind e2e** smoke | [testing/kind/README.md](https://github.com/hrodrig/kzero-selfhosted/blob/main/testing/kind/README.md) |
+| **Reference hooks & probe assets** | [run/examples/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples) |
+
+Install the **CLI** here ([Install or update](#install-or-update)); run it from a host with **`kubectl`**, **`helm`** (when needed), and **`kubeconfig`** as documented in **kzero-selfhosted**.
 
 [↑ Back to top](#top)
 
@@ -229,7 +245,7 @@ Set **`run.verify: true`** to run verify automatically after a successful **`up`
 kzero probe --config ./kzero.yaml
 ```
 
-Optional **`infra_probe`** runs a throwaway mini-pipeline before **`down`** / **`reset`** in **`live`** mode (registry, image pull, PVC/StorageClass, Helm install). Use the [anonymous Redis reference](docs/examples/infra-probe/) or your own probe chart. Cookbook: [docs/examples/infra-probe.md](docs/examples/infra-probe.md).
+Optional **`infra_probe`** runs a throwaway mini-pipeline before **`down`** / **`reset`** in **`live`** mode. Cookbook: [docs/examples/infra-probe.md](docs/examples/infra-probe.md). Reference Redis assets: [kzero-selfhosted/run/examples/infra-probe/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/infra-probe).
 
 ### Explicit config path
 
@@ -248,7 +264,7 @@ If **`down`** fails, **`up`** is **not** executed (see [`RunReset`](https://gith
 
 ### Automation and CI/CD
 
-**kzero** does not prompt before live runs. For cron, GitHub Actions, or a **wrapper script** that asks for **`YES`**, see **[docs/examples/automation-and-pipelines.md](docs/examples/automation-and-pipelines.md)** (generic paths, `KZERO_RUN_MODE`, `printf 'YES\n' | ./run-operator --live down`).
+Cron, GitHub Actions, and YES-gated wrappers: **[kzero-selfhosted/run/docs/automation-and-pipelines.md](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/automation-and-pipelines.md)**.
 
 ### Version metadata
 
@@ -400,7 +416,7 @@ pipelines:
     - deployment.app/producer
 ```
 
-Reference hook script: [`docs/examples/hooks/wait-deployment-scale-down.sh`](docs/examples/hooks/wait-deployment-scale-down.sh). Full walkthrough (StatefulSet `pre`/`post`, optional guards): [`docs/examples/pipeline-order-and-integrity.md`](docs/examples/pipeline-order-and-integrity.md).
+Reference hook script: [kzero-selfhosted/run/examples/hooks/wait-deployment-scale-down.sh](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/examples/hooks/wait-deployment-scale-down.sh). Full walkthrough: [`docs/examples/pipeline-order-and-integrity.md`](docs/examples/pipeline-order-and-integrity.md).
 
 **Waiting between steps on `up`** (Helm `--wait` in scripts, `post` on `release.*`, `wait_for_ready` on workloads): [`docs/examples/waiting-between-pipeline-steps.md`](docs/examples/waiting-between-pipeline-steps.md).
 

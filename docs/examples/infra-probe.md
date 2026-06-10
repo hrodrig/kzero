@@ -18,13 +18,13 @@ In **live** mode, a successful probe run is evidence that (for **your** chosen p
 
 ## Use our reference example—or bring your own
 
-kzero ships an **anonymous reference** (public Bitnami Redis 8, no vendor-specific registry):
+kzero ships an **anonymous reference** (public Bitnami Redis 8) in **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)**:
 
 | File | Purpose |
 |------|---------|
-| [infra-probe/kzero-probe-redis.sh](infra-probe/kzero-probe-redis.sh) | Install script → copy to `<helm.workspace>/probe-redis.sh` |
-| [infra-probe/kzero-probe-redis-values.yaml](infra-probe/kzero-probe-redis-values.yaml) | Values (image, PVC size, retention on uninstall) |
-| [infra-probe/kzero-infra-probe-redis.sample.yaml](infra-probe/kzero-infra-probe-redis.sample.yaml) | YAML fragment for `infra_probe` + `pvc_bound` |
+| [run/examples/infra-probe/kzero-probe-redis.sh](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/examples/infra-probe/kzero-probe-redis.sh) | Install script → copy to `<helm.workspace>/probe-redis.sh` |
+| [run/examples/infra-probe/kzero-probe-redis-values.yaml](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/examples/infra-probe/kzero-probe-redis-values.yaml) | Values (image, PVC size, retention on uninstall) |
+| [run/examples/infra-probe/kzero-infra-probe-redis.sample.yaml](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/examples/infra-probe/kzero-infra-probe-redis.sample.yaml) | YAML fragment for `infra_probe` + `pvc_bound` |
 
 **Copy and edit** those files, or ignore them entirely and wire `infra_probe` to whatever you prefer:
 

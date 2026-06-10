@@ -36,7 +36,7 @@ pipelines:
         wait_for_ready: true
 ```
 
-Copy the hook from [hooks/wait-deployment-scale-down.sh](hooks/wait-deployment-scale-down.sh) into your config directory (for example next to `kzero.yaml`), mark it executable (`chmod +x`), and point `post` at that path.
+Copy the hook from [kzero-selfhosted/run/examples/hooks/wait-deployment-scale-down.sh](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/examples/hooks/wait-deployment-scale-down.sh) into your config directory (for example next to `kzero.yaml`), mark it executable (`chmod +x`), and point `post` at that path.
 
 On **`down`**, kzero runs:
 

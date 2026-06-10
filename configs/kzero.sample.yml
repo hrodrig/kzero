@@ -106,7 +106,7 @@ verify:
 
 # Infra probe: optional gate before destructive down/reset (live only when enabled).
 # Goal: validate registry, image pull creds, StorageClass/PVC, Helm install — not app workloads.
-# Use docs/examples/infra-probe/ (anonymous Redis reference) or your own chart/scripts.
+# Use kzero-selfhosted run/examples/infra-probe/ (anonymous Redis reference) or your own chart/scripts.
 # Standalone: kzero probe -c <file>
 infra_probe:
   enabled: false

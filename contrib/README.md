@@ -40,4 +40,4 @@ Artifacts appear under **`dist/`**.
 
 ## Scheduling (optional, operator-owned)
 
-If you want periodic or boot-time runs, invoke **`/usr/bin/kzero`** yourself from **cron**, **CI**, or a **unit file you write** (not provided by this repository). The packages do not enable or ship any long-running service.
+If you want periodic or boot-time runs, invoke **`/usr/bin/kzero`** yourself from **cron**, **CI**, or a **unit file you write** (not provided by this repository). Cron/systemd examples: **[kzero-selfhosted/run/standalone/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/standalone)**. The packages do not enable any long-running service.

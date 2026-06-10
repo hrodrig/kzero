@@ -176,7 +176,7 @@ export KZERO_RUN_MODE=live
 kzero reset --config ./kzero.yaml
 ```
 
-See also [automation-and-pipelines.md](automation-and-pipelines.md) for CI/cron patterns.
+See also [kzero-selfhosted/run/docs/automation-and-pipelines.md](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/automation-and-pipelines.md) for CI/cron patterns.
 
 ## Operator audit fields in payloads
 

@@ -10,11 +10,12 @@
 | [demo.tape](demo.tape) | VHS tape to record [demo.gif](demo.gif) |
 | [examples/pipeline-order-and-integrity.md](examples/pipeline-order-and-integrity.md) | Ordered `down` steps, `wait_for_ready` limits, per-step `post` examples |
 | [examples/notifications.md](examples/notifications.md) | **notify** channels, `kzero notify test`, env overrides, live vs dry-run |
-| [examples/automation-and-pipelines.md](examples/automation-and-pipelines.md) | CI/cron: live mode, env overrides, auto-confirm for YES-gated wrappers |
+| [examples/infra-probe.md](examples/infra-probe.md) | **`infra_probe`** schema, checks, gate (`kzero probe`) |
 | [examples/waiting-between-pipeline-steps.md](examples/waiting-between-pipeline-steps.md) | Wait between steps: Helm `--wait`, `post` on `release.*`, `wait_for_ready` |
-| [examples/hooks/wait-helm-release-ready.sh](examples/hooks/wait-helm-release-ready.sh) | Reference `post` hook after Helm install (release steps on `up`) |
-| [examples/hooks/wait-master-ready.sh](examples/hooks/wait-master-ready.sh) | Reference `pre` hook: slave StatefulSet waits for master Deployment |
-| [examples/hooks/wait-deployment-scale-down.sh](examples/hooks/wait-deployment-scale-down.sh) | Reference `post` hook after scale-to-zero on a Deployment |
+| [examples/automation-and-pipelines.md](examples/automation-and-pipelines.md) | Stub → operator CI/cron docs in **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)** |
+| [examples/hooks/README.md](examples/hooks/README.md) | Stub → reference hook scripts in **kzero-selfhosted** |
+
+**Operator deployment** (bastion, cron, docker run, kind e2e, hook scripts): **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)** → [run/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run).
 
 Diagrams render on GitHub and in most Markdown viewers that support **Mermaid**.
 

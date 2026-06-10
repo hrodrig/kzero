@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-06-10
+
+### Changed
+
+- **Product vs operator split:** operator deployment docs (cron/CI, reference hook scripts, infra-probe assets) moved to **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)**; stubs and links remain in this repo. README adds **Operator deployment** table; new **[AGENTS.md](AGENTS.md)** documents scope (same pattern as pgwd / pgwd-selfhosted).
+
 ## [0.6.1] - 2026-06-07
 
 ### Added
@@ -197,7 +203,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/hrodrig/kzero/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/hrodrig/kzero/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/hrodrig/kzero/compare/v0.5.7...v0.6.0
 [0.5.7]: https://github.com/hrodrig/kzero/compare/v0.5.6...v0.5.7

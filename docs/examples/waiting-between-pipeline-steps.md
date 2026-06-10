@@ -209,7 +209,7 @@ pipelines:
 
 **Dry-run:** `kzero analyze` lists order and annotations; `kzero up` in `dry-run` logs planned hooks and `wait_for_ready` without mutating the cluster.
 
-**Live validation:** run `kzero analyze`, then `kzero up` in `dry-run`, then `live` when the plan matches. See [automation-and-pipelines.md](automation-and-pipelines.md).
+**Live validation:** run `kzero analyze`, then `kzero up` in `dry-run`, then `live` when the plan matches. See [kzero-selfhosted automation guide](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/automation-and-pipelines.md).
 
 ---
 
