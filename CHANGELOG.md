@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-06-10
+
+### Added
+
+- **Supply chain (GoReleaser):** **Cosign** keyless signing for **`checksums.txt`** and **`ghcr.io/hrodrig/kzero`** images; **SPDX** and **CycloneDX** SBOMs per release (Syft, source catalog). Release workflow installs **cosign** and **syft** and grants **`id-token: write`** for OIDC signing (same pattern as [groot](https://github.com/hrodrig/groot)).
+
 ## [0.6.2] - 2026-06-10
 
 ### Changed

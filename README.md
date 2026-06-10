@@ -2,7 +2,7 @@
 
 <a id="top"></a>
 
-[![Version](https://img.shields.io/badge/version-0.6.2-blue.svg)](https://github.com/hrodrig/kzero/releases)
+[![Version](https://img.shields.io/badge/version-0.7.0-blue.svg)](https://github.com/hrodrig/kzero/releases)
 [![GitHub release](https://img.shields.io/github/v/release/hrodrig/kzero)](https://github.com/hrodrig/kzero/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -34,7 +34,7 @@ Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (an
 
 **Operator deployment (bastion, cron, kind e2e, docker run patterns):** **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)** — production paths and examples live there; **this** repo ships the CLI binary, packages, container image, and Homebrew cask only (same split as [pgwd](https://github.com/hrodrig/pgwd) / [pgwd-selfhosted](https://github.com/hrodrig/pgwd-selfhosted)).
 
-**Releases** ([GitHub Releases](https://github.com/hrodrig/kzero/releases)) ship standalone **binaries** and archives (**`.tar.gz`** / **`.zip`**), Linux **`.deb`** / **`.rpm`**, **Docker** images on **`ghcr.io/hrodrig/kzero`**, and **Homebrew** ([`brew install hrodrig/kzero/kzero`](#homebrew-macos--linux)). This repository does **not** ship Helm charts as a release artifact.
+**Releases** ([GitHub Releases](https://github.com/hrodrig/kzero/releases)) ship standalone **binaries** and archives (**`.tar.gz`** / **`.zip`**), Linux **`.deb`** / **`.rpm`**, **Docker** images on **`ghcr.io/hrodrig/kzero`**, and **Homebrew** ([`brew install hrodrig/kzero/kzero`](#homebrew-macos--linux)). **Supply chain (v0.7.0+):** each release attaches **SPDX** and **CycloneDX** SBOMs plus **Cosign** signatures for **`checksums.txt`** and GHCR images — verify with **`cosign verify-blob`** / **`cosign verify`** (see release assets). This repository does **not** ship Helm charts as a release artifact.
 
 Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md)**. **Planned work** (prioritized): **[docs/ROADMAP.md](docs/ROADMAP.md)**. **Diagrams** (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
 
@@ -369,7 +369,7 @@ See **`SECURITY.md`** for reporting vulnerabilities.
 
 1. Work on **`develop`**; merge to **`main`** when ready.
 2. Before tagging: run **`make release-check`** (requires **Docker**): semver **`VERSION`**, **`make lint`** (gofmt, go vet, **gocyclo** ≤14), **`make test`**, **`make cover-check`** (≥80% statements by default), **`make security`** (govulncheck), **`make docker-scan`** (Grype on the image; use **`GRYPE_FAIL_ON`** to tune the gate, default **high**).
-3. On **`main`**: create an annotated tag (e.g. `git tag -a v0.6.1 -m "Release 0.6.1"`) and **`git push origin v0.6.1`**. The **Release** workflow runs **`make release-check`** then **GoReleaser** (binaries, **`ghcr.io/hrodrig/kzero`**, and Homebrew cask to **[homebrew-kzero](https://github.com/hrodrig/homebrew-kzero)**).
+3. On **`main`**: create an annotated tag (e.g. `git tag -a v0.7.0 -m "Release 0.7.0"`) and **`git push origin v0.7.0`**. The **Release** workflow runs **`make release-check`** then **GoReleaser** (binaries, **`ghcr.io/hrodrig/kzero`**, Cosign signatures, SBOMs, and Homebrew cask to **[homebrew-kzero](https://github.com/hrodrig/homebrew-kzero)**).
 4. Local release after checks: **`make release`** (same as CI tail; **main** branch only).
 
 **GitHub Actions secret:** set **`HOMEBREW_TAP_TOKEN`** on **`hrodrig/kzero`** — a PAT with **`contents:write`** on **`hrodrig/homebrew-kzero`** (the default **`GITHUB_TOKEN`** cannot push to another repository). The release workflow fails early if this secret is missing.

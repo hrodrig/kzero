@@ -54,6 +54,37 @@ archives:
 checksum:
   name_template: checksums.txt
 
+# Cosign keyless signing (GitHub Actions OIDC). Requires `id-token: write`
+# in release.yml and sigstore/cosign-installer. Signs checksums.txt and
+# container images pushed to ghcr.io.
+signs:
+  - cmd: cosign
+    env:
+      - COSIGN_EXPERIMENTAL=1
+    certificate: "${artifact}.pem"
+    args:
+      - sign-blob
+      - "--output-signature=${signature}"
+      - "--output-certificate=${certificate}"
+      - "${artifact}"
+      - --yes
+    artifacts: checksum
+
+# SBOM (Software Bill of Materials) generation via syft.
+# One SPDX + one CycloneDX document per release (source tree catalog).
+# Container image SBOM attestation deferred (docker driver limit; same as groot).
+sboms:
+  - id: kzero-sbom-spdx
+    artifacts: source
+    documents:
+      - "kzero_{{ .Version }}_sbom.spdx.json"
+    args: ["$artifact", "--output", "spdx-json=$document"]
+  - id: kzero-sbom-cdx
+    artifacts: source
+    documents:
+      - "kzero_{{ .Version }}_sbom.cyclonedx.json"
+    args: ["$artifact", "--output", "cyclonedx-json=$document"]
+
 # .deb / .rpm for Linux (same pattern as pgwd nfpms).
 nfpms:
   - id: default
@@ -96,6 +127,7 @@ release:
     name: kzero
 
 # Multi-arch image to ghcr.io (same GITHUB_TOKEN in Actions). Snapshots skip Docker.
+# sbom: false — GitHub Actions buildx docker driver lacks attestation support.
 dockers_v2:
   - disable: "{{ .IsSnapshot }}"
     sbom: false
@@ -112,6 +144,18 @@ dockers_v2:
       org.opencontainers.image.description: "Declarative Kubernetes workload shutdown and startup pipelines"
       org.opencontainers.image.source: "https://github.com/hrodrig/kzero"
       org.opencontainers.image.version: "{{ .Version }}"
+      org.opencontainers.image.revision: "{{ .FullCommit }}"
+      org.opencontainers.image.created: "{{ .Date }}"
+
+# Cosign keyless signing for container manifests built by dockers_v2.
+docker_signs:
+  - cmd: cosign
+    env:
+      - COSIGN_EXPERIMENTAL=1
+    args:
+      - sign
+      - "${artifact}@${digest}"
+      - --yes
 
 # Homebrew: publish cask to https://github.com/hrodrig/homebrew-kzero (brew install hrodrig/kzero/kzero).
 # CI: set repo secret HOMEBREW_TAP_TOKEN (PAT with contents:write on the tap repo; GITHUB_TOKEN cannot push there).

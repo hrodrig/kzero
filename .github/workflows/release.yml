@@ -3,17 +3,22 @@
 
 name: Release
 
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
 on:
   push:
     tags:
       - "v*"
 
-permissions:
-  contents: write
-  packages: write
-
 jobs:
   release:
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,6 +29,13 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+
+      - name: Install GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: latest
+          install-only: true
 
       - name: Run release checks
         run: make release-check
@@ -40,6 +52,13 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      # GoReleaser sboms: invokes syft; not bundled by goreleaser-action.
+      - name: Install syft (SBOM)
+        uses: anchore/sbom-action/download-syft@v0
 
       - name: Require Homebrew tap token
         env:
