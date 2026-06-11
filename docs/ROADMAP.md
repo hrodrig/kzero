@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-06-10 (**0.7.1** tagged in-cluster + **#17**; **0.7.x** plan in [plan-0.7.x.md](plan-0.7.x.md))
+**Last reviewed:** 2026-06-10 (**0.7.2** band close on develop; **0.7.1** tagged in-cluster + **#17**; see [plan-0.7.x.md](plan-0.7.x.md))
 
 ### Versioning note
 
@@ -31,7 +31,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 |------|------------|
 | **0.5.x** | **Closed** (last item **#15** in **v0.5.7**) |
 | **0.6.x** | **Closed** in **v0.6.0** (notify, slog, verify, infra probe, preflight, OS audit, Helm workspace SPEC) |
-| **0.7.x** | **Helm SDK** (**#25**), **`exec`**, **`pvc` delete**, **probe checks native**, scheduling/affinity sanity, extended step types — **0.7.0** Cosign/SBOM and **0.7.1** in-cluster + **#17** shipped |
+| **0.7.x** | **Helm SDK** (**#25**), **`exec`**, **`pvc` delete**, **probe checks native**, scheduling/affinity sanity, **`custom:`** parity, OCI auth + non-flat helm paths — **0.7.0** Cosign/SBOM, **0.7.1** in-cluster + **#17**, **0.7.2** band close on develop |
 | **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI |
 
 **Helm** stays on **workspace scripts** until the **Helm SDK** executor lands (**0.7.x #24**). Shell-backed hooks remain for operator-maintained scripts on the host.
@@ -134,13 +134,13 @@ Broader pipeline primitives via **client-go** and **helm.sh/helm/v3**, keeping a
 |---|------|--------|
 | 23 | **`exec` step type**: run a command (and optional stdin) inside a named pod/container via **remotecommand**—covers SQL, admin CLIs, and other in-cluster maintenance without a one-off truncate primitive. | **Done** (develop, PR5) |
 | 24 | **`pvc` step type**: delete named PVCs (or labeled sets) via the API for data-reset pipelines. | **Done** (develop, PR4) |
-| 25 | **Helm SDK executor** for **`release.*`**: `upgrade --install` / uninstall with wait; optional **OCI registry login** from config (no separate operator image). | **Done** (develop, SDK MVP) |
+| 25 | **Helm SDK executor** for **`release.*`**: `upgrade --install` / uninstall with wait; **OCI registry login** from **`helm.registries`** (no separate operator image). | **Done** (**0.7.2**) |
 | 26 | **Infra probe (native checks)**: PVC **Bound** wait, optional in-volume write/read, and probe teardown using built-in step types (extends **0.6.x #22** for distroless/single-binary runs). | **Done** (develop, PR6 — native Redis sample + docs) |
-| 27 | **Scheduling / affinity sanity** (optional probe or **`verify`** check): detect pods **Pending** due to node selectors, affinity, or taints after maintenance—separate from storage probe. | Pending |
+| 27 | **Scheduling / affinity sanity** (optional probe or **`verify`** check): detect pods **Pending** due to node selectors, affinity, or taints after maintenance—separate from storage probe. | **Done** (**0.7.2** — **`pods_schedulable`**) |
 | 28 | **Cosign signing** and **SBOM** (e.g. Syft) in the GoReleaser pipeline. | **Done** (**v0.7.0**) |
 | 29 | **Additional step types**: `job`, `cronjob` (suspend), safe generic **patch** / scale patterns for CRDs. Prefer native executor; shell fallback where needed. | Pending |
-| 30 | **`custom:` parity**: pass `KZERO_PHASE` and step metadata to the main custom script (same as per-step hooks / release scripts). | Pending |
-| 31 | **Release script ergonomics**: optional non-flat paths under `helm.workspace` (e.g. `monitoring/kube-prometheus-stack.sh`) without breaking flat `name.sh` convention. | Pending |
+| 30 | **`custom:` parity**: pass `KZERO_PHASE` and step metadata to the main custom script (same as per-step hooks / release scripts). | **Done** (**0.7.2**) |
+| 31 | **Release script ergonomics**: optional non-flat paths under `helm.workspace` (e.g. `monitoring/kube-prometheus-stack.sh`) without breaking flat `name.sh` convention. | **Done** (**0.7.2** — step **`script:`**) |
 
 ---
 

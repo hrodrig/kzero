@@ -7,6 +7,7 @@ import (
 
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/validate"
+	"github.com/hrodrig/kzero/internal/verify"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,14 +31,14 @@ func RunChecks(ctx context.Context, cfg *config.Config, factory validate.ClientF
 		}
 	}
 	for i, check := range cfg.InfraProbe.Checks {
-		if err := runOneCheck(ctx, client, check, dryRun, upOK); err != nil {
+		if err := runOneCheck(ctx, cfg, client, check, dryRun, upOK); err != nil {
 			return fmt.Errorf("infra probe checks[%d]: %w", i, err)
 		}
 	}
 	return nil
 }
 
-func runOneCheck(ctx context.Context, client kubernetes.Interface, check config.ProbeCheck, dryRun, upOK bool) error {
+func runOneCheck(ctx context.Context, cfg *config.Config, client kubernetes.Interface, check config.ProbeCheck, dryRun, upOK bool) error {
 	if check.PVCBound != "" {
 		ns, name, err := parsePVCRef(check.PVCBound)
 		if err != nil {
@@ -54,6 +55,29 @@ func runOneCheck(ctx context.Context, client kubernetes.Interface, check config.
 		}
 		if !upOK {
 			return fmt.Errorf("release_ready: probe up did not complete successfully")
+		}
+	}
+	if check.PodsSchedulable {
+		if dryRun {
+			return nil
+		}
+		return checkProbePodsSchedulable(ctx, client, cfg)
+	}
+	return nil
+}
+
+func checkProbePodsSchedulable(ctx context.Context, client kubernetes.Interface, cfg *config.Config) error {
+	namespaces := verify.NamespacesFromSteps(cfg.InfraProbe.Pipeline.Up)
+	if len(namespaces) == 0 {
+		return fmt.Errorf("pods_schedulable: no namespaces in infra_probe.pipeline.up")
+	}
+	items, err := verify.FindUnschedulablePods(ctx, client, namespaces)
+	if err != nil {
+		return fmt.Errorf("pods_schedulable: %w", err)
+	}
+	for _, item := range items {
+		if !item.OK {
+			return fmt.Errorf("pods_schedulable %s: %s", item.Ref, item.Detail)
 		}
 	}
 	return nil

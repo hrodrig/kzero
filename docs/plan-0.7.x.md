@@ -1,6 +1,6 @@
 # Plan 0.7.x — native cluster ops, Helm SDK, and operator safety
 
-**Status:** in progress on `develop` — **PR7 (#27 + #31 + band close)** next; **one release tag** at band close, not per PR
+**Status:** **0.7.2** band close on **`develop`** (PR7); merge **`develop` → `main`** + tag **`v0.7.2`** when ready
 
 ### Internal merge order (2026-06-11)
 
@@ -203,7 +203,7 @@ pipelines:
 |-----|----------|
 | **`v0.7.0`** | **Done** — Cosign + SBOM (**#28**) |
 | **`v0.7.1`** | **Done** — **#17** + InClusterConfig (PO / in-cluster smoke track) |
-| **`v0.7.2`** (TBD) | **Band close:** **#25** Helm SDK, **#24** **`pvc`**, **#23** **`exec`**, **#26** probe native, **#27** scheduling, **#29–#31** (incl. OCI registry login) |
+| **`v0.7.2`** | **Done (develop)** — band close: **#25–#27**, **#30–#31** (OCI registry login, **`pods_schedulable`**, **`custom:`** parity, **`script:`** paths); **#29** deferred |
 | **`v0.8.0` or `1.0.0`** | **1.0.0** contract items if band splits |
 
 **Cadence (2026-06):** merge **PR3–PR7** on **`develop`** with **`make release-check`** per PR; **do not** bump **`VERSION`**, tag, or refresh selfhosted GHCR pins until **PR7** lands. **0.7.1** stays the pin for in-cluster PO smoke until then.

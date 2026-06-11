@@ -202,7 +202,11 @@ func (r *LiveRunner) runReleaseScript(ctx context.Context, cfg *config.Config, p
 	if ws == "" {
 		return fmt.Errorf("helm.workspace is empty (required for release step %s on up)", step.Ref)
 	}
-	r.logLive("release script %s/%s.sh (%s)", ws, step.Name, phase)
+	script, err := executor.ResolveReleaseScript(cfg, step)
+	if err != nil {
+		return err
+	}
+	r.logLive("release script %s (%s)", script, phase)
 	return helm.UpgradeInstall(opCtx, step)
 }
 

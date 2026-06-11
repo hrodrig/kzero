@@ -189,6 +189,8 @@ For each pipeline step, when `run.mode` is `live`:
 
 If `pre` fails, the main action and `post` for that step do not run; the phase fails and `hooks.on-error` applies per the global failure policy.
 
+**`custom:`** main scripts receive the same **`KZERO_*`** step metadata as per-step hooks (`KZERO_PHASE`, `KZERO_PIPELINE_STEP_INDEX`, `KZERO_STEP_HOOK=main`, `KZERO_STEP_CUSTOM`, …).
+
 **Environment variables** passed to per-step hook scripts (in addition to the process environment when **`run.no_env_passthrough`** is false, and optional **`KUBECONFIG`** from **`run.kubeconfig`**):
 
 | Variable | Meaning |
@@ -198,7 +200,7 @@ If `pre` fails, the main action and `post` for that step do not run; the phase f
 | `KZERO_OS_UID` | Numeric UID of the kzero process when resolvable |
 | `KZERO_PHASE` | `down` or `up` |
 | `KZERO_PIPELINE_STEP_INDEX` | Zero-based index of this step in the phase’s pipeline list |
-| `KZERO_STEP_HOOK` | `pre` or `post` |
+| `KZERO_STEP_HOOK` | `pre`, `post`, or **`main`** (custom pipeline step body) |
 | `KZERO_STEP_REF` | Set when the step has a compact ref (e.g. `deployment.ns/app`) |
 | `KZERO_STEP_CUSTOM` | Set when the step is a `custom` script path |
 | `KZERO_STEP_TYPE`, `KZERO_STEP_NAMESPACE`, `KZERO_STEP_NAME` | Set for `deployment`, `statefulset`, `release`, `pvc`, and `exec` steps |
@@ -208,17 +210,18 @@ Release `.sh` scripts also receive `KZERO_PHASE` on install (see engine implemen
 
 ## Helm workspace contract (`helm.workspace`)
 
-**0.6.x** documents the flat script layout used today; **0.7.x** Helm SDK (#25) may add hierarchical paths and OCI auth **without** silently breaking this contract.
+**0.6.x** documents the flat script layout used today; **0.7.x** adds optional non-flat **`script:`** paths, OCI registry login for the Helm SDK, and chart manifests under **`helm.workspace`**.
 
 ### Script resolution
 
 | Pipeline step | Live **up** (shell) | Live **up** (native/auto SDK) | Live **down** |
 |---------------|---------------------|-------------------------------|---------------|
-| `release.<namespace>/<name>` | `/bin/sh <helm.workspace>/<name>.sh` with first arg `up` | **Helm SDK** `upgrade --install` from `<helm.workspace>/<name>.yaml` (or step `chart:` / `version:` overrides) | `helm uninstall` (shell) or **Helm SDK** uninstall with wait (native/auto) |
+| `release.<namespace>/<name>` | `/bin/sh <helm.workspace>/<name>.sh` with first arg `up` (override with step **`script:`**) | **Helm SDK** `upgrade --install` from `<helm.workspace>/<name>.yaml` (or step `chart:` / `version:` overrides) | `helm uninstall` (shell) or **Helm SDK** uninstall with wait (native/auto) |
 
 Rules:
 
-- **Basename = release name** — `release.monitoring/kube-prometheus-stack` → `<helm.workspace>/kube-prometheus-stack.sh` (namespace in the step ref is **not** part of the filename).
+- **Basename = release name** — `release.monitoring/kube-prometheus-stack` → `<helm.workspace>/kube-prometheus-stack.sh` by default (namespace in the step ref is **not** part of the filename).
+- **Non-flat shell path** — optional step map **`script: monitoring/kube-prometheus-stack.sh`** (relative to **`helm.workspace`**) overrides the default **`<name>.sh`** layout (**0.7.2 #31**).
 - **Required when** any `pipelines` or `infra_probe.pipeline` step uses `release.*` (`helm.workspace` validation error if missing).
 - **Path** may be relative to the process working directory or absolute; operators often set an absolute path in CI/cron.
 - **Analyze** prints `script: <helm.workspace>/<name>.sh` for each `release.*` **up** step when **`run.execution: shell`**; with **`native`** / **`auto`**, prints **`helm upgrade --install (sdk, …)`** from the chart manifest or step overrides.
@@ -237,7 +240,24 @@ wait: true
 timeout: 10m
 ```
 
-Optional **step map** overrides (same release step): `chart`, `version`, `values_files`, `create_namespace`, `timeout` (see pipeline step options).
+Optional **step map** overrides (same release step): `script` (shell path), `chart`, `version`, `values_files`, `create_namespace`, `timeout` (see pipeline step options).
+
+### OCI registry authentication (`helm.registries`)
+
+When **`run.execution`** is **`native`** or **`auto`** and a chart ref uses **`oci://`**, the Helm SDK logs into matching registries before **`LocateChart`**:
+
+```yaml
+helm:
+  workspace: ./charts
+  registries:
+    - host: ghcr.io
+      username: myuser
+      password_env: HELM_REGISTRY_PASSWORD   # preferred over inline password
+```
+
+- **`host`** must match the OCI registry host in the chart URL (e.g. `oci://ghcr.io/org/chart` → `ghcr.io`).
+- **`username`** is required per entry; supply **`password`** or **`password_env`** (env var read at runtime).
+- Public OCI charts need no **`registries`** entry.
 
 **Down** always runs SDK uninstall (wait, ignore-not-found) when the SDK path is selected — no **`.sh`** on down in either mode.
 
@@ -327,6 +347,7 @@ Read-only readiness checks after **`up`** (no mutations).
 - **`verify.checks`** (default **`workloads_ready`**, **`nodes_ready`**):
   - **`workloads_ready`**: each unique **`deployment`** / **`statefulset`** in **`pipelines.up`** has **`ReadyReplicas`** (and **`UpdatedReplicas`**) ≥ desired count (`replicas` from YAML, default **1**).
   - **`nodes_ready`**: every node reports **`Ready=True`**.
+  - **`pods_schedulable`** (**0.7.2 #27**): in each namespace referenced by **`pipelines.up`**, no pod stays **`Pending`** with **`PodScheduled=False`** / reason **`Unschedulable`** (affinity, taints, node selectors).
 - Output: **`verify.format`** (`text` | `json`) or CLI **`--log-format json`**.
 - Exit **0** when **`outcome: ready`**; **non-zero** when any check fails or the API is unreachable.
 - **`run.verify: true`**: after a successful **`up`** or **`reset`** in **`live`** mode, run the same checks automatically (failure fails the command with **`post-up verify:`**).
@@ -349,11 +370,12 @@ infra_probe:
   checks:
     - pvc_bound: <namespace>/<claim>
     - release_ready: true
+    - pods_schedulable: true   # optional; namespaces from infra_probe.pipeline.up
 ```
 
 - **`kzero probe`**: runs **`pipeline.up`** → **`checks`** → **`pipeline.down`** (no main pipeline, no phase hooks).
 - **Gate** (**`live`** only): when **`infra_probe.enabled`** and the command is listed in **`before`**, probe runs **before** the main pipeline (after **`Kubernetes target:`** and optional **`notify`** start).
-- **Checks** (live): **`pvc_bound`** — PVC **`Status.Phase == Bound`**; **`release_ready`** — probe **`up`** completed without error.
+- **Checks** (live): **`pvc_bound`** — PVC **`Status.Phase == Bound`**; **`release_ready`** — probe **`up`** completed without error; **`pods_schedulable`** — same scheduling sanity as **`kzero verify`** for probe pipeline namespaces.
 - **Cache**: timestamp file under **`run.probe_cache_dir`** or OS user cache **`…/kzero/probe/probe-cache.json`**; invalidated when pipeline/check fingerprint changes.
 - Probe steps use the same engine path as main pipelines (**`release.*`** via Helm SDK when **`run.execution`** is **`native`** / **`auto`**; shell scripts when **`shell`**).
 

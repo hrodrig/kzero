@@ -6,6 +6,7 @@ import (
 	"io"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
@@ -22,6 +23,8 @@ import (
 type SDKHelm struct {
 	cfg      *config.Config
 	settings *cli.EnvSettings
+	loggedIn map[string]struct{}
+	loginMu  sync.Mutex
 }
 
 // NewSDKHelm builds a Helm SDK executor from cfg run.kubeconfig.
@@ -33,7 +36,7 @@ func NewSDKHelm(cfg *config.Config) (*SDKHelm, error) {
 	if k := strings.TrimSpace(cfg.Run.Kubeconfig); k != "" {
 		settings.KubeConfig = k
 	}
-	return &SDKHelm{cfg: cfg, settings: settings}, nil
+	return &SDKHelm{cfg: cfg, settings: settings, loggedIn: make(map[string]struct{})}, nil
 }
 
 func (h *SDKHelm) UsesSDK() bool { return true }
@@ -83,6 +86,9 @@ func (h *SDKHelm) UpgradeInstall(ctx context.Context, step config.PipelineStep) 
 	client.ChartPathOptions.Version = spec.Version
 
 	chartRef := resolveChartRef(h.cfg, spec.Chart)
+	if err := EnsureOCIRegistryAuth(h.cfg, chartRef, h.loggedIn, &h.loginMu); err != nil {
+		return fmt.Errorf("helm sdk auth for %s: %w", step.Ref, err)
+	}
 	chartPath, err := client.LocateChart(chartRef, h.settings)
 	if err != nil {
 		return fmt.Errorf("helm sdk locate chart for %s: %w", step.Ref, err)

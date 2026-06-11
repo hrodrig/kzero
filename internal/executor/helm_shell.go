@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/hrodrig/kzero/internal/config"
@@ -48,11 +47,10 @@ func (h *ShellHelm) Uninstall(ctx context.Context, step config.PipelineStep) err
 }
 
 func (h *ShellHelm) UpgradeInstall(ctx context.Context, step config.PipelineStep) error {
-	ws := strings.TrimSpace(h.deps.Cfg.Helm.Workspace)
-	if ws == "" {
-		return fmt.Errorf("helm.workspace is empty (required for release step %s on up)", step.Ref)
+	script, err := ResolveReleaseScript(h.deps.Cfg, step)
+	if err != nil {
+		return err
 	}
-	script := filepath.Join(ws, step.Name+".sh")
 	st, err := os.Stat(script)
 	if err != nil {
 		return fmt.Errorf("release script %s: %w", script, err)
@@ -60,6 +58,7 @@ func (h *ShellHelm) UpgradeInstall(ctx context.Context, step config.PipelineStep
 	if st.IsDir() {
 		return fmt.Errorf("release script path is a directory: %s", script)
 	}
+	ws := strings.TrimSpace(h.deps.Cfg.Helm.Workspace)
 
 	env := subprocess.Env(h.deps.Cfg)
 	env = append(env,

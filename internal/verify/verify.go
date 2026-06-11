@@ -94,6 +94,8 @@ func runCheck(ctx context.Context, client kubernetes.Interface, cfg *config.Conf
 		return checkWorkloadsReady(ctx, client, cfg)
 	case CheckNodesReady:
 		return checkNodesReady(ctx, client)
+	case CheckPodsSchedulable:
+		return checkPodsSchedulable(ctx, client, cfg)
 	default:
 		return CheckResult{Name: name, OK: false}, fmt.Errorf("verify: unknown check %q", name)
 	}

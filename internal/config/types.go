@@ -43,10 +43,11 @@ type ProbePipelineConfig struct {
 	Down []PipelineStep
 }
 
-// ProbeCheck is one post-probe-up validation (pvc_bound, release_ready).
+// ProbeCheck is one post-probe-up validation (pvc_bound, release_ready, pods_schedulable).
 type ProbeCheck struct {
-	PVCBound     string `mapstructure:"pvc_bound"`
-	ReleaseReady bool   `mapstructure:"release_ready"`
+	PVCBound        string `mapstructure:"pvc_bound"`
+	ReleaseReady    bool   `mapstructure:"release_ready"`
+	PodsSchedulable bool   `mapstructure:"pods_schedulable"`
 }
 
 type ClusterConfig struct {
@@ -56,7 +57,16 @@ type ClusterConfig struct {
 }
 
 type HelmConfig struct {
-	Workspace string `mapstructure:"workspace"`
+	Workspace  string               `mapstructure:"workspace"`
+	Registries []HelmRegistryConfig `mapstructure:"registries"`
+}
+
+// HelmRegistryConfig holds OCI registry credentials for Helm SDK chart pulls.
+type HelmRegistryConfig struct {
+	Host        string `mapstructure:"host"`
+	Username    string `mapstructure:"username"`
+	Password    string `mapstructure:"password"`
+	PasswordEnv string `mapstructure:"password_env"`
 }
 
 type ClientConfig struct {
@@ -120,7 +130,9 @@ type PipelineStep struct {
 	Replicas     *int
 	WaitForReady bool
 	Timeout      time.Duration
-	// Release SDK options (release steps only; used when run.execution is native/auto).
+	// Release options (release steps only).
+	Script string `mapstructure:"script"` // shell path relative to helm.workspace (default <name>.sh)
+	// SDK options (used when run.execution is native/auto).
 	Chart           string   `mapstructure:"chart"`
 	Version         string   `mapstructure:"version"`
 	ValuesFiles     []string `mapstructure:"values_files"`

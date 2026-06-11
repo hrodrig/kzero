@@ -60,7 +60,9 @@ func (r *LiveRunner) RunPipelineStep(ctx context.Context, cfg *config.Config, ph
 
 func (r *LiveRunner) runMainPipelineStep(ctx context.Context, cfg *config.Config, phase Phase, index int, step config.PipelineStep) error {
 	if step.Custom != "" {
-		return r.execScript(ctx, cfg, fmt.Sprintf("pipeline-%s-%d", phase, index), step.Custom)
+		label := fmt.Sprintf("pipeline-%s-%d", phase, index)
+		env := r.stepHookEnv(cfg, phase, index, "main", step)
+		return r.execScriptWithEnv(ctx, cfg, label, step.Custom, env)
 	}
 	if step.Ref == "" {
 		return fmt.Errorf("live: empty pipeline step at index %d", index)
@@ -127,11 +129,15 @@ func (r *LiveRunner) stepHookEnv(cfg *config.Config, phase Phase, index int, hoo
 }
 
 func (r *LiveRunner) execScript(ctx context.Context, cfg *config.Config, label, scriptPath string) error {
+	return r.execScriptWithEnv(ctx, cfg, label, scriptPath, r.envFor(cfg))
+}
+
+func (r *LiveRunner) execScriptWithEnv(ctx context.Context, cfg *config.Config, label, scriptPath string, env []string) error {
 	opCtx, cancel := withOpTimeout(ctx, cfg)
 	defer cancel()
 
 	r.logLive("hook %s: %s", label, scriptPath)
-	out, err := r.runProcess(opCtx, "/bin/sh", []string{scriptPath}, r.envFor(cfg), ".")
+	out, err := r.runProcess(opCtx, "/bin/sh", []string{scriptPath}, env, ".")
 	r.writeOutput(out)
 	if err != nil {
 		return fmt.Errorf("%s: %w", label, executor.WrapSubprocess("/bin/sh", []string{scriptPath}, out, err))

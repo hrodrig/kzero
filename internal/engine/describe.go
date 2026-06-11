@@ -64,7 +64,10 @@ func releasePlanExtras(cfg *config.Config, step config.PipelineStep, helmWorkspa
 		manifest := filepath.Join(strings.TrimSpace(helmWorkspace), step.Name+".yaml")
 		return []string{fmt.Sprintf("helm upgrade --install (sdk, manifest: %s)", manifest)}
 	}
-	script := filepath.Join(strings.TrimSpace(helmWorkspace), step.Name+".sh")
+	script, err := executor.ResolveReleaseScriptIn(cfg, step, helmWorkspace)
+	if err != nil {
+		return nil
+	}
 	return []string{fmt.Sprintf("script: %s", script)}
 }
 

@@ -67,6 +67,39 @@ func TestShellHelm_UpgradeInstall(t *testing.T) {
 	}
 }
 
+func TestShellHelm_UpgradeInstall_scriptOverride(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	sub := filepath.Join(dir, "monitoring")
+	if err := os.Mkdir(sub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	script := filepath.Join(sub, "prom.sh")
+	if err := os.WriteFile(script, []byte("#!/bin/sh\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	var args []string
+	h := NewShellHelm(HelmDeps{
+		Cfg: &config.Config{Helm: config.HelmConfig{Workspace: dir}},
+		Run: func(ctx context.Context, a0 string, a, env []string, d string) ([]byte, error) {
+			args = a
+			return nil, nil
+		},
+	})
+	step := config.PipelineStep{
+		Name: "prom", Namespace: "mon", Ref: "release.mon/prom", Type: "release",
+		Script: "monitoring/prom.sh",
+	}
+	if err := h.UpgradeInstall(context.Background(), step); err != nil {
+		t.Fatal(err)
+	}
+	if len(args) == 0 || args[0] != script {
+		t.Fatalf("args=%v want script %s", args, script)
+	}
+}
+
 func TestShellHelm_UpgradeInstall_missingScript(t *testing.T) {
 	t.Parallel()
 

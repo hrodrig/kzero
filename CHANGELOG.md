@@ -7,13 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-06-10
+
 ### Added
 
 - **Helm SDK (#25):** when **`run.execution`** is **`native`** or **`auto`**, **`release.*`** steps use **`helm.sh/helm/v3`** for uninstall (down) and **`upgrade --install`** (up) from **`<helm.workspace>/<release>.yaml`** or step **`chart`** / **`version`** overrides — no host **`helm`** binary or **`.sh`** install script on the SDK path.
 - **`pvc` step (#24):** compact ref **`pvc.<namespace>/<claim>`** deletes a named PersistentVolumeClaim via the Kubernetes API (`DeletePropagationBackground`, ignore-not-found); always native regardless of **`run.execution`**.
 - **`exec` step (#23):** compact ref **`exec.<namespace>/<pod>`** with required **`container`** and **`command`** runs a command in the pod via **remotecommand**; optional **`stdin`** and per-step **`timeout`**; always native regardless of **`run.execution`**.
 - **Infra probe (native #26):** reference Redis probe for **`run.execution: native`** using Helm SDK chart manifest (**`probe-redis.yaml`**) instead of **`.sh`** — see [docs/examples/infra-probe/](docs/examples/infra-probe/).
+- **`pods_schedulable` verify check (#27):** optional post-up check for pods **Pending** with **`Unschedulable`** scheduling failures (affinity, taints, node selectors) in namespaces from **`pipelines.up`**.
+- **`pods_schedulable` infra probe check:** same scheduling sanity for **`infra_probe.pipeline.up`** namespaces.
+- **OCI registry login:** **`helm.registries`** with **`host`**, **`username`**, and **`password`** or **`password_env`** — Helm SDK logs in before **`oci://`** chart pulls (**0.7.x #25** follow-up).
+- **Release `script:` override (#31):** optional non-flat install script path relative to **`helm.workspace`** (default **`<name>.sh`** unchanged).
+- **`custom:` parity (#30):** main custom pipeline scripts receive **`KZERO_PHASE`**, **`KZERO_PIPELINE_STEP_INDEX`**, **`KZERO_STEP_HOOK=main`**, **`KZERO_STEP_CUSTOM`**, and related step metadata (same as per-step hooks).
 - Dependency: **`helm.sh/helm/v3`** v3.21.x; **`k8s.io/*`** client modules aligned to **v0.35.1** for Helm SDK compatibility.
+
+### Changed
+
+- **0.7.x band close** on **`develop`**: bundles PR3–PR7 (**Helm SDK**, **`pvc`**, **`exec`**, probe native, scheduling, OCI auth, helm path ergonomics, custom env parity). **`#29`** (`job`/`cronjob`) remains open on the roadmap.
 
 ## [0.7.1] - 2026-06-10
 
@@ -225,7 +236,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.7.2...HEAD
+[0.7.2]: https://github.com/hrodrig/kzero/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/hrodrig/kzero/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/hrodrig/kzero/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/hrodrig/kzero/compare/v0.6.1...v0.6.2

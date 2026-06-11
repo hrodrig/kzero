@@ -263,6 +263,21 @@ func applyStepOptions(step *PipelineStep, opts map[string]interface{}) error {
 
 func applyOneStepOption(step *PipelineStep, k string, v interface{}) error {
 	switch k {
+	case "replicas", "wait_for_ready", "timeout", "pre", "post":
+		return applyCommonStepOption(step, k, v)
+	case "script":
+		return applyReleaseScriptOption(step, v)
+	case "chart", "version", "values_files", "create_namespace":
+		return applyReleaseStepOption(step, k, v)
+	case "container", "command", "stdin":
+		return applyExecStepOption(step, k, v)
+	default:
+		return fmt.Errorf("unsupported option %q", k)
+	}
+}
+
+func applyCommonStepOption(step *PipelineStep, k string, v interface{}) error {
+	switch k {
 	case "replicas":
 		replicas, err := parseReplicas(v)
 		if err != nil {
@@ -295,13 +310,21 @@ func applyOneStepOption(step *PipelineStep, k string, v interface{}) error {
 		} else {
 			step.PostStep = strings.TrimSpace(s)
 		}
-	case "chart", "version", "values_files", "create_namespace":
-		return applyReleaseStepOption(step, k, v)
-	case "container", "command", "stdin":
-		return applyExecStepOption(step, k, v)
 	default:
-		return fmt.Errorf("unsupported option %q", k)
+		return fmt.Errorf("unsupported common option %q", k)
 	}
+	return nil
+}
+
+func applyReleaseScriptOption(step *PipelineStep, v interface{}) error {
+	if step.Type != "release" {
+		return errors.New(`option "script" is only valid on release steps`)
+	}
+	s, ok := v.(string)
+	if !ok || strings.TrimSpace(s) == "" {
+		return errors.New("script must be a non-empty string")
+	}
+	step.Script = strings.TrimSpace(s)
 	return nil
 }
 
@@ -408,6 +431,9 @@ func validate(cfg *Config) error {
 		return errors.New("pipelines.down or pipelines.up is required")
 	}
 	if err := validateHelmWorkspaceForReleases(cfg); err != nil {
+		return err
+	}
+	if err := validateHelmRegistries(cfg); err != nil {
 		return err
 	}
 	if err := validateExecSteps(cfg); err != nil {
@@ -553,28 +579,45 @@ func parseProbeChecks(v interface{}) ([]ProbeCheck, error) {
 			return nil, fmt.Errorf("item %d: must have exactly one key", i)
 		}
 		for k, val := range m {
-			switch k {
-			case "pvc_bound":
-				s, ok := val.(string)
-				if !ok || strings.TrimSpace(s) == "" {
-					return nil, fmt.Errorf("item %d: pvc_bound must be a non-empty string", i)
-				}
-				out = append(out, ProbeCheck{PVCBound: strings.TrimSpace(s)})
-			case "release_ready":
-				b, err := parseBool(val)
-				if err != nil {
-					return nil, fmt.Errorf("item %d: release_ready %w", i, err)
-				}
-				if !b {
-					return nil, fmt.Errorf("item %d: release_ready must be true when set", i)
-				}
-				out = append(out, ProbeCheck{ReleaseReady: true})
-			default:
-				return nil, fmt.Errorf("item %d: unknown check %q (want pvc_bound or release_ready)", i, k)
+			check, err := parseProbeCheckItem(i, k, val)
+			if err != nil {
+				return nil, err
 			}
+			out = append(out, check)
 		}
 	}
 	return out, nil
+}
+
+func parseProbeCheckItem(i int, k string, val interface{}) (ProbeCheck, error) {
+	switch k {
+	case "pvc_bound":
+		s, ok := val.(string)
+		if !ok || strings.TrimSpace(s) == "" {
+			return ProbeCheck{}, fmt.Errorf("item %d: pvc_bound must be a non-empty string", i)
+		}
+		return ProbeCheck{PVCBound: strings.TrimSpace(s)}, nil
+	case "release_ready":
+		b, err := parseBool(val)
+		if err != nil {
+			return ProbeCheck{}, fmt.Errorf("item %d: release_ready %w", i, err)
+		}
+		if !b {
+			return ProbeCheck{}, fmt.Errorf("item %d: release_ready must be true when set", i)
+		}
+		return ProbeCheck{ReleaseReady: true}, nil
+	case "pods_schedulable":
+		b, err := parseBool(val)
+		if err != nil {
+			return ProbeCheck{}, fmt.Errorf("item %d: pods_schedulable %w", i, err)
+		}
+		if !b {
+			return ProbeCheck{}, fmt.Errorf("item %d: pods_schedulable must be true when set", i)
+		}
+		return ProbeCheck{PodsSchedulable: true}, nil
+	default:
+		return ProbeCheck{}, fmt.Errorf("item %d: unknown check %q (want pvc_bound, release_ready, or pods_schedulable)", i, k)
+	}
 }
 
 func validateInfraProbe(cfg *Config) error {
@@ -635,9 +678,9 @@ func validateVerify(cfg *Config) error {
 			return errors.New("verify.checks: empty check name")
 		}
 		switch c {
-		case "workloads_ready", "nodes_ready":
+		case "workloads_ready", "nodes_ready", "pods_schedulable":
 		default:
-			return fmt.Errorf("verify.checks: unknown check %q (want workloads_ready, nodes_ready)", c)
+			return fmt.Errorf("verify.checks: unknown check %q (want workloads_ready, nodes_ready, pods_schedulable)", c)
 		}
 	}
 	return nil
@@ -669,6 +712,28 @@ func validateRunExecution(cfg *Config) error {
 	default:
 		return fmt.Errorf("run.execution must be one of: shell, native, auto")
 	}
+}
+
+func validateHelmRegistries(cfg *Config) error {
+	seen := make(map[string]struct{})
+	for i, reg := range cfg.Helm.Registries {
+		host := strings.TrimSpace(reg.Host)
+		if host == "" {
+			return fmt.Errorf("helm.registries[%d]: host is required", i)
+		}
+		key := strings.ToLower(host)
+		if _, dup := seen[key]; dup {
+			return fmt.Errorf("helm.registries[%d]: duplicate host %q", i, host)
+		}
+		seen[key] = struct{}{}
+		if strings.TrimSpace(reg.Username) == "" {
+			return fmt.Errorf("helm.registries[%d]: username is required for host %q", i, host)
+		}
+		if strings.TrimSpace(reg.Password) == "" && strings.TrimSpace(reg.PasswordEnv) == "" {
+			return fmt.Errorf("helm.registries[%d]: password or password_env is required for host %q", i, host)
+		}
+	}
+	return nil
 }
 
 func validateHelmWorkspaceForReleases(cfg *Config) error {

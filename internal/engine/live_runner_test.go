@@ -522,20 +522,28 @@ func TestLiveRunner_RunMainStep_customScript(t *testing.T) {
 	}
 
 	var calls [][]string
+	var gotEnv []string
 	r := &LiveRunner{
 		Exec: func(ctx context.Context, argv0 string, args, env []string, d string) ([]byte, error) {
 			calls = append(calls, append([]string{argv0}, args...))
+			gotEnv = env
 			return nil, nil
 		},
 	}
 	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
 	step := config.PipelineStep{Custom: script}
 
-	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step); err != nil {
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 2, step); err != nil {
 		t.Fatal(err)
 	}
 	if len(calls) != 1 || calls[0][0] != "/bin/sh" || calls[0][1] != script {
 		t.Fatalf("expected custom via /bin/sh, got %v", calls)
+	}
+	if !envHas(gotEnv, "KZERO_PHASE=down") || !envHas(gotEnv, "KZERO_PIPELINE_STEP_INDEX=2") || !envHas(gotEnv, "KZERO_STEP_HOOK=main") {
+		t.Fatalf("missing KZERO_* env on custom main, got %v", gotEnv)
+	}
+	if !envHas(gotEnv, "KZERO_STEP_CUSTOM="+script) {
+		t.Fatalf("missing KZERO_STEP_CUSTOM, got %v", gotEnv)
 	}
 }
 
