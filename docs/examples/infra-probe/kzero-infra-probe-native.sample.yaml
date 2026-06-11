@@ -1,0 +1,30 @@
+# Infra probe fragment: native / distroless path (Helm SDK, no probe-redis.sh).
+# Merge into your kzero.yaml. Requires run.execution: native|auto and chart manifest
+# probe-redis.yaml under helm.workspace (see probe-redis.yaml in this directory).
+#
+# Values: copy kzero-probe-redis-values.yaml from kzero-selfhosted run/examples/infra-probe/
+
+schema_version: "1.0"
+
+helm:
+  workspace: "./helm-assets"
+
+infra_probe:
+  enabled: false
+  before: ["reset"]
+  fail_fast: true
+  cache_ttl: 30m
+  pipeline:
+    up:
+      - release.probe-ns/probe-redis
+    down:
+      - release.probe-ns/probe-redis
+  checks:
+    - pvc_bound: probe-ns/redis-data-probe-redis-master-0
+    - release_ready: true
+
+run:
+  mode: dry-run
+  execution: native
+  kubeconfig: ""
+  probe_cache_dir: ""

@@ -355,7 +355,7 @@ infra_probe:
 - **Gate** (**`live`** only): when **`infra_probe.enabled`** and the command is listed in **`before`**, probe runs **before** the main pipeline (after **`Kubernetes target:`** and optional **`notify`** start).
 - **Checks** (live): **`pvc_bound`** — PVC **`Status.Phase == Bound`**; **`release_ready`** — probe **`up`** completed without error.
 - **Cache**: timestamp file under **`run.probe_cache_dir`** or OS user cache **`…/kzero/probe/probe-cache.json`**; invalidated when pipeline/check fingerprint changes.
-- Probe steps use the same engine path as main pipelines (shell Helm/scripts until **0.7.x** SDK).
+- Probe steps use the same engine path as main pipelines (**`release.*`** via Helm SDK when **`run.execution`** is **`native`** / **`auto`**; shell scripts when **`shell`**).
 
 Cookbook: [examples/infra-probe.md](examples/infra-probe.md). Reference assets: [kzero-selfhosted/run/examples/infra-probe/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/infra-probe).
 

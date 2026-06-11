@@ -1,6 +1,6 @@
 # Plan 0.7.x — native cluster ops, Helm SDK, and operator safety
 
-**Status:** in progress on `develop` — **PR6 (probe native #26)** next; **one release tag** at band close (after **#31**), not per PR
+**Status:** in progress on `develop` — **PR7 (#27 + #31 + band close)** next; **one release tag** at band close, not per PR
 
 ### Internal merge order (2026-06-11)
 
@@ -76,8 +76,8 @@ Merge to **`develop`** in this order. Each PR: `make lint`, `make test`, `make c
 | PR3 | Helm SDK MVP | **#25** | **Done** — commit on develop |
 | PR4 | **`pvc`** step | **#24** | **Done** on develop |
 | PR5 | **`exec`** step | **#23** | **Done** on develop |
-| PR6 | Infra probe native | **#26** | |
-| PR7 | Scheduling sanity + **#29–#31** (incl. OCI registry login **#31**) + band close | **#27**, **#29–#31** | **Single tag** **`v0.7.2`** (or next patch) — VERSION, CHANGELOG, selfhosted pin |
+| PR6 | Infra probe native | **#26** | **Done** — native Redis sample + docs + selfhosted RBAC |
+| PR7 | Scheduling sanity + **#29–#31** (incl. OCI registry login **#31**) + band close | **#27**, **#29–#31** | **Single tag** **`v0.7.2`** |
 
 ---
 

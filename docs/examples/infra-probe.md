@@ -22,9 +22,11 @@ kzero ships an **anonymous reference** (public Bitnami Redis 8) in **[kzero-self
 
 | File | Purpose |
 |------|---------|
-| [run/examples/infra-probe/kzero-probe-redis.sh](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/examples/infra-probe/kzero-probe-redis.sh) | Install script → copy to `<helm.workspace>/probe-redis.sh` |
+| [run/examples/infra-probe/kzero-probe-redis.sh](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/examples/infra-probe/kzero-probe-redis.sh) | Install script → `<helm.workspace>/probe-redis.sh` (**shell** path) |
+| [run/examples/infra-probe/kzero-probe-redis.yaml](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/examples/infra-probe/kzero-probe-redis.yaml) | Chart manifest → `<helm.workspace>/probe-redis.yaml` (**native** path) |
 | [run/examples/infra-probe/kzero-probe-redis-values.yaml](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/examples/infra-probe/kzero-probe-redis-values.yaml) | Values (image, PVC size, retention on uninstall) |
-| [run/examples/infra-probe/kzero-infra-probe-redis.sample.yaml](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/examples/infra-probe/kzero-infra-probe-redis.sample.yaml) | YAML fragment for `infra_probe` + `pvc_bound` |
+| [run/examples/infra-probe/kzero-infra-probe-redis.sample.yaml](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/examples/infra-probe/kzero-infra-probe-redis.sample.yaml) | YAML fragment (**shell**) |
+| [run/examples/infra-probe/kzero-infra-probe-redis-native.sample.yaml](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/examples/infra-probe/kzero-infra-probe-redis-native.sample.yaml) | YAML fragment (**native** / distroless) |
 
 **Copy and edit** those files, or ignore them entirely and wire `infra_probe` to whatever you prefer:
 
@@ -70,6 +72,29 @@ infra_probe:
   checks:
     - pvc_bound: probe-ns/redis-data-probe-redis-master-0
     - release_ready: true
+```
+
+## Native path (distroless / in-cluster)
+
+For **distroless** Jobs or hosts without **`/bin/sh`**, set **`run.execution: native`** (or **`auto`**) and use **Helm SDK** for probe **`release.*`** steps — no **`<release>.sh`** script.
+
+1. Copy **`kzero-probe-redis-values.yaml`** and **`kzero-probe-redis.yaml`** (chart manifest) into **`helm.workspace`** — see [docs/examples/infra-probe/](infra-probe/) in the product repo and [kzero-selfhosted run/examples/infra-probe/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/infra-probe).
+2. Merge [kzero-infra-probe-native.sample.yaml](infra-probe/kzero-infra-probe-native.sample.yaml) (or selfhosted **`kzero-infra-probe-redis-native.sample.yaml`**).
+3. Grant RBAC for Helm release secrets/configmaps, **`pods`** (checks), and optional **`pvc`** / **`exec`** in the probe namespace — see [kzero-selfhosted run/in-cluster/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/in-cluster).
+
+Optional **`pvc.*`** on probe **`down`** or **`exec.*`** write/read checks can extend the mini-pipeline when chart retention does not delete PVCs automatically.
+
+```yaml
+run:
+  execution: native
+  kubeconfig: ""   # in-cluster Job
+
+infra_probe:
+  pipeline:
+    up:
+      - release.probe-ns/probe-redis
+    down:
+      - release.probe-ns/probe-redis
 ```
 
 ## Probe chart teardown (operator-owned)
