@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
@@ -153,5 +154,47 @@ func TestCheckPipelineWorkloads_statefulSetNoReplicas(t *testing.T) {
 	})
 	if err == nil || !strings.Contains(err.Error(), "replicas unset") {
 		t.Fatalf("got %v", err)
+	}
+}
+
+func TestCheckPipelineWorkloads_pvcNotFoundOK(t *testing.T) {
+	t.Parallel()
+
+	client := fake.NewSimpleClientset()
+	cfg := &config.Config{
+		Pipelines: config.PipelinesConfig{
+			Down: []config.PipelineStep{{Type: "pvc", Namespace: "db", Name: "data-0", Ref: "pvc.db/data-0"}},
+		},
+	}
+	lines, skipped, err := CheckPipelineWorkloads(context.Background(), cfg, func(string) (kubernetes.Interface, error) {
+		return client, nil
+	})
+	if err != nil || skipped != "" {
+		t.Fatalf("unexpected err=%v skipped=%q", err, skipped)
+	}
+	if len(lines) != 1 || !lines[0].OK || lines[0].Detail != "not found (delete no-op)" {
+		t.Fatalf("lines=%+v", lines)
+	}
+}
+
+func TestCheckPipelineWorkloads_pvcFound(t *testing.T) {
+	t.Parallel()
+
+	client := fake.NewSimpleClientset(&corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{Name: "data-0", Namespace: "db"},
+	})
+	cfg := &config.Config{
+		Pipelines: config.PipelinesConfig{
+			Down: []config.PipelineStep{{Type: "pvc", Namespace: "db", Name: "data-0", Ref: "pvc.db/data-0"}},
+		},
+	}
+	lines, skipped, err := CheckPipelineWorkloads(context.Background(), cfg, func(string) (kubernetes.Interface, error) {
+		return client, nil
+	})
+	if err != nil || skipped != "" {
+		t.Fatalf("unexpected err=%v skipped=%q", err, skipped)
+	}
+	if len(lines) != 1 || !lines[0].OK || lines[0].Detail != "found" {
+		t.Fatalf("lines=%+v", lines)
 	}
 }

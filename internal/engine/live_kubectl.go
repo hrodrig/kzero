@@ -99,6 +99,37 @@ func (r *LiveRunner) workloadFor(cfg *config.Config) (executor.Workload, error) 
 	return wl, nil
 }
 
+func (r *LiveRunner) runPVCDelete(ctx context.Context, cfg *config.Config, step config.PipelineStep) error {
+	pvc, err := r.pvcFor(cfg)
+	if err != nil {
+		return err
+	}
+	opCtx, cancel := withOpTimeout(ctx, cfg)
+	defer cancel()
+
+	r.logLive("delete pvc %s/%s (background propagation, ignore-not-found)", step.Namespace, step.Name)
+	return pvc.Delete(opCtx, step.Namespace, step.Name)
+}
+
+func (r *LiveRunner) pvcFor(cfg *config.Config) (executor.PVCDeleter, error) {
+	if r.PVC != nil {
+		return r.PVC, nil
+	}
+	key := cfg.Run.Kubeconfig
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.cachedPVC != nil && r.cachedPVCKey == key {
+		return r.cachedPVC, nil
+	}
+	pvc, err := executor.NewPVCDeleter(cfg.Run.Kubeconfig)
+	if err != nil {
+		return nil, fmt.Errorf("pvc deleter: %w", err)
+	}
+	r.cachedPVC = pvc
+	r.cachedPVCKey = key
+	return pvc, nil
+}
+
 func (r *LiveRunner) runReleaseScript(ctx context.Context, cfg *config.Config, phase Phase, step config.PipelineStep) error {
 	helm, err := r.helmFor(cfg)
 	if err != nil {

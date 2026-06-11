@@ -112,6 +112,28 @@ run:
 	}
 }
 
+func TestLoadConfig_PVCStep(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - pvc.database/data-postgresql-0
+run:
+  mode: "live"
+`)
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load() returned error: %v", err)
+	}
+	step := cfg.Pipelines.Down[0]
+	if step.Type != "pvc" || step.Namespace != "database" || step.Name != "data-postgresql-0" {
+		t.Fatalf("unexpected pvc step: %#v", step)
+	}
+}
+
 func TestLoadConfig_releaseChartOptions(t *testing.T) {
 	t.Parallel()
 

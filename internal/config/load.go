@@ -21,6 +21,7 @@ var supportedStepKinds = map[string]struct{}{
 	"deployment":  {},
 	"statefulset": {},
 	"release":     {},
+	"pvc":         {},
 }
 
 type rawConfig struct {
@@ -176,7 +177,7 @@ func parseReferenceStep(ref string) (PipelineStep, error) {
 		if kind == "daemonset" {
 			return PipelineStep{}, fmt.Errorf(`unsupported step kind "daemonset" in %q: kubectl scale is not supported for DaemonSet; use a custom: step with kubectl patch to set a nodeSelector that drains the pods`, ref)
 		}
-		return PipelineStep{}, fmt.Errorf("unsupported step kind %q in %q (supported: deployment, statefulset, release)", kind, ref)
+		return PipelineStep{}, fmt.Errorf("unsupported step kind %q in %q (supported: deployment, statefulset, release, pvc)", kind, ref)
 	}
 
 	return PipelineStep{

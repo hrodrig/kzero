@@ -88,4 +88,13 @@ func TestFormatStepPlanLine_releaseAndOptions(t *testing.T) {
 	if !strings.Contains(got, "manifest: helm-assets/prom.yaml") {
 		t.Fatalf("missing manifest hint: %q", got)
 	}
+
+	pvc := config.PipelineStep{
+		Ref: "pvc.database/data-postgresql-0", Type: "pvc",
+		Namespace: "database", Name: "data-postgresql-0",
+	}
+	got = FormatStepPlanLine(shellCfg, pvc, "", "down")
+	if !strings.Contains(got, "delete pvc (background propagation") {
+		t.Fatalf("missing pvc delete hint: %q", got)
+	}
 }

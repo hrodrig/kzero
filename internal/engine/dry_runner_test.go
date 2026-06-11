@@ -109,6 +109,24 @@ func TestDryRunner_ReleaseUpSDKPlan(t *testing.T) {
 	}
 }
 
+func TestDryRunner_PVCDeletePlan(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+	r := &DryRunner{Log: testEmitter(&buf)}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run"}}
+	step := config.PipelineStep{
+		Ref: "pvc.database/data-postgresql-0", Type: "pvc",
+		Namespace: "database", Name: "data-postgresql-0",
+	}
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "delete pvc database/data-postgresql-0") {
+		t.Fatalf("expected pvc delete plan, got: %q", buf.String())
+	}
+}
+
 func TestDryRunner_ReleaseDownSDKPlan(t *testing.T) {
 	t.Parallel()
 

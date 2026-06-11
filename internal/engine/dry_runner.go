@@ -52,6 +52,13 @@ func (r *DryRunner) RunPipelineStep(ctx context.Context, cfg *config.Config, pha
 		}
 	}
 
+	if step.Type == "pvc" {
+		if r.Log != nil {
+			r.Log.DryRun(cfg, fmt.Sprintf("delete pvc %s/%s (background propagation, ignore-not-found)", step.Namespace, step.Name))
+		}
+		return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
+	}
+
 	if r.releaseDryRunHandled(cfg, phase, step) {
 		return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
 	}

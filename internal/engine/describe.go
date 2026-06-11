@@ -24,32 +24,50 @@ func DescribeStep(step config.PipelineStep) string {
 // phase is the pipeline phase name ("down" or "up") for release step hints.
 func FormatStepPlanLine(cfg *config.Config, step config.PipelineStep, helmWorkspace string, phase string) string {
 	base := DescribeStep(step)
-	var extras []string
-
-	if step.Type == "release" {
-		if phase == string(PhaseDown) {
-			if executor.WantHelmSDK(cfg) {
-				extras = append(extras, "helm sdk uninstall --wait --ignore-not-found")
-			} else {
-				extras = append(extras, "helm uninstall --wait --ignore-not-found")
-			}
-		} else if strings.TrimSpace(helmWorkspace) != "" {
-			if executor.WantHelmSDK(cfg) {
-				if spec, err := executor.ResolveChartSpec(cfg, step); err == nil {
-					extras = append(extras, executor.FormatChartPlan(spec))
-				} else if strings.TrimSpace(step.Chart) != "" {
-					extras = append(extras, executor.FormatChartPlan(executor.ChartSpec{Chart: step.Chart, Version: step.Version, Wait: true}))
-				} else {
-					manifest := filepath.Join(strings.TrimSpace(helmWorkspace), step.Name+".yaml")
-					extras = append(extras, fmt.Sprintf("helm upgrade --install (sdk, manifest: %s)", manifest))
-				}
-			} else {
-				script := filepath.Join(strings.TrimSpace(helmWorkspace), step.Name+".sh")
-				extras = append(extras, fmt.Sprintf("script: %s", script))
-			}
-		}
+	extras := append(stepTypePlanExtras(cfg, step, helmWorkspace, phase), stepOptionPlanExtras(step)...)
+	if len(extras) == 0 {
+		return base
 	}
+	return base + " (" + strings.Join(extras, ", ") + ")"
+}
 
+func stepTypePlanExtras(cfg *config.Config, step config.PipelineStep, helmWorkspace, phase string) []string {
+	switch step.Type {
+	case "release":
+		return releasePlanExtras(cfg, step, helmWorkspace, phase)
+	case "pvc":
+		return []string{"delete pvc (background propagation, ignore-not-found)"}
+	default:
+		return nil
+	}
+}
+
+func releasePlanExtras(cfg *config.Config, step config.PipelineStep, helmWorkspace, phase string) []string {
+	if phase == string(PhaseDown) {
+		if executor.WantHelmSDK(cfg) {
+			return []string{"helm sdk uninstall --wait --ignore-not-found"}
+		}
+		return []string{"helm uninstall --wait --ignore-not-found"}
+	}
+	if strings.TrimSpace(helmWorkspace) == "" {
+		return nil
+	}
+	if executor.WantHelmSDK(cfg) {
+		if spec, err := executor.ResolveChartSpec(cfg, step); err == nil {
+			return []string{executor.FormatChartPlan(spec)}
+		}
+		if strings.TrimSpace(step.Chart) != "" {
+			return []string{executor.FormatChartPlan(executor.ChartSpec{Chart: step.Chart, Version: step.Version, Wait: true})}
+		}
+		manifest := filepath.Join(strings.TrimSpace(helmWorkspace), step.Name+".yaml")
+		return []string{fmt.Sprintf("helm upgrade --install (sdk, manifest: %s)", manifest)}
+	}
+	script := filepath.Join(strings.TrimSpace(helmWorkspace), step.Name+".sh")
+	return []string{fmt.Sprintf("script: %s", script)}
+}
+
+func stepOptionPlanExtras(step config.PipelineStep) []string {
+	var extras []string
 	if step.PreStep != "" {
 		extras = append(extras, "pre: "+step.PreStep)
 	}
@@ -65,9 +83,5 @@ func FormatStepPlanLine(cfg *config.Config, step config.PipelineStep, helmWorksp
 	if step.Timeout > 0 {
 		extras = append(extras, "timeout: "+step.Timeout.String())
 	}
-
-	if len(extras) == 0 {
-		return base
-	}
-	return base + " (" + strings.Join(extras, ", ") + ")"
+	return extras
 }

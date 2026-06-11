@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hrodrig/kzero/internal/cluster"
 	"github.com/hrodrig/kzero/internal/config"
 )
 
@@ -629,5 +630,59 @@ func TestLiveRunner_noEnvPassthroughHook(t *testing.T) {
 	}
 	if !envHas(preEnv, "KZERO_PHASE=down") {
 		t.Fatalf("missing KZERO_PHASE, got %v", preEnv)
+	}
+}
+
+func TestLiveRunner_PVCDelete(t *testing.T) {
+	t.Parallel()
+
+	var deleted []string
+	var buf strings.Builder
+	r := &LiveRunner{
+		PVC: &stubPVCDeleter{
+			deleteFn: func(_ context.Context, ns, name string) error {
+				deleted = append(deleted, ns+"/"+name)
+				return nil
+			},
+		},
+		Log: testEmitter(&buf),
+	}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	step := config.PipelineStep{
+		Ref: "pvc.database/data-postgresql-0", Type: "pvc",
+		Namespace: "database", Name: "data-postgresql-0",
+	}
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step); err != nil {
+		t.Fatal(err)
+	}
+	if len(deleted) != 1 || deleted[0] != "database/data-postgresql-0" {
+		t.Fatalf("deleted=%v", deleted)
+	}
+}
+
+type stubPVCDeleter struct {
+	deleteFn func(context.Context, string, string) error
+}
+
+func (s *stubPVCDeleter) Delete(ctx context.Context, namespace, name string) error {
+	return s.deleteFn(ctx, namespace, name)
+}
+
+func TestLiveRunner_pvcFor_caches(t *testing.T) {
+	t.Parallel()
+
+	kc := cluster.TestKubeconfigPath(t)
+	r := &LiveRunner{}
+	cfg := &config.Config{Run: config.RunConfig{Kubeconfig: kc}}
+	p1, err := r.pvcFor(cfg)
+	if err != nil {
+		t.Fatalf("pvcFor: %v", err)
+	}
+	p2, err := r.pvcFor(cfg)
+	if err != nil {
+		t.Fatalf("pvcFor second: %v", err)
+	}
+	if p1 != p2 {
+		t.Fatal("expected cached pvc deleter")
 	}
 }

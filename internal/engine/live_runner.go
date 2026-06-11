@@ -23,12 +23,16 @@ type LiveRunner struct {
 	Workload executor.Workload
 	// Helm overrides release backend (tests). When nil, resolved from cfg and cached under mu.
 	Helm executor.HelmReleases
+	// PVC overrides pvc delete backend (tests). When nil, resolved from cfg and cached under mu.
+	PVC executor.PVCDeleter
 
 	mu            sync.Mutex // guards cachedWL / cachedWLKey and cachedHelm / cachedHelmKey
 	cachedWL      executor.Workload
 	cachedWLKey   string
 	cachedHelm    executor.HelmReleases
 	cachedHelmKey string
+	cachedPVC     executor.PVCDeleter
+	cachedPVCKey  string
 }
 
 // RunHook implements Runner.
@@ -63,6 +67,8 @@ func (r *LiveRunner) runMainPipelineStep(ctx context.Context, cfg *config.Config
 		return r.runScaledWorkload(ctx, cfg, phase, step)
 	case "release":
 		return r.runReleaseScript(ctx, cfg, phase, step)
+	case "pvc":
+		return r.runPVCDelete(ctx, cfg, step)
 	default:
 		return fmt.Errorf("live: unsupported pipeline resource type %q", step.Type)
 	}
@@ -100,7 +106,7 @@ func (r *LiveRunner) stepHookEnv(cfg *config.Config, phase Phase, index int, hoo
 		env = append(env, "KZERO_STEP_CUSTOM="+step.Custom)
 	}
 	switch step.Type {
-	case "deployment", "statefulset", "release":
+	case "deployment", "statefulset", "release", "pvc":
 		env = append(env, "KZERO_STEP_TYPE="+step.Type)
 		env = append(env, "KZERO_STEP_NAMESPACE="+step.Namespace)
 		env = append(env, "KZERO_STEP_NAME="+step.Name)

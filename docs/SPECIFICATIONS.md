@@ -93,7 +93,7 @@ When `run.mode` is `live`, `deployment` and `statefulset` steps use a **Workload
 | Value | Behavior |
 |-------|----------|
 | `shell` | `kubectl scale` and `kubectl rollout status` (subprocess; honors `command.kubectl` and `KUBECONFIG` from `run.kubeconfig`). |
-| `native` | `k8s.io/client-go`: update workload replica count and poll readiness (no `kubectl` for scale/wait). Requires a valid kubeconfig / in-cluster config. **`release.*`** steps use **Helm SDK** (`helm.sh/helm/v3`) instead of shell **`helm`** / **`.sh`** scripts. |
+| `native` | `k8s.io/client-go`: update workload replica count and poll readiness (no `kubectl` for scale/wait). Requires a valid kubeconfig / in-cluster config. **`release.*`** steps use **Helm SDK** (`helm.sh/helm/v3`) instead of shell **`helm`** / **`.sh`** scripts. **`pvc.*`** steps delete claims via the API (always native; ignores `run.execution`). |
 | `auto` | Try **native** (workloads + Helm SDK for releases); on client init failure, fall back to **shell** and print a one-line notice on the run output stream. |
 
 Hooks, `custom:` steps, and per-step `pre`/`post` always use `/bin/sh` regardless of `run.execution`.
@@ -111,6 +111,7 @@ Compact step references (`<kind>.<namespace>/<name>`) in `pipelines.down` and `p
 | `deployment` | scale to 0 (`shell`: `kubectl scale`; `native`: API update) | scale to N (default 1; optional `wait_for_ready` → rollout wait) |
 | `statefulset` | scale to 0 | scale to N (default 1; optional `wait_for_ready` → rollout wait) |
 | `release` | `helm uninstall <name> -n <namespace> --wait --ignore-not-found` (live); dry-run logs the same | `<helm.workspace>/<name>.sh` (install/upgrade script) |
+| `pvc` | delete claim via API (`DeletePropagationBackground`, ignore-not-found) | same (delete only; typically used after scale-down on **`down`**) |
 
 `daemonset` is **not** a built-in kind in v1 because the Kubernetes API server does not expose a `/scale` subresource for DaemonSet, so `kubectl scale daemonset/...` returns `Error from server (NotFound): the server could not find the requested resource`. Configs that reference `daemonset.<ns>/<name>` are rejected at parse time.
 
@@ -139,6 +140,7 @@ and `daemonset-enable.sh` removes that nodeSelector key. A future minor release 
     - `deployment.argocd/argocd-server`
     - `statefulset.database/postgresql`
     - `release.monitoring/kube-prometheus-stack`
+    - `pvc.database/data-postgresql-0`
 - Map step with one key (resource or `custom`):
   - `custom: ./hooks/example-custom.sh`
   - `custom` mapping may include **only** these additional keys: `pre`, `post` (each a non-empty string path to a shell script).
@@ -194,7 +196,7 @@ If `pre` fails, the main action and `post` for that step do not run; the phase f
 | `KZERO_STEP_HOOK` | `pre` or `post` |
 | `KZERO_STEP_REF` | Set when the step has a compact ref (e.g. `deployment.ns/app`) |
 | `KZERO_STEP_CUSTOM` | Set when the step is a `custom` script path |
-| `KZERO_STEP_TYPE`, `KZERO_STEP_NAMESPACE`, `KZERO_STEP_NAME` | Set for `deployment`, `statefulset`, and `release` steps |
+| `KZERO_STEP_TYPE`, `KZERO_STEP_NAMESPACE`, `KZERO_STEP_NAME` | Set for `deployment`, `statefulset`, `release`, and `pvc` steps |
 | `KZERO_RELEASE_NAME`, `KZERO_RELEASE_NAMESPACE` | Set for **`release`** steps (per-step `pre`/`post` and release `.sh` scripts) |
 
 Release `.sh` scripts also receive `KZERO_PHASE` on install (see engine implementation).

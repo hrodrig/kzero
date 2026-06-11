@@ -26,7 +26,7 @@ type Line struct {
 	Detail string
 }
 
-// CheckPipelineWorkloads verifies deployment/statefulset steps exist in the API when a client is available.
+// CheckPipelineWorkloads verifies deployment/statefulset/pvc steps against the API when a client is available.
 // Returns lines in stable ref order, a skip reason (non-empty if checks were not run), and a combined error if any check failed.
 func CheckPipelineWorkloads(ctx context.Context, cfg *config.Config, factory ClientFactory) (lines []Line, skipped string, err error) {
 	if cfg == nil {
@@ -40,19 +40,19 @@ func CheckPipelineWorkloads(ctx context.Context, cfg *config.Config, factory Cli
 		return nil, fmt.Sprintf("cannot load kubeconfig: %v", clientErr), nil
 	}
 
-	refs := collectWorkloadRefs(cfg)
+	refs := collectPipelineResourceRefs(cfg)
 	lines = make([]Line, 0, len(refs))
 	var fail []string
 	for _, ref := range refs {
 		step := ref.step
 		line := Line{Ref: ref.key}
-		checkErr := checkWorkload(ctx, client, step.Type, step.Namespace, step.Name)
+		okDetail, checkErr := checkPipelineResource(ctx, client, step.Type, step.Namespace, step.Name)
 		if checkErr != nil {
 			line.Detail = checkErr.Error()
 			fail = append(fail, ref.key+": "+line.Detail)
 		} else {
 			line.OK = true
-			line.Detail = "found"
+			line.Detail = okDetail
 		}
 		lines = append(lines, line)
 	}
@@ -62,17 +62,17 @@ func CheckPipelineWorkloads(ctx context.Context, cfg *config.Config, factory Cli
 	return lines, "", nil
 }
 
-type workloadRef struct {
+type pipelineResourceRef struct {
 	key  string
 	step config.PipelineStep
 }
 
-func collectWorkloadRefs(cfg *config.Config) []workloadRef {
+func collectPipelineResourceRefs(cfg *config.Config) []pipelineResourceRef {
 	seen := make(map[string]struct{})
-	var out []workloadRef
+	var out []pipelineResourceRef
 	add := func(steps []config.PipelineStep) {
 		for _, s := range steps {
-			if s.Type != "deployment" && s.Type != "statefulset" {
+			if s.Type != "deployment" && s.Type != "statefulset" && s.Type != "pvc" {
 				continue
 			}
 			if s.Namespace == "" || s.Name == "" {
@@ -83,7 +83,7 @@ func collectWorkloadRefs(cfg *config.Config) []workloadRef {
 				continue
 			}
 			seen[key] = struct{}{}
-			out = append(out, workloadRef{key: key, step: s})
+			out = append(out, pipelineResourceRef{key: key, step: s})
 		}
 	}
 	add(cfg.Pipelines.Down)
@@ -91,28 +91,41 @@ func collectWorkloadRefs(cfg *config.Config) []workloadRef {
 	return out
 }
 
-func checkWorkload(ctx context.Context, client kubernetes.Interface, kind, namespace, name string) error {
+func collectWorkloadRefs(cfg *config.Config) []pipelineResourceRef {
+	return collectPipelineResourceRefs(cfg)
+}
+
+func checkPipelineResource(ctx context.Context, client kubernetes.Interface, kind, namespace, name string) (okDetail string, err error) {
 	switch kind {
 	case "deployment":
-		dep, err := client.AppsV1().Deployments(namespace).Get(ctx, name, metav1.GetOptions{})
-		if err != nil {
-			return friendlyAPIError(kind, namespace, name, err)
+		dep, getErr := client.AppsV1().Deployments(namespace).Get(ctx, name, metav1.GetOptions{})
+		if getErr != nil {
+			return "", friendlyAPIError(kind, namespace, name, getErr)
 		}
 		if dep.Spec.Replicas == nil {
-			return fmt.Errorf("%s %s/%s: spec.replicas unset (cannot scale)", kind, namespace, name)
+			return "", fmt.Errorf("%s %s/%s: spec.replicas unset (cannot scale)", kind, namespace, name)
 		}
-		return nil
+		return "found", nil
 	case "statefulset":
-		sts, err := client.AppsV1().StatefulSets(namespace).Get(ctx, name, metav1.GetOptions{})
-		if err != nil {
-			return friendlyAPIError(kind, namespace, name, err)
+		sts, getErr := client.AppsV1().StatefulSets(namespace).Get(ctx, name, metav1.GetOptions{})
+		if getErr != nil {
+			return "", friendlyAPIError(kind, namespace, name, getErr)
 		}
 		if sts.Spec.Replicas == nil {
-			return fmt.Errorf("%s %s/%s: spec.replicas unset (cannot scale)", kind, namespace, name)
+			return "", fmt.Errorf("%s %s/%s: spec.replicas unset (cannot scale)", kind, namespace, name)
 		}
-		return nil
+		return "found", nil
+	case "pvc":
+		_, getErr := client.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, name, metav1.GetOptions{})
+		if getErr != nil {
+			if apierrors.IsNotFound(getErr) {
+				return "not found (delete no-op)", nil
+			}
+			return "", friendlyAPIError(kind, namespace, name, getErr)
+		}
+		return "found", nil
 	default:
-		return fmt.Errorf("unsupported kind %q", kind)
+		return "", fmt.Errorf("unsupported kind %q", kind)
 	}
 }
 
