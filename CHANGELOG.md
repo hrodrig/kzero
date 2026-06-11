@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-06-10
+
 ### Added
 
+- **In-cluster auth:** when **`run.kubeconfig`** is empty, **`LoadRESTConfig`** tries default kubeconfig discovery, then **`rest.InClusterConfig()`** (Pod service account). **`Kubernetes target:`** shows an **`in-cluster`** audit block; pipeline step namespaces still come from compact refs.
 - **Secret redaction (#17):** `internal/redact` scrubs bearer tokens, webhook URLs, and common `*_TOKEN` / `*_KEY` env patterns in engine logs, notify error payloads, and subprocess output.
 - **`run.no_env_passthrough`** and **`--no-env-passthrough`** on pipeline commands — hooks and kubectl subprocesses receive only **`KZERO_*`**, optional **`KUBECONFIG`**, and correlation fields.
 
@@ -214,7 +217,9 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.6.2...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/hrodrig/kzero/compare/v0.7.0...v0.7.1
+[0.7.0]: https://github.com/hrodrig/kzero/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/hrodrig/kzero/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/hrodrig/kzero/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/hrodrig/kzero/compare/v0.5.7...v0.6.0

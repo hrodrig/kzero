@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	cfgFile            string
-	logFormat          string
-	noEnvPassthrough   bool
+	cfgFile          string
+	logFormat        string
+	noEnvPassthrough bool
 )
 
 // Execute runs the root command tree.

@@ -17,11 +17,11 @@ type RunFunc func(ctx context.Context, argv0 string, args, env []string, dir str
 
 // ShellDeps supplies kubectl invocation for Shell workload steps.
 type ShellDeps struct {
-	Kubectl            string
-	Kubeconfig         string
-	NoEnvPassthrough   bool
-	Run                RunFunc
-	WriteOut           func([]byte)
+	Kubectl          string
+	Kubeconfig       string
+	NoEnvPassthrough bool
+	Run              RunFunc
+	WriteOut         func([]byte)
 }
 
 // Shell scales and waits via kubectl subprocesses.
@@ -101,11 +101,11 @@ func ShellFromConfig(cfg *config.Config, run RunFunc, writeOut func([]byte)) *Sh
 		kc = cfg.Run.Kubeconfig
 	}
 	return NewShell(ShellDeps{
-		Kubectl:            kubectl,
-		Kubeconfig:         kc,
-		NoEnvPassthrough:   cfg != nil && cfg.Run.NoEnvPassthrough,
-		Run:                run,
-		WriteOut:           writeOut,
+		Kubectl:          kubectl,
+		Kubeconfig:       kc,
+		NoEnvPassthrough: cfg != nil && cfg.Run.NoEnvPassthrough,
+		Run:              run,
+		WriteOut:         writeOut,
 	})
 }
 

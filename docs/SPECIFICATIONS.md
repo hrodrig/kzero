@@ -64,6 +64,15 @@ kzero stays **generic** and **configuration-driven**: the engine interprets vali
 - `retry.attempts`, `retry.delay` (loaded; engine behavior: see subsection below)
 - `run.kubeconfig`, `run.mode`, `run.execution`, `run.timeout`, `run.operation_timeout`, `run.no_env_passthrough`
 
+### `run.kubeconfig` and in-cluster auth
+
+When **`run.kubeconfig`** is empty or omitted, the engine loads API credentials in order: default kubeconfig discovery (`KUBECONFIG`, `~/.kube/config`, in-cluster mount at `/var/run/secrets/kubernetes.io`), then **`rest.InClusterConfig()`** (Pod service account token). This supports **Job/CronJob** runs without mounting a kubeconfig Secret.
+
+- Leave **`run.kubeconfig`** empty in in-cluster manifests; mount pipeline YAML via ConfigMap or Secret.
+- The Job **ServiceAccount** needs RBAC in **each namespace referenced by pipeline steps** (`deployment.ns/name`, etc.), not only the Pod namespace.
+- **`Kubernetes target:`** prints an **`in-cluster`** block (API server, service-account namespace) for audit; step namespaces come from compact refs.
+- **`release.*`**, phase hooks, and **`custom:`** still invoke **`/bin/sh`** and external **`helm`** on the shell path — use **`run.execution: native`** scale-only pipelines in the distroless image until the **Helm SDK** executor ships (**0.7.x #25**). Operator Job examples: [kzero-selfhosted `run/in-cluster/`](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/in-cluster).
+
 **Removed from contract (schema 1.0):** `run.worker_concurrency` is **not** supported. Legacy configs that still set it are ignored (unknown key under `run`). Pipeline parallelism is intentionally out of scope; express ordering and optional batching in YAML step order and `custom:` scripts.
 
 <a id="current-engine-sequencing-retry-and-concurrency"></a>

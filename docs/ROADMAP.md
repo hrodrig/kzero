@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-06-11 (**0.7.0** tagged Cosign/SBOM; **0.7.x** plan in [plan-0.7.x.md](plan-0.7.x.md))
+**Last reviewed:** 2026-06-10 (**0.7.1** tagged in-cluster + **#17**; **0.7.x** plan in [plan-0.7.x.md](plan-0.7.x.md))
 
 ### Versioning note
 
@@ -31,7 +31,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 |------|------------|
 | **0.5.x** | **Closed** (last item **#15** in **v0.5.7**) |
 | **0.6.x** | **Closed** in **v0.6.0** (notify, slog, verify, infra probe, preflight, OS audit, Helm workspace SPEC) |
-| **0.7.x** | **Cosign/SBOM** (**0.7.0**), **`exec`**, **`pvc` delete**, **Helm SDK**, **probe checks native**, scheduling/affinity sanity, extended step types |
+| **0.7.x** | **Helm SDK** (**#25**), **`exec`**, **`pvc` delete**, **probe checks native**, scheduling/affinity sanity, extended step types — **0.7.0** Cosign/SBOM and **0.7.1** in-cluster + **#17** shipped |
 | **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI |
 
 **Helm** stays on **workspace scripts** until the **Helm SDK** executor lands (**0.7.x #24**). Shell-backed hooks remain for operator-maintained scripts on the host.
@@ -56,6 +56,8 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.5.6** | Pipeline command factorization, coverage housekeeping, BSD port sync. |
 | **0.5.7** | **0.5.x band closed:** subprocess error taxonomy (`WrapSubprocess`, `ErrTransient`) for kubectl/helm/hooks on the shell path. |
 | **0.6.0** | **0.6.x band closed:** multi-channel **`notify`**, **`--log-format`**, **`kzero verify`**, **`kzero probe`** / **`infra_probe`**, live **preflight**, OS audit fields, Helm workspace SPEC. |
+| **0.7.0** | **Cosign** keyless signing and **SPDX/CycloneDX SBOM** in GoReleaser (roadmap **0.7.x #28**). |
+| **0.7.1** | **In-cluster auth** (empty **`run.kubeconfig`** → service account token); **#17** secret redaction and **`--no-env-passthrough`**. |
 
 ---
 
@@ -112,7 +114,7 @@ Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subpr
 | # | Item | Status |
 |---|------|--------|
 | 16 | **`log/slog`** with `--log-format json|text`. | Done (PR3, develop) |
-| 17 | **Secret redaction** in logs and optional `--no-env-passthrough` for hooks. | **Done** (develop, 0.7.x PR1) |
+| 17 | **Secret redaction** in logs and optional `--no-env-passthrough` for hooks. | **Done** (**v0.7.1**) |
 | 18 | **`notify`**: implement common outbound channels—**Slack**, **Microsoft Teams**, **PagerDuty**, and a **generic webhook** (plus **Discord** already in schema). Fire on pipeline start/end and optionally on error; redact secrets in payloads. **`kzero notify test`** verifies channels without a pipeline. | Done (PR2, develop) |
 | 19 | **Preflight connectivity**: before mutating resources, verify API reachability (e.g. list nodes or equivalent) and fail fast with a clear message. | **Done** (develop, 0.6.x PR6) |
 | 20 | **Operator audit**: include **OS username** and **UID** in the **`Kubernetes target:`** block and expose **`KZERO_OS_USER`** / **`KZERO_OS_UID`** (or equivalent) to hooks and subprocesses. Complements **`client.id`**. | Done (PR1, develop) |
@@ -135,7 +137,7 @@ Broader pipeline primitives via **client-go** and **helm.sh/helm/v3**, keeping a
 | 25 | **Helm SDK executor** for **`release.*`**: `upgrade --install` / uninstall with wait; optional **OCI registry login** from config (no separate operator image). | Pending |
 | 26 | **Infra probe (native checks)**: PVC **Bound** wait, optional in-volume write/read, and probe teardown using built-in step types (extends **0.6.x #22** for distroless/single-binary runs). | Pending |
 | 27 | **Scheduling / affinity sanity** (optional probe or **`verify`** check): detect pods **Pending** due to node selectors, affinity, or taints after maintenance—separate from storage probe. | Pending |
-| 28 | **Cosign signing** and **SBOM** (e.g. Syft) in the GoReleaser pipeline. | **Done** (develop, 0.7.0) |
+| 28 | **Cosign signing** and **SBOM** (e.g. Syft) in the GoReleaser pipeline. | **Done** (**v0.7.0**) |
 | 29 | **Additional step types**: `job`, `cronjob` (suspend), safe generic **patch** / scale patterns for CRDs. Prefer native executor; shell fallback where needed. | Pending |
 | 30 | **`custom:` parity**: pass `KZERO_PHASE` and step metadata to the main custom script (same as per-step hooks / release scripts). | Pending |
 | 31 | **Release script ergonomics**: optional non-flat paths under `helm.workspace` (e.g. `monitoring/kube-prometheus-stack.sh`) without breaking flat `name.sh` convention. | Pending |

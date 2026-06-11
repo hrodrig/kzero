@@ -1,6 +1,6 @@
 # Plan 0.7.x — native cluster ops, Helm SDK, and operator safety
 
-**Status:** in progress on `develop` — **PR1 (#17)** implemented; **PR2 (0.7.1 in-cluster)** next
+**Status:** in progress on `develop` — **PR2 (0.7.1)** released; **PR3 (Helm SDK #25)** next
 
 ### Internal merge order (2026-06-11)
 
@@ -72,7 +72,7 @@ Merge to **`develop`** in this order. Each PR: `make lint`, `make test`, `make c
 | PR | Item | Roadmap | Notes |
 |----|------|---------|--------|
 | PR1 | Secret redaction + env passthrough | **#17** | Close 0.6.x carry-over |
-| PR2 | In-cluster release (**0.7.1**) | — | CHANGELOG, SPEC note, ROADMAP; image tag |
+| PR2 | In-cluster release (**0.7.1**) | — | **Done** — CHANGELOG, SPEC, ROADMAP, tag **`v0.7.1`** |
 | PR3 | Helm SDK MVP | **#25** | uninstall + upgrade --install + wait |
 | PR4 | **`pvc`** step | **#24** | |
 | PR5 | **`exec`** step | **#23** | |
