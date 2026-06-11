@@ -37,3 +37,16 @@ func TestBuildPayload_duration(t *testing.T) {
 		t.Fatalf("got %q", p.Duration)
 	}
 }
+
+func TestBuildPayload_redactsError(t *testing.T) {
+	t.Parallel()
+
+	p := buildPayload(EventError, Meta{
+		Command: "down",
+		Mode:    "live",
+		Error:   "notify failed Bearer secret-token SLACK_WEBHOOK_URL=https://hooks.example/x",
+	})
+	if strings.Contains(p.Error, "secret-token") || strings.Contains(p.Error, "hooks.example") {
+		t.Fatalf("expected redacted error, got %q", p.Error)
+	}
+}

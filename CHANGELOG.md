@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Secret redaction (#17):** `internal/redact` scrubs bearer tokens, webhook URLs, and common `*_TOKEN` / `*_KEY` env patterns in engine logs, notify error payloads, and subprocess output.
+- **`run.no_env_passthrough`** and **`--no-env-passthrough`** on pipeline commands — hooks and kubectl subprocesses receive only **`KZERO_*`**, optional **`KUBECONFIG`**, and correlation fields.
+
 ## [0.7.0] - 2026-06-10
 
 ### Added

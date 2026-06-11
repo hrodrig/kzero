@@ -8,6 +8,7 @@ import (
 
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/correlation"
+	"github.com/hrodrig/kzero/internal/redact"
 )
 
 // Kind labels engine and CLI summary events.
@@ -83,6 +84,8 @@ func (e *Emitter) Emit(entry Entry) {
 	if e == nil || e.w == nil {
 		return
 	}
+	entry.Msg = redact.String(entry.Msg)
+	entry.Err = redact.String(entry.Err)
 	if entry.Command == "" {
 		entry.Command = e.command
 	}

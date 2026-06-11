@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/hrodrig/kzero/internal/redact"
 )
 
 type payload struct {
@@ -34,7 +36,7 @@ func buildPayload(event string, meta Meta) payload {
 		p.FailedStep = meta.FailedStep
 	}
 	if meta.Error != "" {
-		p.Error = meta.Error
+		p.Error = redact.String(meta.Error)
 	}
 	return p
 }

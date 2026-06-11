@@ -3,12 +3,13 @@ package executor
 import (
 	"context"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/redact"
+	"github.com/hrodrig/kzero/internal/subprocess"
 )
 
 // RunFunc runs a subprocess; same contract as engine.LiveExec.
@@ -16,10 +17,11 @@ type RunFunc func(ctx context.Context, argv0 string, args, env []string, dir str
 
 // ShellDeps supplies kubectl invocation for Shell workload steps.
 type ShellDeps struct {
-	Kubectl    string
-	Kubeconfig string
-	Run        RunFunc
-	WriteOut   func([]byte)
+	Kubectl            string
+	Kubeconfig         string
+	NoEnvPassthrough   bool
+	Run                RunFunc
+	WriteOut           func([]byte)
 }
 
 // Shell scales and waits via kubectl subprocesses.
@@ -74,16 +76,17 @@ func (s *Shell) WaitRollout(ctx context.Context, kind, namespace, name string, t
 }
 
 func (s *Shell) env() []string {
-	env := os.Environ()
-	if k := strings.TrimSpace(s.deps.Kubeconfig); k != "" {
-		env = append(env, "KUBECONFIG="+k)
-	}
-	return env
+	return subprocess.Env(&config.Config{
+		Run: config.RunConfig{
+			Kubeconfig:       s.deps.Kubeconfig,
+			NoEnvPassthrough: s.deps.NoEnvPassthrough,
+		},
+	})
 }
 
 func (s *Shell) write(out []byte) {
 	if len(out) > 0 && s.deps.WriteOut != nil {
-		s.deps.WriteOut(out)
+		s.deps.WriteOut([]byte(redact.String(string(out))))
 	}
 }
 
@@ -98,10 +101,11 @@ func ShellFromConfig(cfg *config.Config, run RunFunc, writeOut func([]byte)) *Sh
 		kc = cfg.Run.Kubeconfig
 	}
 	return NewShell(ShellDeps{
-		Kubectl:    kubectl,
-		Kubeconfig: kc,
-		Run:        run,
-		WriteOut:   writeOut,
+		Kubectl:            kubectl,
+		Kubeconfig:         kc,
+		NoEnvPassthrough:   cfg != nil && cfg.Run.NoEnvPassthrough,
+		Run:                run,
+		WriteOut:           writeOut,
 	})
 }
 

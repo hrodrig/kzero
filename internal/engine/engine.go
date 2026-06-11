@@ -9,6 +9,7 @@ import (
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/notify"
+	"github.com/hrodrig/kzero/internal/redact"
 	"github.com/hrodrig/kzero/internal/retry"
 )
 
@@ -153,7 +154,7 @@ func dispatchPipelineError(ctx context.Context, eng *Engine, cfg *config.Config,
 		started = time.Now()
 	}
 	meta := notify.MetaFromConfig(cfg, eng.Command, started, time.Since(started))
-	meta.Error = err.Error()
+	meta.Error = redact.String(err.Error())
 	var pe *PipelineError
 	if errors.As(err, &pe) {
 		meta.FailedStep = pe.FailedStep()

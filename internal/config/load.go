@@ -106,6 +106,7 @@ func bindConfigEnv(v *viper.Viper) {
 		"verify.format",
 		"infra_probe.enabled",
 		"run.probe_cache_dir",
+		"run.no_env_passthrough",
 	} {
 		_ = v.BindEnv(key)
 	}

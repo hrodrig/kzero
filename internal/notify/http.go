@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/hrodrig/kzero/internal/redact"
 )
 
 func postJSON(ctx context.Context, client HTTPDoer, url string, headers map[string]string, v any) error {
@@ -31,12 +33,12 @@ func postJSON(ctx context.Context, client HTTPDoer, url string, headers map[stri
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("notify: POST %s: %w", redactURL(url), err)
+		return fmt.Errorf("notify: POST %s: %w", redact.URL(url), err)
 	}
 	defer resp.Body.Close()
 	_, _ = io.Copy(io.Discard, resp.Body)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("notify: POST %s: HTTP %d", redactURL(url), resp.StatusCode)
+		return fmt.Errorf("notify: POST %s: HTTP %d", redact.URL(url), resp.StatusCode)
 	}
 	return nil
 }
@@ -58,27 +60,14 @@ func postRawJSON(ctx context.Context, client HTTPDoer, url string, headers map[s
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("notify: POST %s: %w", redactURL(url), err)
+		return fmt.Errorf("notify: POST %s: %w", redact.URL(url), err)
 	}
 	defer resp.Body.Close()
 	_, _ = io.Copy(io.Discard, resp.Body)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("notify: POST %s: HTTP %d", redactURL(url), resp.StatusCode)
+		return fmt.Errorf("notify: POST %s: HTTP %d", redact.URL(url), resp.StatusCode)
 	}
 	return nil
-}
-
-func redactURL(u string) string {
-	if i := strings.Index(u, "://"); i >= 0 {
-		rest := u[i+3:]
-		if j := strings.Index(rest, "@"); j >= 0 {
-			return u[:i+3] + "***@" + rest[j+1:]
-		}
-	}
-	if len(u) > 24 {
-		return u[:12] + "…" + u[len(u)-4:]
-	}
-	return "***"
 }
 
 func joinErrors(errs []error) error {

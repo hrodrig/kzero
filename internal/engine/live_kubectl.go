@@ -10,8 +10,9 @@ import (
 	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
-	"github.com/hrodrig/kzero/internal/correlation"
 	"github.com/hrodrig/kzero/internal/executor"
+	"github.com/hrodrig/kzero/internal/redact"
+	"github.com/hrodrig/kzero/internal/subprocess"
 )
 
 // LiveExec runs argv0 with args; env is the full environment; dir is the working directory.
@@ -38,11 +39,7 @@ func helmPath(cfg *config.Config) string {
 }
 
 func (r *LiveRunner) envFor(cfg *config.Config) []string {
-	env := os.Environ()
-	if k := strings.TrimSpace(cfg.Run.Kubeconfig); k != "" {
-		env = append(env, "KUBECONFIG="+k)
-	}
-	return correlation.AppendEnv(cfg, env)
+	return subprocess.Env(cfg)
 }
 
 func (r *LiveRunner) runProcess(ctx context.Context, argv0 string, args, env []string, dir string) ([]byte, error) {
@@ -54,7 +51,7 @@ func (r *LiveRunner) runProcess(ctx context.Context, argv0 string, args, env []s
 
 func (r *LiveRunner) writeOutput(out []byte) {
 	if len(out) > 0 && r.Log != nil {
-		_, _ = r.Log.Writer().Write(out)
+		_, _ = r.Log.Writer().Write([]byte(redact.String(string(out))))
 	}
 }
 

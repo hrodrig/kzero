@@ -21,6 +21,15 @@ func writeDeferredFeatureWarnings(w io.Writer, cfg *config.Config) {
 	}
 }
 
+func applyCLIRunOverrides(cfg *config.Config) {
+	if cfg == nil {
+		return
+	}
+	if noEnvPassthrough {
+		cfg.Run.NoEnvPassthrough = true
+	}
+}
+
 func writeKubernetesTarget(w io.Writer, cfg *config.Config) error {
 	if err := cluster.Print(w, cfg); err != nil {
 		return fmt.Errorf("kubernetes target: %w", err)
@@ -108,6 +117,7 @@ func buildPipelineCmd(use, short, label string, run pipelineRunFunc) *cobra.Comm
 			if err != nil {
 				return fmt.Errorf("load config: %w", err)
 			}
+			applyCLIRunOverrides(cfg)
 			writeDeferredFeatureWarnings(cmd.ErrOrStderr(), cfg)
 			return runPipelineCommand(cmd, label, cfg, func(eng *engine.Engine, cfg *config.Config) error {
 				return run(cmd.Context(), eng, cfg)

@@ -510,3 +510,45 @@ func TestLiveRunner_DaemonSetUnsupported(t *testing.T) {
 		t.Fatalf("expected unsupported type error for daemonset, got %v", err)
 	}
 }
+
+func TestLiveRunner_noEnvPassthroughHook(t *testing.T) {
+	t.Setenv("HOME", "/tmp/kzero-hook-home")
+	t.Setenv("USER", "hook-user")
+
+	dir := t.TempDir()
+	pre := filepath.Join(dir, "pre.sh")
+	if err := os.WriteFile(pre, []byte("#!/bin/sh\necho ok\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	var preEnv []string
+	r := &LiveRunner{
+		Exec: func(ctx context.Context, argv0 string, args, env []string, dir string) ([]byte, error) {
+			if argv0 == "/bin/sh" {
+				preEnv = env
+			}
+			return nil, nil
+		},
+	}
+	cfg := &config.Config{
+		Run:     config.RunConfig{Mode: "live", NoEnvPassthrough: true},
+		Command: config.CommandConfig{Kubectl: "/bin/kubectl"},
+	}
+	step := config.PipelineStep{
+		Ref:       "deployment.ns/app",
+		Type:      "deployment",
+		Namespace: "ns",
+		Name:      "app",
+		PreStep:   pre,
+	}
+
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step); err != nil {
+		t.Fatal(err)
+	}
+	if envHas(preEnv, "HOME=/tmp/kzero-hook-home") || envHas(preEnv, "USER=hook-user") {
+		t.Fatalf("host env leaked into hook: %v", preEnv)
+	}
+	if !envHas(preEnv, "KZERO_PHASE=down") {
+		t.Fatalf("missing KZERO_PHASE, got %v", preEnv)
+	}
+}

@@ -140,4 +140,6 @@ type RunConfig struct {
 	Verify bool `mapstructure:"verify"`
 	// ProbeCacheDir stores infra probe cache files (empty = OS temp dir).
 	ProbeCacheDir string `mapstructure:"probe_cache_dir"`
+	// NoEnvPassthrough when true omits os.Environ from hook/release/kubectl subprocesses.
+	NoEnvPassthrough bool `mapstructure:"no_env_passthrough"`
 }

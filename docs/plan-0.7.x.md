@@ -1,9 +1,6 @@
 # Plan 0.7.x — native cluster ops, Helm SDK, and operator safety
 
-**Status:** in progress on `develop`  
-**Shipped:** **`v0.7.0`** on `main` — **#28** Cosign signing + SBOM only  
-**On `develop` (unreleased):** InClusterConfig fallback + in-cluster target block (in-cluster Job smoke validated via [kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted) `make test-kind-in-cluster`)  
-**Target band:** [ROADMAP.md](ROADMAP.md) **0.7.x** items **#17** (carry-over from **0.6.x**), **#23–#27**, **#29–#31**
+**Status:** in progress on `develop` — **PR1 (#17)** implemented; **PR2 (0.7.1 in-cluster)** next
 
 ### Internal merge order (2026-06-11)
 

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/redact"
 )
 
 func TestDispatch_allChannels(t *testing.T) {
@@ -112,7 +113,7 @@ func TestDispatch_onErrorDisabled(t *testing.T) {
 func TestRedactURL(t *testing.T) {
 	t.Parallel()
 	u := "https://hooks.slack.com/services/T00/B00/XXXXXXXXXXXXXXXXXXXXXXXX"
-	got := redactURL(u)
+	got := redact.URL(u)
 	if got == u {
 		t.Fatalf("expected redaction, got %q", got)
 	}

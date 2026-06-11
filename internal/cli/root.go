@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	cfgFile   string
-	logFormat string
+	cfgFile            string
+	logFormat          string
+	noEnvPassthrough   bool
 )
 
 // Execute runs the root command tree.
@@ -31,6 +32,7 @@ so operators can scale workloads and Helm releases in a safe, repeatable way.`,
 
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file path (default: ./kzero.yaml)")
 	rootCmd.PersistentFlags().StringVar(&logFormat, "log-format", "text", "log output format: text or json")
+	rootCmd.PersistentFlags().BoolVar(&noEnvPassthrough, "no-env-passthrough", false, "omit host environment from hook and subprocess env (KZERO_* and KUBECONFIG only)")
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.Version = Version

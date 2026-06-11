@@ -62,7 +62,7 @@ kzero stays **generic** and **configuration-driven**: the engine interprets vali
 - `verify` (optional; post-up readiness — see § **`kzero verify`**)
 - `infra_probe` (optional; pre-destructive probe — see § **`kzero probe`**)
 - `retry.attempts`, `retry.delay` (loaded; engine behavior: see subsection below)
-- `run.kubeconfig`, `run.mode`, `run.execution`, `run.timeout`, `run.operation_timeout`
+- `run.kubeconfig`, `run.mode`, `run.execution`, `run.timeout`, `run.operation_timeout`, `run.no_env_passthrough`
 
 **Removed from contract (schema 1.0):** `run.worker_concurrency` is **not** supported. Legacy configs that still set it are ignored (unknown key under `run`). Pipeline parallelism is intentionally out of scope; express ordering and optional batching in YAML step order and `custom:` scripts.
 
@@ -73,8 +73,9 @@ This subsection documents **observable behavior in the codebase today** (strictl
 
 1. **Sequential pipeline steps:** For `kzero down` / `kzero up` / `kzero reset`, each entry in `pipelines.down` or `pipelines.up` runs **after** the previous step completes successfully. Steps do **not** run in parallel. Fail-fast: the first failing hook or step aborts the phase (see §5). On **down**, `deployment` / `statefulset` steps set replicas without waiting for pods to terminate unless a step defines its own wait semantics via hooks or future fields.
 2. **`retry.attempts` and `retry.delay`:** In **`run.mode: live`**, each **pipeline step** (pre-hook, main step, post-hook as one unit) may be retried up to **`retry.attempts`** times. After failure *n*, the engine waits **`retry.delay × 2^(n−1)`** (capped at **2m**) before the next try. Retries apply only to **transient** errors (API timeout/conflict/429/503, `context.DeadlineExceeded`, common connection/timeout strings). **`ErrNotFound`**, **`ErrForbidden`**, and **`context.Canceled`** are not retried. **`dry-run`** does not retry. A line `[retry] pipeline …` is written to the command output stream when a retry occurs.
-3. **`notify`:** When **`run.mode: live`** and at least one channel is **`enabled`**, the CLI sends **`pipeline.start`** (after the **`Kubernetes target:`** block), **`pipeline.success`** on completion, and **`pipeline.error`** on fail-fast **before** the **`on-error`** hook. Channels: **`slack`**, **`discord`**, **`teams`**, **`pagerduty`** (Events API v2), and **`webhook`** (generic JSON payload). **`notify.on_error`** defaults to **true** when any channel is enabled. **`dry-run`** does not send pipeline notifications. Use **`kzero notify test`** to POST a test event without running a pipeline (see § **`kzero notify test`**). Webhook URLs and routing keys are redacted in notify error messages logged by the engine.
-4. **CLI warnings:** Deferred-feature warnings are reserved for schema fields not yet implemented; **`notify.*`** channels no longer emit deferred warnings once enabled.
+3. **`notify`:** When **`run.mode: live`** and at least one channel is **`enabled`**, the CLI sends **`pipeline.start`** (after the **`Kubernetes target:`** block), **`pipeline.success`** on completion, and **`pipeline.error`** on fail-fast **before** the **`on-error`** hook. Channels: **`slack`**, **`discord`**, **`teams`**, **`pagerduty`** (Events API v2), and **`webhook`** (generic JSON payload). **`notify.on_error`** defaults to **true** when any channel is enabled. **`dry-run`** does not send pipeline notifications. Use **`kzero notify test`** to POST a test event without running a pipeline (see § **`kzero notify test`**). Webhook URLs, bearer tokens, and common `*_TOKEN` / `*_KEY` / `*_SECRET` patterns are redacted in notify payloads and engine logs.
+4. **Secret redaction and hook environment:** Engine logs (text and JSON), notify **`pipeline.error`** payloads, and subprocess stdout/stderr written to the output stream scrub common secret patterns. Set **`run.no_env_passthrough: true`** or pass **`--no-env-passthrough`** on **`down`** / **`up`** / **`reset`** to omit the host **`os.Environ()`** from hook, **`custom:`**, **`release`**, and **`kubectl`** subprocesses — only **`KZERO_*`**, optional **`KUBECONFIG`**, and correlation fields remain. Hooks that depend on host **`PATH`**, cloud SDK env vars, or other inherited credentials must not use this flag.
+5. **CLI warnings:** Deferred-feature warnings are reserved for schema fields not yet implemented; **`notify.*`** channels no longer emit deferred warnings once enabled.
 
 ### Workload execution backend (`run.execution`)
 
@@ -172,7 +173,7 @@ For each pipeline step, when `run.mode` is `live`:
 
 If `pre` fails, the main action and `post` for that step do not run; the phase fails and `hooks.on-error` applies per the global failure policy.
 
-**Environment variables** passed to per-step hook scripts (in addition to the process environment and optional `KUBECONFIG` from `run.kubeconfig`):
+**Environment variables** passed to per-step hook scripts (in addition to the process environment when **`run.no_env_passthrough`** is false, and optional **`KUBECONFIG`** from **`run.kubeconfig`**):
 
 | Variable | Meaning |
 |----------|---------|

@@ -112,7 +112,7 @@ Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subpr
 | # | Item | Status |
 |---|------|--------|
 | 16 | **`log/slog`** with `--log-format json|text`. | Done (PR3, develop) |
-| 17 | **Secret redaction** in logs and optional `--no-env-passthrough` for hooks. | Pending — **partial:** notify HTTP error URL redaction only (0.6.x PR2); full scope in [plan-0.7.x.md](plan-0.7.x.md) PR1 |
+| 17 | **Secret redaction** in logs and optional `--no-env-passthrough` for hooks. | **Done** (develop, 0.7.x PR1) |
 | 18 | **`notify`**: implement common outbound channels—**Slack**, **Microsoft Teams**, **PagerDuty**, and a **generic webhook** (plus **Discord** already in schema). Fire on pipeline start/end and optionally on error; redact secrets in payloads. **`kzero notify test`** verifies channels without a pipeline. | Done (PR2, develop) |
 | 19 | **Preflight connectivity**: before mutating resources, verify API reachability (e.g. list nodes or equivalent) and fail fast with a clear message. | **Done** (develop, 0.6.x PR6) |
 | 20 | **Operator audit**: include **OS username** and **UID** in the **`Kubernetes target:`** block and expose **`KZERO_OS_USER`** / **`KZERO_OS_UID`** (or equivalent) to hooks and subprocesses. Complements **`client.id`**. | Done (PR1, develop) |
