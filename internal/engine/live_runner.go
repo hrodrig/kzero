@@ -25,14 +25,18 @@ type LiveRunner struct {
 	Helm executor.HelmReleases
 	// PVC overrides pvc delete backend (tests). When nil, resolved from cfg and cached under mu.
 	PVC executor.PVCDeleter
+	// PodExec overrides exec backend (tests). When nil, resolved from cfg and cached under mu.
+	PodExec executor.PodExec
 
-	mu            sync.Mutex // guards cachedWL / cachedWLKey and cachedHelm / cachedHelmKey
-	cachedWL      executor.Workload
-	cachedWLKey   string
-	cachedHelm    executor.HelmReleases
-	cachedHelmKey string
-	cachedPVC     executor.PVCDeleter
-	cachedPVCKey  string
+	mu               sync.Mutex // guards cached executors below
+	cachedWL         executor.Workload
+	cachedWLKey      string
+	cachedHelm       executor.HelmReleases
+	cachedHelmKey    string
+	cachedPVC        executor.PVCDeleter
+	cachedPVCKey     string
+	cachedPodExec    executor.PodExec
+	cachedPodExecKey string
 }
 
 // RunHook implements Runner.
@@ -69,6 +73,8 @@ func (r *LiveRunner) runMainPipelineStep(ctx context.Context, cfg *config.Config
 		return r.runReleaseScript(ctx, cfg, phase, step)
 	case "pvc":
 		return r.runPVCDelete(ctx, cfg, step)
+	case "exec":
+		return r.runPodExec(ctx, cfg, step)
 	default:
 		return fmt.Errorf("live: unsupported pipeline resource type %q", step.Type)
 	}
@@ -106,7 +112,7 @@ func (r *LiveRunner) stepHookEnv(cfg *config.Config, phase Phase, index int, hoo
 		env = append(env, "KZERO_STEP_CUSTOM="+step.Custom)
 	}
 	switch step.Type {
-	case "deployment", "statefulset", "release", "pvc":
+	case "deployment", "statefulset", "release", "pvc", "exec":
 		env = append(env, "KZERO_STEP_TYPE="+step.Type)
 		env = append(env, "KZERO_STEP_NAMESPACE="+step.Namespace)
 		env = append(env, "KZERO_STEP_NAME="+step.Name)

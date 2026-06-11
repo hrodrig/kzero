@@ -22,6 +22,7 @@ var supportedStepKinds = map[string]struct{}{
 	"statefulset": {},
 	"release":     {},
 	"pvc":         {},
+	"exec":        {},
 }
 
 type rawConfig struct {
@@ -177,7 +178,7 @@ func parseReferenceStep(ref string) (PipelineStep, error) {
 		if kind == "daemonset" {
 			return PipelineStep{}, fmt.Errorf(`unsupported step kind "daemonset" in %q: kubectl scale is not supported for DaemonSet; use a custom: step with kubectl patch to set a nodeSelector that drains the pods`, ref)
 		}
-		return PipelineStep{}, fmt.Errorf("unsupported step kind %q in %q (supported: deployment, statefulset, release, pvc)", kind, ref)
+		return PipelineStep{}, fmt.Errorf("unsupported step kind %q in %q (supported: deployment, statefulset, release, pvc, exec)", kind, ref)
 	}
 
 	return PipelineStep{
@@ -296,6 +297,8 @@ func applyOneStepOption(step *PipelineStep, k string, v interface{}) error {
 		}
 	case "chart", "version", "values_files", "create_namespace":
 		return applyReleaseStepOption(step, k, v)
+	case "container", "command", "stdin":
+		return applyExecStepOption(step, k, v)
 	default:
 		return fmt.Errorf("unsupported option %q", k)
 	}
@@ -333,6 +336,35 @@ func applyReleaseStepOption(step *PipelineStep, k string, v interface{}) error {
 		step.CreateNamespace = &b
 	default:
 		return fmt.Errorf("unsupported release option %q", k)
+	}
+	return nil
+}
+
+func applyExecStepOption(step *PipelineStep, k string, v interface{}) error {
+	if step.Type != "exec" {
+		return fmt.Errorf("option %q is only valid on exec steps", k)
+	}
+	switch k {
+	case "container":
+		s, ok := v.(string)
+		if !ok || strings.TrimSpace(s) == "" {
+			return errors.New("container must be a non-empty string")
+		}
+		step.Container = strings.TrimSpace(s)
+	case "command":
+		cmd, err := parseStringList(v)
+		if err != nil {
+			return fmt.Errorf("command: %w", err)
+		}
+		step.Command = cmd
+	case "stdin":
+		s, ok := v.(string)
+		if !ok {
+			return errors.New("stdin must be a string")
+		}
+		step.Stdin = s
+	default:
+		return fmt.Errorf("unsupported exec option %q", k)
 	}
 	return nil
 }
@@ -376,6 +408,9 @@ func validate(cfg *Config) error {
 		return errors.New("pipelines.down or pipelines.up is required")
 	}
 	if err := validateHelmWorkspaceForReleases(cfg); err != nil {
+		return err
+	}
+	if err := validateExecSteps(cfg); err != nil {
 		return err
 	}
 	if err := validateVerify(cfg); err != nil {
@@ -644,6 +679,33 @@ func validateHelmWorkspaceForReleases(cfg *Config) error {
 		return errors.New("helm.workspace is required when pipelines include release steps")
 	}
 	return nil
+}
+
+func validateExecSteps(cfg *Config) error {
+	check := func(label string, steps []PipelineStep) error {
+		for i, s := range steps {
+			if s.Type != "exec" {
+				continue
+			}
+			if strings.TrimSpace(s.Container) == "" {
+				return fmt.Errorf("%s item %d: exec step %q requires container", label, i, s.Ref)
+			}
+			if len(s.Command) == 0 {
+				return fmt.Errorf("%s item %d: exec step %q requires command", label, i, s.Ref)
+			}
+		}
+		return nil
+	}
+	if err := check("pipelines.down", cfg.Pipelines.Down); err != nil {
+		return err
+	}
+	if err := check("pipelines.up", cfg.Pipelines.Up); err != nil {
+		return err
+	}
+	if err := check("infra_probe.pipeline.down", cfg.InfraProbe.Pipeline.Down); err != nil {
+		return err
+	}
+	return check("infra_probe.pipeline.up", cfg.InfraProbe.Pipeline.Up)
 }
 
 func pipelinesContainRelease(steps []PipelineStep) bool {

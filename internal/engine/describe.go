@@ -37,6 +37,8 @@ func stepTypePlanExtras(cfg *config.Config, step config.PipelineStep, helmWorksp
 		return releasePlanExtras(cfg, step, helmWorkspace, phase)
 	case "pvc":
 		return []string{"delete pvc (background propagation, ignore-not-found)"}
+	case "exec":
+		return []string{executor.FormatExecPlan(step)}
 	default:
 		return nil
 	}

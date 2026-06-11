@@ -59,6 +59,13 @@ func (r *DryRunner) RunPipelineStep(ctx context.Context, cfg *config.Config, pha
 		return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
 	}
 
+	if step.Type == "exec" {
+		if r.Log != nil {
+			r.Log.DryRun(cfg, executor.FormatExecPlan(step))
+		}
+		return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
+	}
+
 	if r.releaseDryRunHandled(cfg, phase, step) {
 		return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
 	}

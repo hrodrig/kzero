@@ -198,3 +198,54 @@ func TestCheckPipelineWorkloads_pvcFound(t *testing.T) {
 		t.Fatalf("lines=%+v", lines)
 	}
 }
+
+func TestCheckPipelineWorkloads_execPodAndContainer(t *testing.T) {
+	t.Parallel()
+
+	client := fake.NewSimpleClientset(&corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: "postgresql-0", Namespace: "database"},
+		Spec: corev1.PodSpec{Containers: []corev1.Container{
+			{Name: "postgres", Image: "postgres:16"},
+		}},
+	})
+	cfg := &config.Config{
+		Pipelines: config.PipelinesConfig{
+			Down: []config.PipelineStep{{
+				Type: "exec", Namespace: "database", Name: "postgresql-0", Ref: "exec.database/postgresql-0",
+				Container: "postgres", Command: []string{"psql"},
+			}},
+		},
+	}
+	lines, skipped, err := CheckPipelineWorkloads(context.Background(), cfg, func(string) (kubernetes.Interface, error) {
+		return client, nil
+	})
+	if err != nil || skipped != "" {
+		t.Fatalf("err=%v skipped=%q", err, skipped)
+	}
+	if len(lines) != 1 || !lines[0].OK || lines[0].Detail != "pod found, container ok" {
+		t.Fatalf("lines=%+v", lines)
+	}
+}
+
+func TestCheckPipelineWorkloads_execMissingContainer(t *testing.T) {
+	t.Parallel()
+
+	client := fake.NewSimpleClientset(&corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: "postgresql-0", Namespace: "database"},
+		Spec:       corev1.PodSpec{Containers: []corev1.Container{{Name: "postgres"}}},
+	})
+	cfg := &config.Config{
+		Pipelines: config.PipelinesConfig{
+			Down: []config.PipelineStep{{
+				Type: "exec", Namespace: "database", Name: "postgresql-0",
+				Container: "sidecar", Command: []string{"sh"},
+			}},
+		},
+	}
+	_, _, err := CheckPipelineWorkloads(context.Background(), cfg, func(string) (kubernetes.Interface, error) {
+		return client, nil
+	})
+	if err == nil || !strings.Contains(err.Error(), "container \"sidecar\" not found") {
+		t.Fatalf("got %v", err)
+	}
+}

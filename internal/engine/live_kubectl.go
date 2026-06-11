@@ -130,6 +130,48 @@ func (r *LiveRunner) pvcFor(cfg *config.Config) (executor.PVCDeleter, error) {
 	return pvc, nil
 }
 
+func (r *LiveRunner) runPodExec(ctx context.Context, cfg *config.Config, step config.PipelineStep) error {
+	execRunner, err := r.podExecFor(cfg)
+	if err != nil {
+		return err
+	}
+	opCtx, cancel := withOpTimeout(ctx, cfg)
+	defer cancel()
+	if step.Timeout > 0 {
+		var cancelTimeout context.CancelFunc
+		opCtx, cancelTimeout = context.WithTimeout(opCtx, step.Timeout)
+		defer cancelTimeout()
+	}
+
+	r.logLive("%s", executor.FormatExecPlan(step))
+	stdout, stderr, err := execRunner.Run(opCtx, step)
+	r.writeOutput(stdout)
+	r.writeOutput(stderr)
+	if err != nil {
+		return fmt.Errorf("live: %w", err)
+	}
+	return nil
+}
+
+func (r *LiveRunner) podExecFor(cfg *config.Config) (executor.PodExec, error) {
+	if r.PodExec != nil {
+		return r.PodExec, nil
+	}
+	key := cfg.Run.Kubeconfig
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.cachedPodExec != nil && r.cachedPodExecKey == key {
+		return r.cachedPodExec, nil
+	}
+	pe, err := executor.NewPodExec(cfg.Run.Kubeconfig)
+	if err != nil {
+		return nil, fmt.Errorf("pod exec: %w", err)
+	}
+	r.cachedPodExec = pe
+	r.cachedPodExecKey = key
+	return pe, nil
+}
+
 func (r *LiveRunner) runReleaseScript(ctx context.Context, cfg *config.Config, phase Phase, step config.PipelineStep) error {
 	helm, err := r.helmFor(cfg)
 	if err != nil {

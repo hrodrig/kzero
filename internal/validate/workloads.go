@@ -8,6 +8,7 @@ import (
 
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/executor"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -26,7 +27,7 @@ type Line struct {
 	Detail string
 }
 
-// CheckPipelineWorkloads verifies deployment/statefulset/pvc steps against the API when a client is available.
+// CheckPipelineWorkloads verifies deployment/statefulset/pvc/exec steps against the API when a client is available.
 // Returns lines in stable ref order, a skip reason (non-empty if checks were not run), and a combined error if any check failed.
 func CheckPipelineWorkloads(ctx context.Context, cfg *config.Config, factory ClientFactory) (lines []Line, skipped string, err error) {
 	if cfg == nil {
@@ -46,7 +47,7 @@ func CheckPipelineWorkloads(ctx context.Context, cfg *config.Config, factory Cli
 	for _, ref := range refs {
 		step := ref.step
 		line := Line{Ref: ref.key}
-		okDetail, checkErr := checkPipelineResource(ctx, client, step.Type, step.Namespace, step.Name)
+		okDetail, checkErr := checkPipelineResource(ctx, client, step)
 		if checkErr != nil {
 			line.Detail = checkErr.Error()
 			fail = append(fail, ref.key+": "+line.Detail)
@@ -72,7 +73,7 @@ func collectPipelineResourceRefs(cfg *config.Config) []pipelineResourceRef {
 	var out []pipelineResourceRef
 	add := func(steps []config.PipelineStep) {
 		for _, s := range steps {
-			if s.Type != "deployment" && s.Type != "statefulset" && s.Type != "pvc" {
+			if s.Type != "deployment" && s.Type != "statefulset" && s.Type != "pvc" && s.Type != "exec" {
 				continue
 			}
 			if s.Namespace == "" || s.Name == "" {
@@ -95,7 +96,10 @@ func collectWorkloadRefs(cfg *config.Config) []pipelineResourceRef {
 	return collectPipelineResourceRefs(cfg)
 }
 
-func checkPipelineResource(ctx context.Context, client kubernetes.Interface, kind, namespace, name string) (okDetail string, err error) {
+func checkPipelineResource(ctx context.Context, client kubernetes.Interface, step config.PipelineStep) (okDetail string, err error) {
+	kind := step.Type
+	namespace := step.Namespace
+	name := step.Name
 	switch kind {
 	case "deployment":
 		dep, getErr := client.AppsV1().Deployments(namespace).Get(ctx, name, metav1.GetOptions{})
@@ -124,9 +128,32 @@ func checkPipelineResource(ctx context.Context, client kubernetes.Interface, kin
 			return "", friendlyAPIError(kind, namespace, name, getErr)
 		}
 		return "found", nil
+	case "exec":
+		pod, getErr := client.CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
+		if getErr != nil {
+			return "", friendlyAPIError(kind, namespace, name, getErr)
+		}
+		if !podHasContainer(pod, step.Container) {
+			return "", fmt.Errorf("exec %s/%s: container %q not found in pod", namespace, name, step.Container)
+		}
+		return "pod found, container ok", nil
 	default:
 		return "", fmt.Errorf("unsupported kind %q", kind)
 	}
+}
+
+func podHasContainer(pod *corev1.Pod, name string) bool {
+	for _, c := range pod.Spec.Containers {
+		if c.Name == name {
+			return true
+		}
+	}
+	for _, c := range pod.Spec.InitContainers {
+		if c.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 func friendlyAPIError(kind, namespace, name string, err error) error {

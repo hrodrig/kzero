@@ -132,7 +132,7 @@ Broader pipeline primitives via **client-go** and **helm.sh/helm/v3**, keeping a
 
 | # | Item | Status |
 |---|------|--------|
-| 23 | **`exec` step type**: run a command (and optional stdin) inside a named pod/container via **remotecommand**—covers SQL, admin CLIs, and other in-cluster maintenance without a one-off truncate primitive. | Pending |
+| 23 | **`exec` step type**: run a command (and optional stdin) inside a named pod/container via **remotecommand**—covers SQL, admin CLIs, and other in-cluster maintenance without a one-off truncate primitive. | **Done** (develop, PR5) |
 | 24 | **`pvc` step type**: delete named PVCs (or labeled sets) via the API for data-reset pipelines. | **Done** (develop, PR4) |
 | 25 | **Helm SDK executor** for **`release.*`**: `upgrade --install` / uninstall with wait; optional **OCI registry login** from config (no separate operator image). | **Done** (develop, SDK MVP) |
 | 26 | **Infra probe (native checks)**: PVC **Bound** wait, optional in-volume write/read, and probe teardown using built-in step types (extends **0.6.x #22** for distroless/single-binary runs). | Pending |

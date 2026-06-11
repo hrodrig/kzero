@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -684,5 +685,93 @@ func TestLiveRunner_pvcFor_caches(t *testing.T) {
 	}
 	if p1 != p2 {
 		t.Fatal("expected cached pvc deleter")
+	}
+}
+
+func TestLiveRunner_PodExec(t *testing.T) {
+	t.Parallel()
+
+	var ran bool
+	var buf strings.Builder
+	r := &LiveRunner{
+		Log: testEmitter(&buf),
+		PodExec: &stubPodExecRunner{
+			runFn: func(_ context.Context, step config.PipelineStep) ([]byte, []byte, error) {
+				ran = true
+				if step.Container != "postgres" || step.Command[0] != "psql" {
+					t.Fatalf("unexpected step: %#v", step)
+				}
+				return []byte("ok\n"), nil, nil
+			},
+		},
+	}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	step := config.PipelineStep{
+		Ref: "exec.database/postgresql-0", Type: "exec",
+		Namespace: "database", Name: "postgresql-0",
+		Container: "postgres", Command: []string{"psql", "-c", "select 1"},
+	}
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step); err != nil {
+		t.Fatal(err)
+	}
+	if !ran {
+		t.Fatal("expected pod exec to run")
+	}
+	if !strings.Contains(buf.String(), "exec database/postgresql-0") {
+		t.Fatalf("log: %q", buf.String())
+	}
+}
+
+func TestLiveRunner_PodExecFailure(t *testing.T) {
+	t.Parallel()
+
+	var buf strings.Builder
+	r := &LiveRunner{
+		Log: testEmitter(&buf),
+		PodExec: &stubPodExecRunner{
+			runFn: func(_ context.Context, _ config.PipelineStep) ([]byte, []byte, error) {
+				return nil, []byte("err\n"), errors.New("exec failed")
+			},
+		},
+	}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	step := config.PipelineStep{
+		Ref: "exec.database/postgresql-0", Type: "exec",
+		Namespace: "database", Name: "postgresql-0",
+		Container: "postgres", Command: []string{"psql"},
+	}
+	err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(buf.String(), "err") {
+		t.Fatalf("expected stderr in log, got %q", buf.String())
+	}
+}
+
+type stubPodExecRunner struct {
+	runFn func(context.Context, config.PipelineStep) ([]byte, []byte, error)
+}
+
+func (s *stubPodExecRunner) Run(ctx context.Context, step config.PipelineStep) ([]byte, []byte, error) {
+	return s.runFn(ctx, step)
+}
+
+func TestLiveRunner_podExecFor_caches(t *testing.T) {
+	t.Parallel()
+
+	kc := cluster.TestKubeconfigPath(t)
+	r := &LiveRunner{}
+	cfg := &config.Config{Run: config.RunConfig{Kubeconfig: kc}}
+	p1, err := r.podExecFor(cfg)
+	if err != nil {
+		t.Fatalf("podExecFor: %v", err)
+	}
+	p2, err := r.podExecFor(cfg)
+	if err != nil {
+		t.Fatalf("podExecFor second: %v", err)
+	}
+	if p1 != p2 {
+		t.Fatal("expected cached pod exec runner")
 	}
 }

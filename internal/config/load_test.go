@@ -134,6 +134,113 @@ run:
 	}
 }
 
+func TestLoadConfig_ExecStep(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - exec.database/postgresql-0:
+        container: postgres
+        command: ["psql", "-c", "TRUNCATE foo"]
+        timeout: 5m
+run:
+  mode: "live"
+`)
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load() returned error: %v", err)
+	}
+	step := cfg.Pipelines.Down[0]
+	if step.Type != "exec" || step.Namespace != "database" || step.Name != "postgresql-0" {
+		t.Fatalf("unexpected exec step: %#v", step)
+	}
+	if step.Container != "postgres" || len(step.Command) != 3 || step.Command[0] != "psql" {
+		t.Fatalf("unexpected exec options: %#v", step)
+	}
+	if step.Timeout != 5*time.Minute {
+		t.Fatalf("timeout: %s", step.Timeout)
+	}
+}
+
+func TestLoadConfig_ExecStepRequiresOptions(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - exec.database/postgresql-0
+run:
+  mode: "live"
+`)
+	_, err := Load(path)
+	if err == nil || !strings.Contains(err.Error(), "requires container") {
+		t.Fatalf("expected container validation error, got %v", err)
+	}
+}
+
+func TestLoadConfig_ExecStepRequiresCommand(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - exec.database/postgresql-0:
+        container: postgres
+run:
+  mode: "live"
+`)
+	_, err := Load(path)
+	if err == nil || !strings.Contains(err.Error(), "requires command") {
+		t.Fatalf("expected command validation error, got %v", err)
+	}
+}
+
+func TestLoadConfig_execOptionOnDeploymentRejected(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.ns/app:
+        container: postgres
+run:
+  mode: "live"
+`)
+	_, err := Load(path)
+	if err == nil || !strings.Contains(err.Error(), "only valid on exec steps") {
+		t.Fatalf("expected exec option rejection, got %v", err)
+	}
+}
+
+func TestLoadConfig_execWithStdin(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - exec.database/postgresql-0:
+        container: postgres
+        command: ["psql"]
+        stdin: "select 1;"
+run:
+  mode: "live"
+`)
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Pipelines.Down[0].Stdin != "select 1;" {
+		t.Fatalf("stdin: %q", cfg.Pipelines.Down[0].Stdin)
+	}
+}
+
 func TestLoadConfig_releaseChartOptions(t *testing.T) {
 	t.Parallel()
 

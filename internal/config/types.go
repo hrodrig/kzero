@@ -125,6 +125,10 @@ type PipelineStep struct {
 	Version         string   `mapstructure:"version"`
 	ValuesFiles     []string `mapstructure:"values_files"`
 	CreateNamespace *bool    `mapstructure:"create_namespace"`
+	// Exec options (exec steps only).
+	Container string   `mapstructure:"container"`
+	Command   []string `mapstructure:"command"`
+	Stdin     string   `mapstructure:"stdin"`
 }
 
 type RetryConfig struct {

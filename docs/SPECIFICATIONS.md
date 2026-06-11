@@ -93,7 +93,7 @@ When `run.mode` is `live`, `deployment` and `statefulset` steps use a **Workload
 | Value | Behavior |
 |-------|----------|
 | `shell` | `kubectl scale` and `kubectl rollout status` (subprocess; honors `command.kubectl` and `KUBECONFIG` from `run.kubeconfig`). |
-| `native` | `k8s.io/client-go`: update workload replica count and poll readiness (no `kubectl` for scale/wait). Requires a valid kubeconfig / in-cluster config. **`release.*`** steps use **Helm SDK** (`helm.sh/helm/v3`) instead of shell **`helm`** / **`.sh`** scripts. **`pvc.*`** steps delete claims via the API (always native; ignores `run.execution`). |
+| `native` | `k8s.io/client-go`: update workload replica count and poll readiness (no `kubectl` for scale/wait). Requires a valid kubeconfig / in-cluster config. **`release.*`** steps use **Helm SDK** (`helm.sh/helm/v3`) instead of shell **`helm`** / **`.sh`** scripts. **`pvc.*`** steps delete claims via the API (always native; ignores `run.execution`). **`exec.*`** steps run commands in a pod/container via **remotecommand** (always native). |
 | `auto` | Try **native** (workloads + Helm SDK for releases); on client init failure, fall back to **shell** and print a one-line notice on the run output stream. |
 
 Hooks, `custom:` steps, and per-step `pre`/`post` always use `/bin/sh` regardless of `run.execution`.
@@ -112,6 +112,7 @@ Compact step references (`<kind>.<namespace>/<name>`) in `pipelines.down` and `p
 | `statefulset` | scale to 0 | scale to N (default 1; optional `wait_for_ready` → rollout wait) |
 | `release` | `helm uninstall <name> -n <namespace> --wait --ignore-not-found` (live); dry-run logs the same | `<helm.workspace>/<name>.sh` (install/upgrade script) |
 | `pvc` | delete claim via API (`DeletePropagationBackground`, ignore-not-found) | same (delete only; typically used after scale-down on **`down`**) |
+| `exec` | run `command` in pod container via API exec subresource | same |
 
 `daemonset` is **not** a built-in kind in v1 because the Kubernetes API server does not expose a `/scale` subresource for DaemonSet, so `kubectl scale daemonset/...` returns `Error from server (NotFound): the server could not find the requested resource`. Configs that reference `daemonset.<ns>/<name>` are rejected at parse time.
 
@@ -141,12 +142,16 @@ and `daemonset-enable.sh` removes that nodeSelector key. A future minor release 
     - `statefulset.database/postgresql`
     - `release.monitoring/kube-prometheus-stack`
     - `pvc.database/data-postgresql-0`
+    - `exec.database/postgresql-0`:
+        container: postgres
+        command: ["psql", "-c", "TRUNCATE …"]
 - Map step with one key (resource or `custom`):
   - `custom: ./hooks/example-custom.sh`
   - `custom` mapping may include **only** these additional keys: `pre`, `post` (each a non-empty string path to a shell script).
   - Resource map value (object) may include:
     - Up / scale options: `replicas`, `wait_for_ready`, `timeout`
     - Per-step hooks: `pre`, `post` (non-empty string paths; see below)
+    - **`exec.*`** options: `container` (required), `command` (required string list), optional `stdin`, `timeout`
   - Example (per-step hooks on a StatefulSet):
     - `statefulset.database/postgresql: { pre: ./hooks/before-pg.sh, post: ./hooks/after-pg.sh }`
   - Example (custom step with hooks):
@@ -196,7 +201,7 @@ If `pre` fails, the main action and `post` for that step do not run; the phase f
 | `KZERO_STEP_HOOK` | `pre` or `post` |
 | `KZERO_STEP_REF` | Set when the step has a compact ref (e.g. `deployment.ns/app`) |
 | `KZERO_STEP_CUSTOM` | Set when the step is a `custom` script path |
-| `KZERO_STEP_TYPE`, `KZERO_STEP_NAMESPACE`, `KZERO_STEP_NAME` | Set for `deployment`, `statefulset`, `release`, and `pvc` steps |
+| `KZERO_STEP_TYPE`, `KZERO_STEP_NAMESPACE`, `KZERO_STEP_NAME` | Set for `deployment`, `statefulset`, `release`, `pvc`, and `exec` steps |
 | `KZERO_RELEASE_NAME`, `KZERO_RELEASE_NAMESPACE` | Set for **`release`** steps (per-step `pre`/`post` and release `.sh` scripts) |
 
 Release `.sh` scripts also receive `KZERO_PHASE` on install (see engine implementation).

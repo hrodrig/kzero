@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Helm SDK (#25):** when **`run.execution`** is **`native`** or **`auto`**, **`release.*`** steps use **`helm.sh/helm/v3`** for uninstall (down) and **`upgrade --install`** (up) from **`<helm.workspace>/<release>.yaml`** or step **`chart`** / **`version`** overrides — no host **`helm`** binary or **`.sh`** install script on the SDK path.
 - **`pvc` step (#24):** compact ref **`pvc.<namespace>/<claim>`** deletes a named PersistentVolumeClaim via the Kubernetes API (`DeletePropagationBackground`, ignore-not-found); always native regardless of **`run.execution`**.
+- **`exec` step (#23):** compact ref **`exec.<namespace>/<pod>`** with required **`container`** and **`command`** runs a command in the pod via **remotecommand**; optional **`stdin`** and per-step **`timeout`**; always native regardless of **`run.execution`**.
 - Dependency: **`helm.sh/helm/v3`** v3.21.x; **`k8s.io/*`** client modules aligned to **v0.35.1** for Helm SDK compatibility.
 
 ## [0.7.1] - 2026-06-10

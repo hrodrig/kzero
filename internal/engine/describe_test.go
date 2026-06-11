@@ -97,4 +97,14 @@ func TestFormatStepPlanLine_releaseAndOptions(t *testing.T) {
 	if !strings.Contains(got, "delete pvc (background propagation") {
 		t.Fatalf("missing pvc delete hint: %q", got)
 	}
+
+	execStep := config.PipelineStep{
+		Ref: "exec.database/postgresql-0", Type: "exec",
+		Namespace: "database", Name: "postgresql-0",
+		Container: "postgres", Command: []string{"psql", "-c", "select 1"},
+	}
+	got = FormatStepPlanLine(shellCfg, execStep, "", "down")
+	if !strings.Contains(got, "exec database/postgresql-0 container=postgres") {
+		t.Fatalf("missing exec hint: %q", got)
+	}
 }
