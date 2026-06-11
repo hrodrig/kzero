@@ -1,24 +1,17 @@
 package executor
 
 import (
-	"fmt"
-	"strings"
-
+	"github.com/hrodrig/kzero/internal/cluster"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
-// NewKubernetesClient builds a clientset from kubeconfig path (empty uses default loading rules).
+// NewKubernetesClient builds a clientset from run.kubeconfig (empty uses default loading rules
+// and in-cluster service account credentials when running inside a Pod).
 func NewKubernetesClient(kubeconfig string) (kubernetes.Interface, error) {
-	loading := clientcmd.NewDefaultClientConfigLoadingRules()
-	if k := strings.TrimSpace(kubeconfig); k != "" {
-		loading.ExplicitPath = k
-	}
-	overrides := &clientcmd.ConfigOverrides{}
-	cc, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loading, overrides).ClientConfig()
+	cc, err := cluster.LoadRESTConfig(kubeconfig)
 	if err != nil {
-		return nil, fmt.Errorf("load kubeconfig: %w", err)
+		return nil, err
 	}
 	return kubernetes.NewForConfig(rest.CopyConfig(cc))
 }

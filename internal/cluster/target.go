@@ -3,11 +3,13 @@ package cluster
 import (
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/correlation"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	api "k8s.io/client-go/tools/clientcmd/api"
 )
@@ -21,7 +23,8 @@ type Target struct {
 	KubeconfigPath string
 }
 
-// ResolveFromConfig uses cfg.Run.Kubeconfig and default client-go loading rules when empty.
+// ResolveFromConfig uses cfg.Run.Kubeconfig, default client-go loading rules when empty,
+// and in-cluster service account credentials when no kubeconfig is available.
 func ResolveFromConfig(cfg *config.Config) (Target, error) {
 	if cfg == nil {
 		return Target{}, fmt.Errorf("no config")
@@ -30,23 +33,61 @@ func ResolveFromConfig(cfg *config.Config) (Target, error) {
 	kc := strings.TrimSpace(cfg.Run.Kubeconfig)
 	if kc != "" {
 		loading.ExplicitPath = kc
-	}
-	raw, err := loading.Load()
-	if err != nil {
-		return Target{}, fmt.Errorf("load kubeconfig: %w", err)
-	}
-	t, err := targetFromRaw(raw)
-	if err != nil {
-		return Target{}, err
-	}
-	if kc != "" {
+		raw, err := loading.Load()
+		if err != nil {
+			return Target{}, fmt.Errorf("load kubeconfig: %w", err)
+		}
+		t, err := targetFromRaw(raw)
+		if err != nil {
+			return Target{}, err
+		}
 		t.KubeconfigPath = kc
-	} else if f := loading.GetDefaultFilename(); f != "" {
-		t.KubeconfigPath = f
-	} else {
-		t.KubeconfigPath = "(default kubeconfig search path)"
+		return t, nil
 	}
-	return t, nil
+
+	raw, err := loading.Load()
+	if err == nil {
+		if t, tErr := targetFromRaw(raw); tErr == nil {
+			if f := loading.GetDefaultFilename(); f != "" {
+				t.KubeconfigPath = f
+			} else {
+				t.KubeconfigPath = "(default kubeconfig search path)"
+			}
+			return t, nil
+		}
+	}
+
+	return resolveInClusterTarget(err)
+}
+
+func resolveInClusterTarget(kubeconfigErr error) (Target, error) {
+	ic, icErr := rest.InClusterConfig()
+	if icErr == nil {
+		return targetFromInCluster(ic)
+	}
+	if kubeconfigErr != nil {
+		return Target{}, fmt.Errorf("load kubeconfig: %w", kubeconfigErr)
+	}
+	return Target{}, fmt.Errorf("load kubeconfig: no valid kubeconfig found (in-cluster: %v)", icErr)
+}
+
+func targetFromInCluster(cfg *rest.Config) (Target, error) {
+	if cfg == nil {
+		return Target{}, fmt.Errorf("empty in-cluster config")
+	}
+	ns := "default"
+	if b, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); err == nil {
+		if n := strings.TrimSpace(string(b)); n != "" {
+			ns = n
+		}
+	}
+	return Target{
+		ContextName:    "in-cluster",
+		ClusterName:    "in-cluster",
+		Server:         cfg.Host,
+		Namespace:      ns,
+		KubeconfigPath: "(in-cluster service account)",
+	}, nil
 }
 
 func targetFromRaw(raw *api.Config) (Target, error) {
