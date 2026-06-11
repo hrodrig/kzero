@@ -1,6 +1,6 @@
 # Plan 0.7.x — native cluster ops, Helm SDK, and operator safety
 
-**Status:** in progress on `develop` — **PR4 (`pvc` #24)** in progress; **one release tag** at band close (after **#31**), not per PR
+**Status:** in progress on `develop` — **PR5 (`exec` #23)** next; **one release tag** at band close (after **#31**), not per PR
 
 ### Internal merge order (2026-06-11)
 
