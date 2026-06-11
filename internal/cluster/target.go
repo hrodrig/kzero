@@ -9,6 +9,7 @@ import (
 
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/correlation"
+	"github.com/hrodrig/kzero/internal/log"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	api "k8s.io/client-go/tools/clientcmd/api"
@@ -149,7 +150,7 @@ func Print(w io.Writer, cfg *config.Config) error {
 		))
 	}
 	for _, line := range lines {
-		if _, err := fmt.Fprintln(w, line); err != nil {
+		if err := log.WriteLine(w, log.LevelInfo, line); err != nil {
 			return err
 		}
 	}

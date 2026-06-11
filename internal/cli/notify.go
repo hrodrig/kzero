@@ -42,6 +42,9 @@ pipeline.success, or pipeline.error payload formatting.`,
 			if err != nil {
 				return err
 			}
+			if err := applyLogLevel(); err != nil {
+				return err
+			}
 			return runTimed(cmd.ErrOrStderr(), "notify test", cfg.Run.Color, format, func() error {
 				if err := notify.DispatchTest(cmd.Context(), cfg, event, nil); err != nil {
 					return err

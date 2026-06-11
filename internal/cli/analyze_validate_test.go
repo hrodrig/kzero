@@ -113,7 +113,7 @@ run:
 	cmd := newRootCmd()
 	cmd.SetOut(&stdout)
 	cmd.SetErr(&stdout)
-	cmd.SetArgs([]string{"analyze", "--config", cfgPath})
+	cmd.SetArgs([]string{"analyze", "--log-level", "debug", "--config", cfgPath})
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute: %v", err)
 	}

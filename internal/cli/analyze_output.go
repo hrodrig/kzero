@@ -9,6 +9,7 @@ import (
 	"github.com/hrodrig/kzero/internal/cluster"
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/engine"
+	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/preflight"
 	"github.com/hrodrig/kzero/internal/validate"
 )
@@ -37,7 +38,7 @@ func printAnalyzePlan(w, errW io.Writer, cfg *config.Config, configPath string) 
 		return err
 	}
 	if w := preflight.AnalyzeWarning(context.Background(), cfg, validate.DefaultClientFactory); w != "" {
-		_, _ = fmt.Fprintf(errW, "warning: %s\n", w)
+		_ = log.WriteLine(errW, log.LevelWarn, "warning: "+w)
 	}
 	return nil
 }
@@ -70,7 +71,14 @@ func printAnalyzeHeader(w io.Writer, cfg *config.Config, configPath string) erro
 		lines = append(lines, "Helm workspace: "+ws)
 	}
 	for _, line := range lines {
-		if _, err := fmt.Fprintln(w, line); err != nil {
+		level := log.LevelDebug
+		switch {
+		case strings.HasPrefix(line, "Client id:"),
+			strings.HasPrefix(line, "Config:"),
+			strings.HasPrefix(line, "Run mode:"):
+			level = log.LevelInfo
+		}
+		if err := log.WriteLine(w, level, line); err != nil {
 			return err
 		}
 	}
@@ -78,7 +86,7 @@ func printAnalyzeHeader(w io.Writer, cfg *config.Config, configPath string) erro
 }
 
 func printAnalyzePipelines(w io.Writer, cfg *config.Config) error {
-	if _, err := fmt.Fprintf(w, "Pipeline steps: down=%d up=%d\n", len(cfg.Pipelines.Down), len(cfg.Pipelines.Up)); err != nil {
+	if err := log.WriteLine(w, log.LevelInfo, fmt.Sprintf("Pipeline steps: down=%d up=%d", len(cfg.Pipelines.Down), len(cfg.Pipelines.Up))); err != nil {
 		return err
 	}
 	helmWS := cfg.Helm.Workspace
@@ -93,11 +101,14 @@ func printDeferredSummary(w io.Writer, cfg *config.Config) error {
 	if len(warnings) == 0 {
 		return nil
 	}
-	if _, err := fmt.Fprintln(w, "\nDeferred (accepted by schema; not implemented by v1 engine):"); err != nil {
+	if _, err := fmt.Fprintln(w); err != nil {
+		return err
+	}
+	if err := log.WriteLine(w, log.LevelWarn, "Deferred (accepted by schema; not implemented by v1 engine):"); err != nil {
 		return err
 	}
 	for _, msg := range warnings {
-		if _, err := fmt.Fprintf(w, "  - %s\n", msg); err != nil {
+		if err := log.WriteLine(w, log.LevelWarn, "  - "+msg); err != nil {
 			return err
 		}
 	}
@@ -119,7 +130,7 @@ func printPhaseHooks(w io.Writer, cfg *config.Config) {
 		if strings.TrimSpace(h.path) == "" {
 			continue
 		}
-		_, _ = fmt.Fprintf(w, "Hook %s: %s\n", h.label, h.path)
+		_ = log.WriteLine(w, log.LevelInfo, fmt.Sprintf("Hook %s: %s", h.label, h.path))
 	}
 }
 
@@ -127,12 +138,12 @@ func printPipelinePhase(w io.Writer, cfg *config.Config, phase string, steps []c
 	if len(steps) == 0 {
 		return nil
 	}
-	if _, err := fmt.Fprintf(w, "\n[%s]\n", phase); err != nil {
+	if err := log.WriteLine(w, log.LevelInfo, fmt.Sprintf("[%s]", phase)); err != nil {
 		return err
 	}
 	for i, step := range steps {
 		line := engine.FormatStepPlanLine(cfg, step, helmWorkspace, phase)
-		if _, err := fmt.Fprintf(w, "  %d: %s\n", i, line); err != nil {
+		if err := log.WriteLine(w, log.LevelInfo, fmt.Sprintf("  %d: %s", i, line)); err != nil {
 			return err
 		}
 	}

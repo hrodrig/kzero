@@ -43,6 +43,7 @@ func (r *LiveRunner) runProcess(ctx context.Context, argv0 string, args, env []s
 func (r *LiveRunner) writeOutput(out []byte) {
 	if len(out) > 0 && r.Log != nil {
 		_, _ = r.Log.Writer().Write([]byte(redact.String(string(out))))
+		r.Log.FlushSubprocessOutput()
 	}
 }
 

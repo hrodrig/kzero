@@ -285,7 +285,7 @@ Per-step `pre` / `post` on `release.*` steps use the same hook env table (includ
 
 Before phase hooks in **live** mode, the engine calls the Kubernetes API (`Discovery().ServerVersion()`). Failure aborts with **`preflight: cannot reach Kubernetes API:`** (or kubeconfig load error). **Dry-run** prints a single plan line (`preflight: would verify Kubernetes API reachability`) and does not call the API. **`kzero analyze`** may emit a **warning** on stderr when preflight would fail in live mode (non-fatal).
 
-**Engine log lines** (`[dry-run]`, `[retry]`, native dry-run messages) include a **`client_id=`** field when `client.id` is set (values with spaces are quoted). **`[live]`** lines omit **`client_id=`** (audit identity is printed once in the **`Kubernetes target:`** block, together with **`os_user`** and **`os_uid`**). **`[live]`** lines are emitted before scale, rollout wait, Helm uninstall, release scripts, and hook/custom script execution. Hook, custom, and release subprocesses receive **`KZERO_CLIENT_ID`** (when configured), **`KZERO_OS_USER`**, and **`KZERO_OS_UID`** in their environment.
+**Engine log lines** (`[dry-run]`, `[retry]`, native dry-run messages) include a **`client_id=`** field when `client.id` is set (values with spaces are quoted). **`[live]`** lines omit **`client_id=`** (audit identity is printed once in the **`Kubernetes target:`** block, together with **`os_user`** and **`os_uid`**). In **`text`** mode every line is prefixed with **`YYYY/MM/DD HH:MM:SS: kzero - [LEVEL] -`** before the message body (**`LEVEL`**: **`DBG`**, **`INF`**, **`WRN`**, **`ERR`**). **`[live]`** and **`[dry-run]`** pipeline lines are **`INF`**; **`[retry]`** is **`WRN`**. **`[live]`** lines are emitted before scale, rollout wait, Helm uninstall, release scripts, and hook/custom script execution. Hook, custom, and release subprocesses receive **`KZERO_CLIENT_ID`** (when configured), **`KZERO_OS_USER`**, and **`KZERO_OS_UID`** in their environment.
 
 ### Per-step hooks in `dry-run`
 
@@ -329,16 +329,40 @@ In order (omit lines when the corresponding config value is empty):
 
 Operator cookbook (YAML per channel, env vars, troubleshooting): [examples/notifications.md](examples/notifications.md).
 
+### Log levels (`--log-level`)
+
+Four severity levels, aligned with [Microsoft.Extensions.Logging.LogLevel](https://learn.microsoft.com/dotnet/api/microsoft.extensions.logging.loglevel) (**Trace**, **Critical**, and **None** are out of scope for v1):
+
+| CLI / JSON `level` | Tag (text) | Microsoft equivalent | Typical kzero output |
+|--------------------|------------|----------------------|-------------------|
+| **`debug`** | **`DBG`** | Debug | Analyze metadata (`Config:`, `Schema:`, `Run mode:`, retry/helm workspace lines) |
+| **`info`** (default) | **`INF`** | Information | `Kubernetes target:`, pipeline plan (`[down]` / `[up]` steps), `[live]`, `[dry-run]`, cluster validation OK, subprocess stdout, command summary on success |
+| **`warn`** | **`WRN`** | Warning | `[retry]`, deferred-feature warnings, cluster validation FAIL, verify FAIL |
+| **`error`** | **`ERR`** | Error | Command summary when the command exits non-zero |
+
+**Filtering:** `--log-level` sets the **minimum** severity (same as .NET). At **`info`**, **`DBG`** lines are hidden; at **`warn`**, only **`WRN`** and **`ERR`** appear.
+
+Global flag on all commands: **`--log-level debug|info|warn|error`** (default **`info`**).
+
 ### Log format (`--log-format`)
 
 Global flag on all commands (default **`text`**). Pipeline commands (`down`, `up`, `reset`, `notify test`) emit engine events through the structured logger:
 
 | Mode | Engine stdout | Command summary (stderr) |
 |------|---------------|---------------------------|
-| **`text`** | Legacy lines: `[live] …`, `[dry-run] client_id=… …`, `[retry] …` | `kzero <cmd> finished in …` (ANSI when `run.color` allows) |
-| **`json`** | One JSON object per line (`kind`, `msg`, `command`, `phase`, `step_index`, `ref`, `error`, …) | JSON `command.summary` with `outcome` and `duration` |
+| **`text`** | Each line: `YYYY/MM/DD HH:MM:SS: kzero - [LEVEL] - …` where **`LEVEL`** is **`DBG`**, **`INF`**, **`WRN`**, or **`ERR`** (message body includes `[live]`, `[dry-run]`, analyze blocks, subprocess stdout). Filter with **`--log-level`** (default **`info`**). | Same prefix and level on `kzero <cmd> finished in …` (**`ERR`** when the command fails) |
+| **`json`** | One JSON object per line (`time`, `app`, `level`, `kind`, `msg`, …) | JSON `command.summary` with `outcome` and `duration` |
 
-The **`Kubernetes target:`** block stays human-readable multiline text on stdout in both modes. Subprocess output from `kubectl` (shell path) is written raw to stdout, not wrapped as JSON.
+Text lines follow operator maintenance conventions (timestamp, application name, severity, payload). Example:
+
+```text
+2026/06/11 16:13:08: kzero - [INF] - [live] scale deployment.cloudbridge/webui -> 0 replicas
+2026/06/11 16:13:08: kzero - [DBG] - Config: kzero.yaml
+2026/06/11 16:13:08: kzero - [WRN] - warning: notify.teams is accepted by schema but not implemented
+2026/06/11 16:13:08: kzero - [ERR] - kzero down failed after 2m11s
+```
+
+**`--log-level debug`** adds **`DBG`** analyze metadata; default **`info`** still prints the full pipeline plan and operational lines.
 
 ## `kzero verify`
 

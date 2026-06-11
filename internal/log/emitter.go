@@ -24,6 +24,7 @@ const (
 // Entry is one log event (text or JSON line).
 type Entry struct {
 	Kind       Kind
+	Level      Level
 	Msg        string
 	ClientID   string
 	Command    string
@@ -46,6 +47,7 @@ type Emitter struct {
 	w       io.Writer
 	format  Format
 	command string
+	lineW   *linePrefixWriter
 }
 
 // New builds an Emitter. command is optional default for Entry.Command (set via SetCommand).
@@ -68,7 +70,20 @@ func (e *Emitter) Writer() io.Writer {
 	if e == nil {
 		return io.Discard
 	}
-	return e.w
+	if e.format == FormatJSON {
+		return e.w
+	}
+	if e.lineW == nil {
+		e.lineW = newLinePrefixWriter(e.w, LevelInfo)
+	}
+	return e.lineW
+}
+
+// FlushSubprocessOutput emits any buffered subprocess line without a trailing newline.
+func (e *Emitter) FlushSubprocessOutput() {
+	if e != nil && e.lineW != nil {
+		_ = e.lineW.flush()
+	}
 }
 
 // Format returns the active output format.
@@ -159,7 +174,11 @@ func (e *Emitter) emitText(entry Entry) {
 	if line == "" {
 		return
 	}
-	_, _ = fmt.Fprintln(e.w, line)
+	level := entryLevel(entry)
+	if !level.Enabled() {
+		return
+	}
+	_, _ = fmt.Fprintln(e.w, PrefixText(level, line))
 }
 
 func textLine(entry Entry) string {
@@ -195,6 +214,8 @@ func quoteIfNeeded(s string) string {
 
 type jsonRecord struct {
 	Time       string `json:"time"`
+	App        string `json:"app"`
+	Level      string `json:"level"`
 	Kind       string `json:"kind"`
 	Msg        string `json:"msg"`
 	ClientID   string `json:"client_id,omitempty"`
@@ -213,8 +234,14 @@ type jsonRecord struct {
 }
 
 func (e *Emitter) emitJSON(entry Entry) {
+	level := entryLevel(entry)
+	if !level.Enabled() {
+		return
+	}
 	rec := jsonRecord{
 		Time:       time.Now().UTC().Format(time.RFC3339Nano),
+		App:        AppName,
+		Level:      level.Tag(),
 		Kind:       string(entry.Kind),
 		Msg:        entry.Msg,
 		ClientID:   entry.ClientID,

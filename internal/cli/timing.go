@@ -30,8 +30,8 @@ func writeCommandSummary(w io.Writer, command string, elapsed time.Duration, err
 	failed := err != nil
 	elapsedOut := colorizeElapsed(elapsedStr, failed, colorMode)
 	if failed {
-		_, _ = fmt.Fprintf(w, "kzero %s failed after %s\n", command, elapsedOut)
+		_ = log.WriteLine(w, log.LevelError, fmt.Sprintf("kzero %s failed after %s", command, elapsedOut))
 		return
 	}
-	_, _ = fmt.Fprintf(w, "kzero %s finished in %s\n", command, elapsedOut)
+	_ = log.WriteLine(w, log.LevelInfo, fmt.Sprintf("kzero %s finished in %s", command, elapsedOut))
 }

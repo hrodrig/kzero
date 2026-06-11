@@ -24,6 +24,9 @@ node Ready status. Does not scale workloads or run Helm.`,
 			if err != nil {
 				return err
 			}
+			if err := applyLogLevel(); err != nil {
+				return err
+			}
 			return runTimed(cmd.ErrOrStderr(), "verify", cfg.Run.Color, format, func() error {
 				return runVerify(cmd, cfg, format, true)
 			})

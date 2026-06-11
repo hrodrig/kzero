@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/executor"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -174,30 +175,35 @@ func PrintClusterValidation(w, errW io.Writer, cfg *config.Config, factory Clien
 		if len(collectWorkloadRefs(cfg)) == 0 {
 			return nil
 		}
-		_, _ = fmt.Fprintf(errW, "note: cluster validation skipped (%s)\n", skipped)
+		_ = log.WriteLine(errW, log.LevelWarn, fmt.Sprintf("note: cluster validation skipped (%s)", skipped))
 		return nil
 	}
 	if len(lines) == 0 {
 		return nil
 	}
-	if _, err := fmt.Fprintln(w, "\nCluster validation:"); err != nil {
+	if _, err := fmt.Fprintln(w); err != nil {
+		return err
+	}
+	if err := log.WriteLine(w, log.LevelInfo, "Cluster validation:"); err != nil {
 		return err
 	}
 	for _, line := range lines {
 		status := "FAIL"
+		level := log.LevelWarn
 		if line.OK {
 			status = "OK"
+			level = log.LevelInfo
 		}
 		detail := line.Detail
 		if line.OK {
 			detail = ""
 		}
 		if detail != "" {
-			if _, err := fmt.Fprintf(w, "  %s  %s (%s)\n", status, line.Ref, detail); err != nil {
+			if err := log.WriteLine(w, level, fmt.Sprintf("  %s  %s (%s)", status, line.Ref, detail)); err != nil {
 				return err
 			}
 		} else {
-			if _, err := fmt.Fprintf(w, "  %s  %s\n", status, line.Ref); err != nil {
+			if err := log.WriteLine(w, level, fmt.Sprintf("  %s  %s", status, line.Ref)); err != nil {
 				return err
 			}
 		}

@@ -34,19 +34,19 @@ func printText(w io.Writer, r Report) error {
 }
 
 func printTextHeader(w io.Writer, r Report) error {
-	if _, err := fmt.Fprintln(w, "Verify:"); err != nil {
+	if err := log.WriteLine(w, log.LevelInfo, "Verify:"); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(w, "  outcome: %s\n", r.Outcome); err != nil {
+	if err := log.WriteLine(w, log.LevelInfo, "  outcome: "+r.Outcome); err != nil {
 		return err
 	}
 	if r.Cluster != "" {
-		if _, err := fmt.Fprintf(w, "  cluster: %s\n", r.Cluster); err != nil {
+		if err := log.WriteLine(w, log.LevelInfo, "  cluster: "+r.Cluster); err != nil {
 			return err
 		}
 	}
 	if r.ClientID != "" {
-		if _, err := fmt.Fprintf(w, "  client_id: %s\n", r.ClientID); err != nil {
+		if err := log.WriteLine(w, log.LevelInfo, "  client_id: "+r.ClientID); err != nil {
 			return err
 		}
 	}
@@ -55,10 +55,12 @@ func printTextHeader(w io.Writer, r Report) error {
 
 func printTextCheck(w io.Writer, c CheckResult) error {
 	status := "FAIL"
+	level := log.LevelWarn
 	if c.OK {
 		status = "OK"
+		level = log.LevelInfo
 	}
-	if _, err := fmt.Fprintf(w, "  %s  %s\n", status, c.Name); err != nil {
+	if err := log.WriteLine(w, level, fmt.Sprintf("  %s  %s", status, c.Name)); err != nil {
 		return err
 	}
 	for _, item := range c.Items {
@@ -71,17 +73,17 @@ func printTextCheck(w io.Writer, c CheckResult) error {
 
 func printTextItem(w io.Writer, checkName string, item Item) error {
 	lineStatus := "FAIL"
+	level := log.LevelWarn
 	if item.OK {
 		lineStatus = "OK"
+		level = log.LevelInfo
 	}
 	ref := item.Ref
 	if ref == "" {
 		ref = checkName
 	}
 	if item.Detail != "" {
-		_, err := fmt.Fprintf(w, "    %s  %s (%s)\n", lineStatus, ref, item.Detail)
-		return err
+		return log.WriteLine(w, level, fmt.Sprintf("    %s  %s (%s)", lineStatus, ref, item.Detail))
 	}
-	_, err := fmt.Fprintf(w, "    %s  %s\n", lineStatus, ref)
-	return err
+	return log.WriteLine(w, level, fmt.Sprintf("    %s  %s", lineStatus, ref))
 }

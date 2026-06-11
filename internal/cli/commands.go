@@ -17,7 +17,7 @@ import (
 
 func writeDeferredFeatureWarnings(w io.Writer, cfg *config.Config) {
 	for _, msg := range config.DeferredFeatureWarnings(cfg) {
-		_, _ = fmt.Fprintf(w, "warning: %s\n", msg)
+		_ = log.WriteLine(w, log.LevelWarn, "warning: "+msg)
 	}
 }
 
@@ -43,6 +43,9 @@ func writeKubernetesTarget(w io.Writer, cfg *config.Config) error {
 func runPipelineCommand(cmd *cobra.Command, command string, cfg *config.Config, run func(*engine.Engine, *config.Config) error) error {
 	format, err := resolvedLogFormat()
 	if err != nil {
+		return err
+	}
+	if err := applyLogLevel(); err != nil {
 		return err
 	}
 	return runTimed(cmd.ErrOrStderr(), command, cfg.Run.Color, format, func() error {
@@ -97,6 +100,9 @@ func newAnalyzeCmd() *cobra.Command {
 			}
 			format, err := resolvedLogFormat()
 			if err != nil {
+				return err
+			}
+			if err := applyLogLevel(); err != nil {
 				return err
 			}
 			return runTimed(cmd.ErrOrStderr(), "analyze", cfg.Run.Color, format, func() error {
@@ -158,6 +164,9 @@ func newTargetCmd() *cobra.Command {
 			}
 			format, err := resolvedLogFormat()
 			if err != nil {
+				return err
+			}
+			if err := applyLogLevel(); err != nil {
 				return err
 			}
 			return runTimed(cmd.ErrOrStderr(), "target", cfg.Run.Color, format, func() error {

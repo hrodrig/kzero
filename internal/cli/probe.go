@@ -26,6 +26,9 @@ release_ready), then pipeline.down. Does not run the main pipelines.`,
 			if err != nil {
 				return err
 			}
+			if err := applyLogLevel(); err != nil {
+				return err
+			}
 			return runTimed(cmd.ErrOrStderr(), "probe", cfg.Run.Color, format, func() error {
 				if err := writeKubernetesTarget(cmd.OutOrStdout(), cfg); err != nil {
 					return err

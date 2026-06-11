@@ -12,6 +12,7 @@ import (
 var (
 	cfgFile          string
 	logFormat        string
+	logLevel         string
 	noEnvPassthrough bool
 )
 
@@ -32,6 +33,7 @@ so operators can scale workloads and Helm releases in a safe, repeatable way.`,
 
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file path (default: ./kzero.yaml)")
 	rootCmd.PersistentFlags().StringVar(&logFormat, "log-format", "text", "log output format: text or json")
+	rootCmd.PersistentFlags().StringVar(&logLevel, "log-level", "info", "minimum log level: debug, info, warn, or error")
 	rootCmd.PersistentFlags().BoolVar(&noEnvPassthrough, "no-env-passthrough", false, "omit host environment from hook and subprocess env (KZERO_* and KUBECONFIG only)")
 	cobra.OnInitialize(initConfig)
 

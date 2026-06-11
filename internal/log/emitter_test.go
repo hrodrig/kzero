@@ -38,7 +38,8 @@ func TestEmitter_textLive(t *testing.T) {
 	var buf bytes.Buffer
 	e := New(&buf, FormatText)
 	e.Live("scale deployment.ns/app -> 0 replicas")
-	if got := buf.String(); got != "[live] scale deployment.ns/app -> 0 replicas\n" {
+	got := buf.String()
+	if !strings.Contains(got, "[INF] - [live] scale deployment.ns/app -> 0 replicas") {
 		t.Fatalf("got %q", got)
 	}
 }
@@ -59,6 +60,12 @@ func TestEmitter_jsonLive(t *testing.T) {
 	}
 	if m["kind"] != "live" || m["command"] != "down" {
 		t.Fatalf("%v", m)
+	}
+	if m["app"] != AppName {
+		t.Fatalf("app field: %v", m)
+	}
+	if m["level"] != "INF" {
+		t.Fatalf("level field: %v", m)
 	}
 	if _, ok := m["client_id"]; ok && m["client_id"] != "" {
 		t.Fatalf("live should omit client_id: %v", m)
@@ -96,7 +103,8 @@ func TestCommandSummary_textUnchanged(t *testing.T) {
 	var buf bytes.Buffer
 	e := New(&buf, FormatText)
 	e.CommandSummary("up", 1500*time.Millisecond, false)
-	if got := strings.TrimSpace(buf.String()); got != "kzero up finished in 1.5s" {
+	got := strings.TrimSpace(buf.String())
+	if !strings.Contains(got, "[INF] - kzero up finished in 1.5s") {
 		t.Fatalf("got %q", got)
 	}
 }
