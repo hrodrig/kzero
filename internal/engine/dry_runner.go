@@ -52,10 +52,7 @@ func (r *DryRunner) RunPipelineStep(ctx context.Context, cfg *config.Config, pha
 		}
 	}
 
-	if step.Type == "release" && phase == PhaseDown {
-		if r.Log != nil {
-			r.Log.DryRun(cfg, fmt.Sprintf("helm uninstall %s/%s (--wait --ignore-not-found)", step.Namespace, step.Name))
-		}
+	if r.releaseDryRunHandled(cfg, phase, step) {
 		return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
 	}
 
@@ -64,4 +61,31 @@ func (r *DryRunner) RunPipelineStep(ctx context.Context, cfg *config.Config, pha
 		r.Log.DryRun(cfg, fmt.Sprintf("pipeline %s step %d: %s", phase, index, desc))
 	}
 	return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
+}
+
+func (r *DryRunner) releaseDryRunHandled(cfg *config.Config, phase Phase, step config.PipelineStep) bool {
+	if step.Type != "release" {
+		return false
+	}
+	if phase == PhaseDown {
+		if r.Log != nil {
+			msg := fmt.Sprintf("helm uninstall %s/%s (--wait --ignore-not-found)", step.Namespace, step.Name)
+			if executor.WantHelmSDK(cfg) {
+				msg = fmt.Sprintf("helm sdk uninstall %s/%s (--wait --ignore-not-found)", step.Namespace, step.Name)
+			}
+			r.Log.DryRun(cfg, msg)
+		}
+		return true
+	}
+	if phase == PhaseUp && executor.WantHelmSDK(cfg) {
+		if r.Log != nil {
+			if spec, err := executor.ResolveChartSpec(cfg, step); err == nil {
+				r.Log.DryRun(cfg, fmt.Sprintf("helm sdk upgrade --install %s/%s (%s)", step.Namespace, step.Name, executor.FormatChartPlan(spec)))
+			} else {
+				r.Log.DryRun(cfg, fmt.Sprintf("helm sdk upgrade --install %s/%s", step.Namespace, step.Name))
+			}
+		}
+		return true
+	}
+	return false
 }

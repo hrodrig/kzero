@@ -82,10 +82,10 @@ func printAnalyzePipelines(w io.Writer, cfg *config.Config) error {
 		return err
 	}
 	helmWS := cfg.Helm.Workspace
-	if err := printPipelinePhase(w, "down", cfg.Pipelines.Down, helmWS); err != nil {
+	if err := printPipelinePhase(w, cfg, "down", cfg.Pipelines.Down, helmWS); err != nil {
 		return err
 	}
-	return printPipelinePhase(w, "up", cfg.Pipelines.Up, helmWS)
+	return printPipelinePhase(w, cfg, "up", cfg.Pipelines.Up, helmWS)
 }
 
 func printDeferredSummary(w io.Writer, cfg *config.Config) error {
@@ -123,7 +123,7 @@ func printPhaseHooks(w io.Writer, cfg *config.Config) {
 	}
 }
 
-func printPipelinePhase(w io.Writer, phase string, steps []config.PipelineStep, helmWorkspace string) error {
+func printPipelinePhase(w io.Writer, cfg *config.Config, phase string, steps []config.PipelineStep, helmWorkspace string) error {
 	if len(steps) == 0 {
 		return nil
 	}
@@ -131,7 +131,7 @@ func printPipelinePhase(w io.Writer, phase string, steps []config.PipelineStep, 
 		return err
 	}
 	for i, step := range steps {
-		line := engine.FormatStepPlanLine(step, helmWorkspace, phase)
+		line := engine.FormatStepPlanLine(cfg, step, helmWorkspace, phase)
 		if _, err := fmt.Fprintf(w, "  %d: %s\n", i, line); err != nil {
 			return err
 		}

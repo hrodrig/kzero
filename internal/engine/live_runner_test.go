@@ -336,6 +336,85 @@ func TestLiveRunner_LogsClientIDOnScale(t *testing.T) {
 	}
 }
 
+func TestLiveRunner_releaseSDKUsesInjectedHelm(t *testing.T) {
+	t.Parallel()
+
+	var buf strings.Builder
+	called := false
+	r := &LiveRunner{
+		Log: testEmitter(&buf),
+		Helm: &stubHelmReleases{
+			usesSDK: true,
+			upgrade: func(ctx context.Context, step config.PipelineStep) error {
+				called = true
+				return nil
+			},
+		},
+	}
+	cfg := &config.Config{
+		Run:  config.RunConfig{Mode: "live", Execution: "native"},
+		Helm: config.HelmConfig{Workspace: t.TempDir()},
+	}
+	step := config.PipelineStep{
+		Ref: "release.mon/prom", Type: "release", Namespace: "mon", Name: "prom",
+		Chart: "oci://example/prom", Version: "1.0.0",
+	}
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseUp, 0, step); err != nil {
+		t.Fatal(err)
+	}
+	if !called {
+		t.Fatal("expected injected helm upgrade")
+	}
+	if !strings.Contains(buf.String(), "helm sdk upgrade --install") {
+		t.Fatalf("log: %q", buf.String())
+	}
+}
+
+type stubHelmReleases struct {
+	usesSDK   bool
+	uninstall func(context.Context, config.PipelineStep) error
+	upgrade   func(context.Context, config.PipelineStep) error
+}
+
+func (s *stubHelmReleases) UsesSDK() bool { return s.usesSDK }
+func (s *stubHelmReleases) Uninstall(ctx context.Context, step config.PipelineStep) error {
+	if s.uninstall != nil {
+		return s.uninstall(ctx, step)
+	}
+	return nil
+}
+func (s *stubHelmReleases) UpgradeInstall(ctx context.Context, step config.PipelineStep) error {
+	if s.upgrade != nil {
+		return s.upgrade(ctx, step)
+	}
+	return nil
+}
+
+func TestLiveRunner_helmForUsesCache(t *testing.T) {
+	t.Parallel()
+
+	r := &LiveRunner{
+		Exec: func(ctx context.Context, argv0 string, args, env []string, dir string) ([]byte, error) {
+			return nil, nil
+		},
+	}
+	cfg := &config.Config{
+		Run:     config.RunConfig{Mode: "live", Execution: "shell"},
+		Command: config.CommandConfig{Helm: "helm"},
+	}
+	first, err := r.helmFor(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := r.helmFor(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first != second {
+		t.Fatal("expected cached helm backend")
+	}
+}
+
 func TestLiveRunner_LogsClientIDOnHelmUninstall(t *testing.T) {
 	t.Parallel()
 

@@ -87,3 +87,40 @@ run:
 		t.Fatalf("stdout: %q", stdout.String())
 	}
 }
+
+func TestAnalyze_releaseSDKPlan(t *testing.T) {
+	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
+
+	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
+	if err := os.WriteFile(cfgPath, []byte(`
+schema_version: "1.0"
+helm:
+  workspace: ./helm
+pipelines:
+  up:
+    - release.mon/prom:
+        chart: oci://example/prom
+        version: "1.0.0"
+run:
+  mode: "dry-run"
+  execution: native
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout bytes.Buffer
+	cmd := newRootCmd()
+	cmd.SetOut(&stdout)
+	cmd.SetErr(&stdout)
+	cmd.SetArgs([]string{"analyze", "--config", cfgPath})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	out := stdout.String()
+	if !strings.Contains(out, "Run execution: native") {
+		t.Fatalf("missing execution line: %q", out)
+	}
+	if !strings.Contains(out, "helm upgrade --install (sdk)") || !strings.Contains(out, "oci://example/prom") {
+		t.Fatalf("missing sdk plan: %q", out)
+	}
+}

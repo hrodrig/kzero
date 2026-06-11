@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Helm SDK (#25):** when **`run.execution`** is **`native`** or **`auto`**, **`release.*`** steps use **`helm.sh/helm/v3`** for uninstall (down) and **`upgrade --install`** (up) from **`<helm.workspace>/<release>.yaml`** or step **`chart`** / **`version`** overrides — no host **`helm`** binary or **`.sh`** install script on the SDK path.
+- Dependency: **`helm.sh/helm/v3`** v3.21.x; **`k8s.io/*`** client modules aligned to **v0.35.1** for Helm SDK compatibility.
+
 ## [0.7.1] - 2026-06-10
 
 ### Added

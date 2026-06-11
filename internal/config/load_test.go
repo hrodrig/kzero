@@ -112,6 +112,78 @@ run:
 	}
 }
 
+func TestLoadConfig_releaseChartOptions(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+helm:
+  workspace: ./helm
+pipelines:
+  up:
+    - release.mon/prom:
+        chart: oci://example/prom
+        version: "2.0.0"
+        values_files:
+          - values.yaml
+        create_namespace: true
+run:
+  mode: "dry-run"
+`)
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	step := cfg.Pipelines.Up[0]
+	if step.Chart != "oci://example/prom" || step.Version != "2.0.0" {
+		t.Fatalf("chart fields: %#v", step)
+	}
+	if len(step.ValuesFiles) != 1 || step.ValuesFiles[0] != "values.yaml" {
+		t.Fatalf("values_files: %#v", step.ValuesFiles)
+	}
+	if step.CreateNamespace == nil || !*step.CreateNamespace {
+		t.Fatalf("create_namespace: %#v", step.CreateNamespace)
+	}
+}
+
+func TestLoadConfig_releaseOptionOnDeploymentRejected(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  up:
+    - deployment.ns/app:
+        chart: oci://bad
+run:
+  mode: "dry-run"
+`)
+	if _, err := Load(path); err == nil || !strings.Contains(err.Error(), "release steps") {
+		t.Fatalf("expected release-only error, got %v", err)
+	}
+}
+
+func TestLoadConfig_releaseInvalidValuesFiles(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+helm:
+  workspace: ./helm
+pipelines:
+  up:
+    - release.mon/prom:
+        chart: oci://example/prom
+        values_files: not-a-list
+run:
+  mode: "dry-run"
+`)
+	if _, err := Load(path); err == nil || !strings.Contains(err.Error(), "values_files") {
+		t.Fatalf("expected values_files error, got %v", err)
+	}
+}
+
 func TestLoadConfig_PipelineStepPrePost(t *testing.T) {
 	t.Parallel()
 

@@ -71,7 +71,7 @@ When **`run.kubeconfig`** is empty or omitted, the engine loads API credentials 
 - Leave **`run.kubeconfig`** empty in in-cluster manifests; mount pipeline YAML via ConfigMap or Secret.
 - The Job **ServiceAccount** needs RBAC in **each namespace referenced by pipeline steps** (`deployment.ns/name`, etc.), not only the Pod namespace.
 - **`Kubernetes target:`** prints an **`in-cluster`** block (API server, service-account namespace) for audit; step namespaces come from compact refs.
-- **`release.*`**, phase hooks, and **`custom:`** still invoke **`/bin/sh`** and external **`helm`** on the shell path — use **`run.execution: native`** scale-only pipelines in the distroless image until the **Helm SDK** executor ships (**0.7.x #25**). Operator Job examples: [kzero-selfhosted `run/in-cluster/`](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/in-cluster).
+- **`release.*`**, phase hooks, and **`custom:`** still invoke **`/bin/sh`** on the shell path — with **`run.execution: native`** or **`auto`**, **`release.*`** uses the **Helm SDK** (chart manifest under **`helm.workspace`**) instead of host **`helm`** / **`.sh`**. Operator Job examples: [kzero-selfhosted `run/in-cluster/`](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/in-cluster).
 
 **Removed from contract (schema 1.0):** `run.worker_concurrency` is **not** supported. Legacy configs that still set it are ignored (unknown key under `run`). Pipeline parallelism is intentionally out of scope; express ordering and optional batching in YAML step order and `custom:` scripts.
 
@@ -93,10 +93,10 @@ When `run.mode` is `live`, `deployment` and `statefulset` steps use a **Workload
 | Value | Behavior |
 |-------|----------|
 | `shell` | `kubectl scale` and `kubectl rollout status` (subprocess; honors `command.kubectl` and `KUBECONFIG` from `run.kubeconfig`). |
-| `native` | `k8s.io/client-go`: update workload replica count and poll readiness (no `kubectl` for scale/wait). Requires a valid kubeconfig / in-cluster config. |
-| `auto` | Try **native**; on client init failure, fall back to **shell** and print a one-line notice on the run output stream. |
+| `native` | `k8s.io/client-go`: update workload replica count and poll readiness (no `kubectl` for scale/wait). Requires a valid kubeconfig / in-cluster config. **`release.*`** steps use **Helm SDK** (`helm.sh/helm/v3`) instead of shell **`helm`** / **`.sh`** scripts. |
+| `auto` | Try **native** (workloads + Helm SDK for releases); on client init failure, fall back to **shell** and print a one-line notice on the run output stream. |
 
-Hooks, `custom:` steps, per-step `pre`/`post`, and `release` scripts always use `/bin/sh` regardless of `run.execution`.
+Hooks, `custom:` steps, and per-step `pre`/`post` always use `/bin/sh` regardless of `run.execution`.
 
 API errors on the native path are wrapped with stable sentinels (`ErrNotFound`, `ErrForbidden`, `ErrConflict` in `internal/executor`) for `errors.Is` in tests or `on-error` hooks.
 
@@ -205,16 +205,34 @@ Release `.sh` scripts also receive `KZERO_PHASE` on install (see engine implemen
 
 ### Script resolution
 
-| Pipeline step | Live **up** | Live **down** |
-|---------------|-------------|---------------|
-| `release.<namespace>/<name>` | `/bin/sh <helm.workspace>/<name>.sh` with first arg `up` | `helm uninstall <name> -n <namespace> --wait --ignore-not-found` (engine; not the `.sh`) |
+| Pipeline step | Live **up** (shell) | Live **up** (native/auto SDK) | Live **down** |
+|---------------|---------------------|-------------------------------|---------------|
+| `release.<namespace>/<name>` | `/bin/sh <helm.workspace>/<name>.sh` with first arg `up` | **Helm SDK** `upgrade --install` from `<helm.workspace>/<name>.yaml` (or step `chart:` / `version:` overrides) | `helm uninstall` (shell) or **Helm SDK** uninstall with wait (native/auto) |
 
 Rules:
 
 - **Basename = release name** — `release.monitoring/kube-prometheus-stack` → `<helm.workspace>/kube-prometheus-stack.sh` (namespace in the step ref is **not** part of the filename).
 - **Required when** any `pipelines` or `infra_probe.pipeline` step uses `release.*` (`helm.workspace` validation error if missing).
 - **Path** may be relative to the process working directory or absolute; operators often set an absolute path in CI/cron.
-- **Analyze** prints `script: <helm.workspace>/<name>.sh` for each `release.*` **up** step.
+- **Analyze** prints `script: <helm.workspace>/<name>.sh` for each `release.*` **up** step when **`run.execution: shell`**; with **`native`** / **`auto`**, prints **`helm upgrade --install (sdk, …)`** from the chart manifest or step overrides.
+
+### Helm SDK chart manifest (`<helm.workspace>/<release>.yaml`)
+
+When **`run.execution`** is **`native`** or **`auto`**, each **`release.*`** **up** step loads chart metadata from **`<helm.workspace>/<release-name>.yaml`** (same basename convention as **`.sh`** scripts):
+
+```yaml
+chart: oci://registry-1.docker.io/bitnamicharts/redis   # or path relative to helm.workspace
+version: "25.5.2"
+values_files:
+  - kzero-probe-redis-values.yaml
+create_namespace: true
+wait: true
+timeout: 10m
+```
+
+Optional **step map** overrides (same release step): `chart`, `version`, `values_files`, `create_namespace`, `timeout` (see pipeline step options).
+
+**Down** always runs SDK uninstall (wait, ignore-not-found) when the SDK path is selected — no **`.sh`** on down in either mode.
 
 ### Release install script environment
 
@@ -234,7 +252,7 @@ Per-step `pre` / `post` on `release.*` steps use the same hook env table (includ
 
 - Maintain one `.sh` per release name (install/upgrade logic, values files, `helm --wait`, registry auth).
 - **Infra probe** charts follow the same layout (see [examples/infra-probe.md](examples/infra-probe.md)); kzero does not ship mandatory probe charts.
-- **0.7.x** may add SDK-driven install without `.sh`; configs that keep using `.sh` must continue to resolve `<helm.workspace>/<name>.sh` as today.
+- **0.7.x** adds SDK-driven install without **`.sh`** when **`run.execution: native`**; configs that keep using **`.sh`** must continue to resolve `<helm.workspace>/<name>.sh` as today (**`run.execution: shell`**).
 
 ## Preflight (live `down` / `up` / `reset`)
 

@@ -252,44 +252,87 @@ func parseCustomMapStep(stepMap map[string]interface{}) (PipelineStep, error) {
 
 func applyStepOptions(step *PipelineStep, opts map[string]interface{}) error {
 	for k, v := range opts {
-		switch k {
-		case "replicas":
-			replicas, err := parseReplicas(v)
-			if err != nil {
-				return err
-			}
-			step.Replicas = &replicas
-		case "wait_for_ready":
-			wait, ok := v.(bool)
-			if !ok {
-				return errors.New("wait_for_ready must be boolean")
-			}
-			step.WaitForReady = wait
-		case "timeout":
-			timeoutRaw, ok := v.(string)
-			if !ok {
-				return errors.New("timeout must be duration string")
-			}
-			timeout, err := time.ParseDuration(timeoutRaw)
-			if err != nil {
-				return fmt.Errorf("invalid timeout duration: %w", err)
-			}
-			step.Timeout = timeout
-		case "pre", "post":
-			s, ok := v.(string)
-			if !ok || strings.TrimSpace(s) == "" {
-				return fmt.Errorf("%s must be a non-empty string", k)
-			}
-			if k == "pre" {
-				step.PreStep = strings.TrimSpace(s)
-			} else {
-				step.PostStep = strings.TrimSpace(s)
-			}
-		default:
-			return fmt.Errorf("unsupported option %q", k)
+		if err := applyOneStepOption(step, k, v); err != nil {
+			return err
 		}
 	}
+	return nil
+}
 
+func applyOneStepOption(step *PipelineStep, k string, v interface{}) error {
+	switch k {
+	case "replicas":
+		replicas, err := parseReplicas(v)
+		if err != nil {
+			return err
+		}
+		step.Replicas = &replicas
+	case "wait_for_ready":
+		wait, ok := v.(bool)
+		if !ok {
+			return errors.New("wait_for_ready must be boolean")
+		}
+		step.WaitForReady = wait
+	case "timeout":
+		timeoutRaw, ok := v.(string)
+		if !ok {
+			return errors.New("timeout must be duration string")
+		}
+		timeout, err := time.ParseDuration(timeoutRaw)
+		if err != nil {
+			return fmt.Errorf("invalid timeout duration: %w", err)
+		}
+		step.Timeout = timeout
+	case "pre", "post":
+		s, ok := v.(string)
+		if !ok || strings.TrimSpace(s) == "" {
+			return fmt.Errorf("%s must be a non-empty string", k)
+		}
+		if k == "pre" {
+			step.PreStep = strings.TrimSpace(s)
+		} else {
+			step.PostStep = strings.TrimSpace(s)
+		}
+	case "chart", "version", "values_files", "create_namespace":
+		return applyReleaseStepOption(step, k, v)
+	default:
+		return fmt.Errorf("unsupported option %q", k)
+	}
+	return nil
+}
+
+func applyReleaseStepOption(step *PipelineStep, k string, v interface{}) error {
+	if step.Type != "release" {
+		return fmt.Errorf("option %q is only valid on release steps", k)
+	}
+	switch k {
+	case "chart":
+		s, ok := v.(string)
+		if !ok || strings.TrimSpace(s) == "" {
+			return errors.New("chart must be a non-empty string")
+		}
+		step.Chart = strings.TrimSpace(s)
+	case "version":
+		s, ok := v.(string)
+		if !ok {
+			return errors.New("version must be a string")
+		}
+		step.Version = strings.TrimSpace(s)
+	case "values_files":
+		files, err := parseStringList(v)
+		if err != nil {
+			return fmt.Errorf("values_files: %w", err)
+		}
+		step.ValuesFiles = files
+	case "create_namespace":
+		b, ok := v.(bool)
+		if !ok {
+			return errors.New("create_namespace must be boolean")
+		}
+		step.CreateNamespace = &b
+	default:
+		return fmt.Errorf("unsupported release option %q", k)
+	}
 	return nil
 }
 

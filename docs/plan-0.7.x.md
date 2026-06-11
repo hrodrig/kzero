@@ -1,6 +1,6 @@
 # Plan 0.7.x — native cluster ops, Helm SDK, and operator safety
 
-**Status:** in progress on `develop` — **PR2 (0.7.1)** released; **PR3 (Helm SDK #25)** next
+**Status:** in progress on `develop` — **PR3 (Helm SDK #25)** done; **PR4–PR7** next; **one release tag** at band close (after **#31**), not per PR
 
 ### Internal merge order (2026-06-11)
 
@@ -57,7 +57,7 @@ After **0.6.x** (notify, verify, probe, preflight, structured logs), operators n
 | 6 | **`exec`** step runs command in pod/container via remotecommand | **#23** |
 | 7 | **`infra_probe`** checks runnable with native step types (no probe `.sh` required) | **#26** |
 | 8 | Optional: pods **Pending** due to selectors/taints surfaced in verify or probe | **#27** |
-| 9 | Total coverage ≥ 80%; `make release-check` green on each release tag | — |
+| 9 | Total coverage ≥ 80%; `make release-check` green on each PR merge to **`develop`**; full release checklist only at band-close tag | — |
 
 **In-cluster PO readiness (scale-only):** criteria **1** + [kzero-selfhosted `run/in-cluster/`](https://github.com/hrodrig/kzero-selfhosted/tree/develop/run/in-cluster) — met after **0.7.1** tag.
 
@@ -73,11 +73,11 @@ Merge to **`develop`** in this order. Each PR: `make lint`, `make test`, `make c
 |----|------|---------|--------|
 | PR1 | Secret redaction + env passthrough | **#17** | Close 0.6.x carry-over |
 | PR2 | In-cluster release (**0.7.1**) | — | **Done** — CHANGELOG, SPEC, ROADMAP, tag **`v0.7.1`** |
-| PR3 | Helm SDK MVP | **#25** | uninstall + upgrade --install + wait |
+| PR3 | Helm SDK MVP | **#25** | **Done** on develop — uninstall + upgrade --install + chart manifest |
 | PR4 | **`pvc`** step | **#24** | |
 | PR5 | **`exec`** step | **#23** | |
 | PR6 | Infra probe native | **#26** | |
-| PR7 | Scheduling sanity + **#29–#31** (as needed) + band close | **#27**, **#29–#31** | Tag **0.7.x** when pilot-ready |
+| PR7 | Scheduling sanity + **#29–#31** (incl. OCI registry login **#31**) + band close | **#27**, **#29–#31** | **Single tag** **`v0.7.2`** (or next patch) — VERSION, CHANGELOG, selfhosted pin |
 
 ---
 
@@ -193,25 +193,24 @@ pipelines:
 - **#27:** after `up`, optional verify check or probe check for pods Pending (affinity/taints)  
 - **#29–#31:** only if develop2 or pilot requires (`job`/`cronjob` suspend, `custom:` parity, helm path ergonomics)  
 - **ROADMAP:** tick **#17**, **#23–#27**, **#29–#31** as shipped; **Last reviewed** date  
-- Tag **`v0.7.x`** (semver TBD — e.g. **0.7.2** after Helm SDK, **0.7.3** after pvc/exec, or single **0.7.5** when develop2-full green)
+- **Band-close tag** (e.g. **`v0.7.2`**) bundles **#25–#27**, **#29–#31**, and develop2-full criteria **4–7** — no intermediate tags after **0.7.1**
 
 ---
 
-## Release sequencing (suggested tags)
+## Release sequencing
 
 | Tag | Contents |
 |-----|----------|
 | **`v0.7.0`** | **Done** — Cosign + SBOM (**#28**) |
-| **`v0.7.1`** | **#17** + InClusterConfig release polish |
-| **`v0.7.2`** | **#25** Helm SDK MVP (or split 0.7.2 = #17+in-cluster, 0.7.3 = Helm if PR1 merges before PR2 tag) |
-| **`v0.7.3+`** | **#24**, **#23**, **#26**, **#27** as merged |
-| **`v0.8.0` or `1.0.0`** | Remaining **#29–#31** + **1.0.0** contract items if band splits |
+| **`v0.7.1`** | **Done** — **#17** + InClusterConfig (PO / in-cluster smoke track) |
+| **`v0.7.2`** (TBD) | **Band close:** **#25** Helm SDK, **#24** **`pvc`**, **#23** **`exec`**, **#26** probe native, **#27** scheduling, **#29–#31** (incl. OCI registry login) |
+| **`v0.8.0` or `1.0.0`** | **1.0.0** contract items if band splits |
 
-**Recommended:** tag **0.7.1** after PR1+PR2; do not wait for Helm SDK — unblocks in-cluster PO track.
+**Cadence (2026-06):** merge **PR3–PR7** on **`develop`** with **`make release-check`** per PR; **do not** bump **`VERSION`**, tag, or refresh selfhosted GHCR pins until **PR7** lands. **0.7.1** stays the pin for in-cluster PO smoke until then.
 
 ---
 
-## Release checklist (each tag)
+## Release checklist (band-close tag only)
 
 Same gate as [plan-0.6.0.md](plan-0.6.0.md) § Release 0.6.0:
 

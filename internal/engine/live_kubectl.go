@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -29,13 +27,6 @@ func kubectlPath(cfg *config.Config) string {
 		return p
 	}
 	return "kubectl"
-}
-
-func helmPath(cfg *config.Config) string {
-	if p := strings.TrimSpace(cfg.Command.Helm); p != "" {
-		return p
-	}
-	return "helm"
 }
 
 func (r *LiveRunner) envFor(cfg *config.Config) []string {
@@ -109,68 +100,64 @@ func (r *LiveRunner) workloadFor(cfg *config.Config) (executor.Workload, error) 
 }
 
 func (r *LiveRunner) runReleaseScript(ctx context.Context, cfg *config.Config, phase Phase, step config.PipelineStep) error {
-	if phase == PhaseDown {
-		return r.runHelmUninstall(ctx, cfg, step)
+	helm, err := r.helmFor(cfg)
+	if err != nil {
+		return err
 	}
-	return r.runHelmInstallScript(ctx, cfg, phase, step)
-}
-
-func (r *LiveRunner) runHelmUninstall(ctx context.Context, cfg *config.Config, step config.PipelineStep) error {
 	opCtx, cancel := withOpTimeout(ctx, cfg)
 	defer cancel()
 
-	helmBin := helmPath(cfg)
-	args := []string{
-		"uninstall", step.Name,
-		"-n", step.Namespace,
-		"--wait",
-		"--ignore-not-found",
+	if phase == PhaseDown {
+		if helm.UsesSDK() {
+			r.logLive("helm sdk uninstall %s/%s (--wait --ignore-not-found)", step.Namespace, step.Name)
+		} else {
+			r.logLive("helm uninstall %s/%s (--wait --ignore-not-found)", step.Namespace, step.Name)
+		}
+		return helm.Uninstall(opCtx, step)
 	}
-	env := r.envFor(cfg)
-	env = append(env,
-		"KZERO_PHASE=down",
-		"KZERO_RELEASE_NAME="+step.Name,
-		"KZERO_RELEASE_NAMESPACE="+step.Namespace,
-	)
-	r.logLive("helm uninstall %s/%s (--wait --ignore-not-found)", step.Namespace, step.Name)
-	out, err := r.runProcess(opCtx, helmBin, args, env, ".")
-	r.writeOutput(out)
-	if err != nil {
-		return fmt.Errorf("helm uninstall %s/%s: %w", step.Namespace, step.Name, executor.WrapSubprocess(helmBin, args, out, err))
-	}
-	return nil
-}
 
-func (r *LiveRunner) runHelmInstallScript(ctx context.Context, cfg *config.Config, phase Phase, step config.PipelineStep) error {
-	ws := strings.TrimSpace(cfg.Helm.Workspace)
+	if helm.UsesSDK() {
+		spec, err := executor.ResolveChartSpec(cfg, step)
+		if err != nil {
+			return err
+		}
+		r.logLive("helm sdk upgrade --install %s/%s (%s)", step.Namespace, step.Name, executor.FormatChartPlan(spec))
+		return helm.UpgradeInstall(opCtx, step)
+	}
+
+	ws := cfg.Helm.Workspace
 	if ws == "" {
 		return fmt.Errorf("helm.workspace is empty (required for release step %s on up)", step.Ref)
 	}
-	script := filepath.Join(ws, step.Name+".sh")
-	st, err := os.Stat(script)
-	if err != nil {
-		return fmt.Errorf("release script %s: %w", script, err)
-	}
-	if st.IsDir() {
-		return fmt.Errorf("release script path is a directory: %s", script)
-	}
+	r.logLive("release script %s/%s.sh (%s)", ws, step.Name, phase)
+	return helm.UpgradeInstall(opCtx, step)
+}
 
-	opCtx, cancel := withOpTimeout(ctx, cfg)
-	defer cancel()
-
-	env := r.envFor(cfg)
-	env = append(env,
-		"KZERO_PHASE="+string(phase),
-		"KZERO_RELEASE_NAME="+step.Name,
-		"KZERO_RELEASE_NAMESPACE="+step.Namespace,
-	)
-	r.logLive("release script %s (%s)", script, phase)
-	out, err := r.runProcess(opCtx, "/bin/sh", []string{script, string(phase)}, env, ws)
-	r.writeOutput(out)
-	if err != nil {
-		return fmt.Errorf("release script %s: %w", script, executor.WrapSubprocess("/bin/sh", []string{script, string(phase)}, out, err))
+func (r *LiveRunner) helmFor(cfg *config.Config) (executor.HelmReleases, error) {
+	if r.Helm != nil {
+		return r.Helm, nil
 	}
-	return nil
+	key := cfg.Run.Kubeconfig + "|" + cfg.Run.Execution + "|" + cfg.Helm.Workspace + "|" + cfg.Command.Helm
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.cachedHelm != nil && r.cachedHelmKey == key {
+		return r.cachedHelm, nil
+	}
+	var writeOut func([]byte)
+	if r.Log != nil {
+		writeOut = r.writeOutput
+	}
+	helm, err := executor.NewHelmReleases(cfg, executor.HelmDeps{
+		Cfg:      cfg,
+		Run:      r.runProcess,
+		WriteOut: writeOut,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("helm releases: %w", err)
+	}
+	r.cachedHelm = helm
+	r.cachedHelmKey = key
+	return helm, nil
 }
 
 func withOpTimeout(ctx context.Context, cfg *config.Config) (context.Context, context.CancelFunc) {

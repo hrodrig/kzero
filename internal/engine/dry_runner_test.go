@@ -87,3 +87,41 @@ func TestDryRunner_ReleaseDownPlansHelmUninstall(t *testing.T) {
 		t.Fatalf("expected helm uninstall plan, got: %q", out)
 	}
 }
+
+func TestDryRunner_ReleaseUpSDKPlan(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+	r := &DryRunner{Log: testEmitter(&buf)}
+	cfg := &config.Config{
+		Run:  config.RunConfig{Mode: "dry-run", Execution: "native"},
+		Helm: config.HelmConfig{Workspace: t.TempDir()},
+	}
+	step := config.PipelineStep{
+		Ref: "release.mon/prom", Type: "release", Namespace: "mon", Name: "prom",
+		Chart: "oci://example/prom", Version: "1.0.0",
+	}
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseUp, 0, step); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "helm sdk upgrade --install mon/prom") {
+		t.Fatalf("expected sdk plan, got: %q", buf.String())
+	}
+}
+
+func TestDryRunner_ReleaseDownSDKPlan(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+	r := &DryRunner{Log: testEmitter(&buf)}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run", Execution: "native"}}
+	step := config.PipelineStep{
+		Ref: "release.monitoring/prom", Type: "release", Namespace: "monitoring", Name: "prom",
+	}
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "helm sdk uninstall monitoring/prom") {
+		t.Fatalf("expected sdk uninstall plan, got: %q", buf.String())
+	}
+}

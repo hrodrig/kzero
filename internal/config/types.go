@@ -120,6 +120,11 @@ type PipelineStep struct {
 	Replicas     *int
 	WaitForReady bool
 	Timeout      time.Duration
+	// Release SDK options (release steps only; used when run.execution is native/auto).
+	Chart           string   `mapstructure:"chart"`
+	Version         string   `mapstructure:"version"`
+	ValuesFiles     []string `mapstructure:"values_files"`
+	CreateNamespace *bool    `mapstructure:"create_namespace"`
 }
 
 type RetryConfig struct {

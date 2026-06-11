@@ -13,7 +13,7 @@ import (
 )
 
 // LiveRunner executes hooks, custom scripts, kubectl scale/rollout for workloads,
-// and release helper scripts under helm.workspace.
+// and release steps via shell helm or Helm SDK (per run.execution).
 type LiveRunner struct {
 	Log  *log.Emitter
 	Exec LiveExec
@@ -21,10 +21,14 @@ type LiveRunner struct {
 	// and cached under mu. The engine constructs one LiveRunner per invocation and runs pipeline
 	// steps sequentially, so the cache is not contended across goroutines in normal use.
 	Workload executor.Workload
+	// Helm overrides release backend (tests). When nil, resolved from cfg and cached under mu.
+	Helm executor.HelmReleases
 
-	mu          sync.Mutex // guards cachedWL / cachedWLKey only
-	cachedWL    executor.Workload
-	cachedWLKey string
+	mu            sync.Mutex // guards cachedWL / cachedWLKey and cachedHelm / cachedHelmKey
+	cachedWL      executor.Workload
+	cachedWLKey   string
+	cachedHelm    executor.HelmReleases
+	cachedHelmKey string
 }
 
 // RunHook implements Runner.
