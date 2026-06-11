@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-06-10 (**0.7.2** band close on develop; **0.7.1** tagged in-cluster + **#17**; see [plan-0.7.x.md](plan-0.7.x.md))
+**Last reviewed:** 2026-06-11 (**v0.7.2** tagged — **0.7.x** band closed; see [plan-0.7.x.md](plan-0.7.x.md))
 
 ### Versioning note
 
@@ -58,6 +58,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.6.0** | **0.6.x band closed:** multi-channel **`notify`**, **`--log-format`**, **`kzero verify`**, **`kzero probe`** / **`infra_probe`**, live **preflight**, OS audit fields, Helm workspace SPEC. |
 | **0.7.0** | **Cosign** keyless signing and **SPDX/CycloneDX SBOM** in GoReleaser (roadmap **0.7.x #28**). |
 | **0.7.1** | **In-cluster auth** (empty **`run.kubeconfig`** → service account token); **#17** secret redaction and **`--no-env-passthrough`**. |
+| **0.7.2** | **0.7.x band close:** Helm SDK (**#25**), **`pvc`** / **`exec`**, probe native (**#26**), **`pods_schedulable`** (**#27**), OCI **`helm.registries`**, **`script:`** paths (**#31**), **`custom:`** env parity (**#30**). |
 
 ---
 

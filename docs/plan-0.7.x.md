@@ -1,6 +1,6 @@
 # Plan 0.7.x — native cluster ops, Helm SDK, and operator safety
 
-**Status:** **0.7.2** band close on **`develop`** (PR7); merge **`develop` → `main`** + tag **`v0.7.2`** when ready
+**Status:** **Done** — **`v0.7.2`** tagged on **`main`** (**0.7.x** band closed)
 
 ### Internal merge order (2026-06-11)
 
