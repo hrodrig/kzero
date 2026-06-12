@@ -5,11 +5,13 @@
 | [SPECIFICATIONS.md](SPECIFICATIONS.md) | Behavior contract, config shape, and TDD baseline |
 | [ROADMAP.md](ROADMAP.md) | Prioritized planned work and known gaps (in-repo source of truth) |
 | [plan-0.6.0.md](plan-0.6.0.md) | Implementation plan for **v0.6.0** (notify, preflight, verify, infra probe, slog) |
+| [plan-0.8.x.md](plan-0.8.x.md) | **Planned** **0.8.x** band — API watchdog, notify delivery visibility, reset phase-boundary preflight |
 | [diagrams.md](diagrams.md) | Mermaid diagrams: CLI vs engine, phase ordering, `reset`, failure path |
 | [demo-kzero.yaml](demo-kzero.yaml) | Minimal YAML used by [demo.tape](demo.tape) (VHS) |
 | [demo.tape](demo.tape) | VHS tape to record [demo.gif](demo.gif) |
 | [examples/pipeline-order-and-integrity.md](examples/pipeline-order-and-integrity.md) | Ordered `down` steps, `wait_for_ready` limits, per-step `post` examples |
 | [examples/notifications.md](examples/notifications.md) | **notify** channels, `kzero notify test`, env overrides, live vs dry-run |
+| [examples/pipeline-network-loss.md](examples/pipeline-network-loss.md) | Long live **`reset`** on bastions: two-phase outage pattern, mitigations until **0.8.0** |
 | [examples/infra-probe.md](examples/infra-probe.md) | **`infra_probe`** schema, checks, gate (`kzero probe`) |
 | [examples/waiting-between-pipeline-steps.md](examples/waiting-between-pipeline-steps.md) | Wait between steps: Helm `--wait`, `post` on `release.*`, `wait_for_ready` |
 | [examples/automation-and-pipelines.md](examples/automation-and-pipelines.md) | Stub → operator CI/cron docs in **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)** |

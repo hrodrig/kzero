@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-06-12 (**v0.7.3** — **0.7.x** band closed; patch release for log levels, Slack notify UX, OCI auth hardening)
+**Last reviewed:** 2026-06-12 (**v0.7.3** shipped; **0.8.x** plan published — pipeline resilience after production network-loss incident)
 
 ### Versioning note
 
@@ -19,9 +19,9 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 
 **Target architecture (single container image):** the **native executor** covers **`deployment` / `statefulset`** scale and rollout wait, **`release.*`** via **Helm SDK**, **`pvc` delete**, and **`exec` in pod** — so the published **distroless** image can run full maintenance pipelines without host **`kubectl`** / **`helm`**. Set **`run.execution: native`** (or **`auto`**) for that path. Phase hooks and **`custom:`** shell scripts remain valid on bastions with **`/bin/sh`**; in-cluster Jobs should prefer declarative **`pvc`**, **`exec`**, and SDK **`release.*`** over host-only scripts.
 
-**Remaining gap before 1.0.0:** default **`run.execution: native`** when omitted (**#32**), documented PVC/data-reset patterns beyond delete primitives (**#33**), and product-repo **kind**/envtest CI (**#34**). **`release.*`** on the **shell** path still requires **`<helm.workspace>/<name>.sh`** and external **`helm`** on **`PATH`**.
+**Remaining gap before 1.0.0:** **0.8.x** API watchdog and notify delivery visibility during long live resets (**#35–#41**); then default **`run.execution: native`** when omitted (**#32**), documented PVC/data-reset patterns (**#33**), and product-repo **kind**/envtest CI (**#34**). **`release.*`** on the **shell** path still requires **`<helm.workspace>/<name>.sh`** and external **`helm`** on **`PATH`**.
 
-**Log capture** before or after pipelines is **out of scope** for the engine—invoke external tools via phase hooks when operators need archives.
+**Log capture** before or after pipelines is **out of scope** for the engine—invoke external tools via phase hooks when operators need archives. **Local stdout/stderr** (and wrapper tee to disk) is the audit trail when notify and API are both unavailable; see [examples/pipeline-network-loss.md](examples/pipeline-network-loss.md).
 
 **Completed bands:** **0.3.x** (operator honesty), **0.4.x** (native client + analyze validation + server-side dry-run on native). **0.5.x** retry, **`client.id`**, live audit logs, and sequential-only contract shipped through **v0.5.6**.
 
@@ -32,7 +32,8 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.5.x** | **Closed** (last item **#15** in **v0.5.7**) |
 | **0.6.x** | **Closed** in **v0.6.0** (notify, slog, verify, infra probe, preflight, OS audit, Helm workspace SPEC) |
 | **0.7.x** | **Closed** (**#23–#28**, **#30–#31** in **v0.7.2**; **#29** `job`/`cronjob` still open). **v0.7.3** patch: text log levels, Slack attachment UX, **`KZERO_NOTIFY_*`**, OCI login hardening. |
-| **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**) |
+| **0.8.x** | **Current focus** — API watchdog, notify delivery visibility, reset phase preflight, progress logs (**#35–#41**). Plan: [plan-0.8.x.md](plan-0.8.x.md). |
+| **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**); **#29** optional in band or pre-1.0. |
 
 **Shell path:** **`run.execution: shell`** (default) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native/auto** uses the Helm SDK and API primitives above.
 
@@ -143,6 +144,26 @@ Broader pipeline primitives via **client-go** and **helm.sh/helm/v3**, keeping a
 | 29 | **Additional step types**: `job`, `cronjob` (suspend), safe generic **patch** / scale patterns for CRDs. Prefer native executor; shell fallback where needed. | Pending |
 | 30 | **`custom:` parity**: pass `KZERO_PHASE` and step metadata to the main custom script (same as per-step hooks / release scripts). | **Done** (**0.7.2**) |
 | 31 | **Release script ergonomics**: optional non-flat paths under `helm.workspace` (e.g. `monitoring/kube-prometheus-stack.sh`) without breaking flat `name.sh` convention. | **Done** (**0.7.2** — step **`script:`**) |
+
+---
+
+## 0.8.x — pipeline resilience (network loss and notify delivery)
+
+**Implementation plan:** [plan-0.8.x.md](plan-0.8.x.md) (target **`v0.8.0`**).
+
+Motivation: live **`reset`** on a bastion lost API connectivity mid-run; process detected unreachable control plane after ~15 minutes but **did not alert**; ~30 minutes later **total network loss**; recovery hours later with **logs as sole evidence**.
+
+| # | Item | Status |
+|---|------|--------|
+| 35 | **Notify delivery visibility**: log **`[ERR]`** when outbound notify POST fails (redacted); optional **`notify.require_delivery`** to fail pipeline if error notify cannot be sent. | Pending |
+| 36 | **API watchdog** during live **`down`/`up`/`reset`**: periodic API reachability check between steps and during long waits; fail-fast + **`pipeline.error`** when threshold exceeded. | Pending |
+| 37 | **Preflight between `reset` phases**: re-check API after **`down`**, before **`up`**. | Pending |
+| 38 | **Throttled progress logs** on long rollout/Helm waits (step ref, elapsed, last API OK). | Pending |
+| 39 | **Config `run.api_watchdog`** (+ **`KZERO_RUN_API_WATCHDOG_*`** env binding). | Pending |
+| 40 | **Operator docs**: [examples/pipeline-network-loss.md](examples/pipeline-network-loss.md); selfhosted automation cross-link. | Pending |
+| 41 | *(Optional)* **`pipeline.stalled`** notify event + **`kzero notify test --event stalled`**. | Pending |
+
+**Operator mitigations before 0.8 ships:** short **`run.operation_timeout`**, **`on-error`** hooks, external watchdog, wrapper log files — documented in [pipeline-network-loss.md](examples/pipeline-network-loss.md).
 
 ---
 
