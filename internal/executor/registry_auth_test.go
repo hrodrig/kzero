@@ -29,6 +29,14 @@ func TestResolveRegistryPassword_inline(t *testing.T) {
 	}
 }
 
+func TestResolveRegistryPassword_envEmpty(t *testing.T) {
+	t.Setenv("EMPTY_REG_PASS", "")
+	_, err := resolveRegistryPassword(config.HelmRegistryConfig{Host: "ghcr.io", PasswordEnv: "EMPTY_REG_PASS"})
+	if err == nil {
+		t.Fatal("expected error for empty env")
+	}
+}
+
 func TestRegistryConfigForHost_caseInsensitive(t *testing.T) {
 	t.Parallel()
 	cfg := &config.Config{
@@ -39,6 +47,13 @@ func TestRegistryConfigForHost_caseInsensitive(t *testing.T) {
 	reg, ok := registryConfigForHost(cfg, "ghcr.io")
 	if !ok || reg.Username != "u" {
 		t.Fatalf("reg=%+v ok=%v", reg, ok)
+	}
+}
+
+func TestRegistryConfigForHost_nilConfig(t *testing.T) {
+	t.Parallel()
+	if _, ok := registryConfigForHost(nil, "ghcr.io"); ok {
+		t.Fatal("expected false for nil config")
 	}
 }
 
@@ -57,7 +72,11 @@ func TestEnsureOCIRegistryAuth_skipsWithoutConfig(t *testing.T) {
 			Registries: []config.HelmRegistryConfig{{Host: "ghcr.io", Username: "u", PasswordEnv: "MISSING"}},
 		},
 	}
-	err := EnsureOCIRegistryAuth(cfg, "oci://docker.io/bitnamicharts/redis", nil, nil)
+	regClient, err := NewHelmRegistryClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = EnsureOCIRegistryAuth(cfg, "oci://docker.io/bitnamicharts/redis", regClient, nil, nil)
 	if err != nil {
 		t.Fatalf("public oci without matching host should skip: %v", err)
 	}
@@ -70,9 +89,43 @@ func TestEnsureOCIRegistryAuth_missingPasswordEnv(t *testing.T) {
 			Registries: []config.HelmRegistryConfig{{Host: "ghcr.io", Username: "u", PasswordEnv: "MISSING_GHCR_PASS"}},
 		},
 	}
-	err := EnsureOCIRegistryAuth(cfg, "oci://ghcr.io/org/chart", nil, nil)
+	regClient, err := NewHelmRegistryClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = EnsureOCIRegistryAuth(cfg, "oci://ghcr.io/org/chart", regClient, nil, nil)
 	if err == nil || !strings.Contains(err.Error(), "MISSING_GHCR_PASS") {
 		t.Fatalf("expected password env error, got %v", err)
+	}
+}
+
+func TestEnsureOCIRegistryAuth_nilClient(t *testing.T) {
+	t.Parallel()
+	cfg := &config.Config{
+		Helm: config.HelmConfig{
+			Registries: []config.HelmRegistryConfig{{Host: "ghcr.io", Username: "u", Password: "p"}},
+		},
+	}
+	err := EnsureOCIRegistryAuth(cfg, "oci://ghcr.io/org/chart", nil, nil, nil)
+	if err == nil || !strings.Contains(err.Error(), "registry client is nil") {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestEnsureOCIRegistryAuth_cacheSkipsLogin(t *testing.T) {
+	t.Parallel()
+	cfg := &config.Config{
+		Helm: config.HelmConfig{
+			Registries: []config.HelmRegistryConfig{{Host: "ghcr.io", Username: "u", Password: "p"}},
+		},
+	}
+	regClient, err := NewHelmRegistryClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cache := map[string]struct{}{"ghcr.io": {}}
+	if err := EnsureOCIRegistryAuth(cfg, "oci://ghcr.io/org/chart", regClient, cache, nil); err != nil {
+		t.Fatalf("cached host should skip login: %v", err)
 	}
 }
 

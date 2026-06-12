@@ -32,6 +32,7 @@ builds:
       - -s
       - -w
       - -X github.com/hrodrig/kzero/internal/cli.Version=v{{ .Version }}
+      - -X github.com/hrodrig/kzero/internal/notify.AppVersion=v{{ .Version }}
       - -X github.com/hrodrig/kzero/internal/cli.Commit={{ .ShortCommit }}
       - -X github.com/hrodrig/kzero/internal/cli.BuildDate={{ .Date }}
       - -X github.com/hrodrig/kzero/internal/cli.Branch={{ .Branch }}

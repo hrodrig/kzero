@@ -28,7 +28,8 @@ func TestParseLevel(t *testing.T) {
 }
 
 func TestLevelEnabled(t *testing.T) {
-	t.Parallel()
+	old := MinLevel()
+	t.Cleanup(func() { SetMinLevel(old) })
 	SetMinLevel(LevelInfo)
 	if LevelDebug.Enabled() {
 		t.Fatal("debug should be filtered at info")

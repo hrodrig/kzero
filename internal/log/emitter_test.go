@@ -83,6 +83,17 @@ func TestEmitter_dryRunClientID(t *testing.T) {
 	}
 }
 
+func TestEmitter_dryRunQuotedClientID(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	e := New(&buf, FormatText)
+	cfg := &config.Config{Client: config.ClientConfig{ID: "ops team"}}
+	e.DryRun(cfg, "scale deployment.ns/app -> 0 replicas")
+	if !strings.Contains(buf.String(), `client_id="ops team"`) {
+		t.Fatalf("got %q", buf.String())
+	}
+}
+
 func TestEmitter_retryJSON(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer
@@ -107,4 +118,59 @@ func TestCommandSummary_textUnchanged(t *testing.T) {
 	if !strings.Contains(got, "[INF] - kzero up finished in 1.5s") {
 		t.Fatalf("got %q", got)
 	}
+}
+
+func TestCommandSummary_failedUsesErrorLevel(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	e := New(&buf, FormatText)
+	e.CommandSummary("reset", 2*time.Second, true)
+	got := buf.String()
+	if !strings.Contains(got, "[ERR]") || !strings.Contains(got, "failed after") {
+		t.Fatalf("got %q", got)
+	}
+}
+
+func TestEmitter_WriterAndFlush(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	e := New(&buf, FormatText)
+	if e.Format() != FormatText {
+		t.Fatalf("format: %v", e.Format())
+	}
+	if _, err := e.Writer().Write([]byte("line\n")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := e.Writer().Write([]byte("partial")); err != nil {
+		t.Fatal(err)
+	}
+	e.FlushSubprocessOutput()
+	out := buf.String()
+	if !strings.Contains(out, "[INF] - line") || !strings.Contains(out, "[INF] - partial") {
+		t.Fatalf("got %q", out)
+	}
+}
+
+func TestEmitter_WriterJSONPassthrough(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	e := New(&buf, FormatJSON)
+	if _, err := e.Writer().Write([]byte("raw\n")); err != nil {
+		t.Fatal(err)
+	}
+	if buf.String() != "raw\n" {
+		t.Fatalf("json writer should pass through: %q", buf.String())
+	}
+}
+
+func TestEmitter_nilSafe(t *testing.T) {
+	t.Parallel()
+	var nilE *Emitter
+	if nilE.Format() != FormatText {
+		t.Fatal("nil Format")
+	}
+	if _, err := nilE.Writer().Write([]byte("x")); err != nil {
+		t.Fatal(err)
+	}
+	nilE.FlushSubprocessOutput()
 }

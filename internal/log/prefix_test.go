@@ -30,14 +30,50 @@ func TestLinePrefixWriter_multiline(t *testing.T) {
 }
 
 func TestWriteLine_respectsMinLevel(t *testing.T) {
-	t.Parallel()
+	old := MinLevel()
+	t.Cleanup(func() { SetMinLevel(old) })
 	SetMinLevel(LevelWarn)
-	t.Cleanup(func() { SetMinLevel(LevelInfo) })
 	var buf strings.Builder
 	if err := WriteLine(&buf, LevelInfo, "hidden"); err != nil {
 		t.Fatal(err)
 	}
 	if buf.Len() != 0 {
 		t.Fatalf("expected filter, got %q", buf.String())
+	}
+}
+
+func TestLinePrefixWriter_flushPartialLine(t *testing.T) {
+	t.Parallel()
+	var buf strings.Builder
+	w := newLinePrefixWriter(&buf, LevelInfo)
+	if _, err := w.Write([]byte("tail")); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.flush(); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "[INF] - tail") {
+		t.Fatalf("got %q", buf.String())
+	}
+}
+
+func TestLinePrefixWriter_emptyLine(t *testing.T) {
+	t.Parallel()
+	var buf strings.Builder
+	w := newLinePrefixWriter(&buf, LevelInfo)
+	if _, err := w.Write([]byte("\n")); err != nil {
+		t.Fatal(err)
+	}
+	if buf.String() == "" {
+		t.Fatal("expected blank line output")
+	}
+}
+
+func TestMinLevel_roundTrip(t *testing.T) {
+	old := MinLevel()
+	t.Cleanup(func() { SetMinLevel(old) })
+	SetMinLevel(LevelDebug)
+	if MinLevel() != LevelDebug {
+		t.Fatalf("got %v", MinLevel())
 	}
 }

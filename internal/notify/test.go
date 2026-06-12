@@ -52,5 +52,6 @@ func DispatchTest(ctx context.Context, cfg *config.Config, event string, client 
 	case EventTest:
 		meta.Duration = 0
 	}
-	return joinErrors(dispatchChannels(ctx, client, cfg.Notify, buildPayload(event, meta)))
+	body := buildPayload(event, meta)
+	return joinErrors(dispatchChannels(ctx, client, cfg, event, meta, body))
 }

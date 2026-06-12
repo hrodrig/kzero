@@ -10,8 +10,18 @@ import (
 	"helm.sh/helm/v3/pkg/registry"
 )
 
+// NewHelmRegistryClient builds the registry client Helm SDK needs for oci:// charts.
+func NewHelmRegistryClient() (*registry.Client, error) {
+	client, err := registry.NewClient()
+	if err != nil {
+		return nil, fmt.Errorf("helm registry client: %w", err)
+	}
+	return client, nil
+}
+
 // EnsureOCIRegistryAuth logs into configured registries when chartRef uses oci://.
-func EnsureOCIRegistryAuth(cfg *config.Config, chartRef string, cache map[string]struct{}, mu *sync.Mutex) error {
+// regClient must be the same client passed to action.Upgrade.SetRegistryClient.
+func EnsureOCIRegistryAuth(cfg *config.Config, chartRef string, regClient *registry.Client, cache map[string]struct{}, mu *sync.Mutex) error {
 	host, err := ociRegistryHost(chartRef)
 	if err != nil {
 		return err
@@ -22,6 +32,9 @@ func EnsureOCIRegistryAuth(cfg *config.Config, chartRef string, cache map[string
 	reg, ok := registryConfigForHost(cfg, host)
 	if !ok {
 		return nil
+	}
+	if regClient == nil {
+		return fmt.Errorf("helm registry login %s: registry client is nil", host)
 	}
 	if mu != nil {
 		mu.Lock()
@@ -36,11 +49,7 @@ func EnsureOCIRegistryAuth(cfg *config.Config, chartRef string, cache map[string
 	if err != nil {
 		return err
 	}
-	client, err := registry.NewClient()
-	if err != nil {
-		return fmt.Errorf("helm registry client: %w", err)
-	}
-	if err := client.Login(host, registry.LoginOptBasicAuth(reg.Username, password)); err != nil {
+	if err := regClient.Login(host, registry.LoginOptBasicAuth(reg.Username, password)); err != nil {
 		return fmt.Errorf("helm registry login %s: %w", host, err)
 	}
 	if cache != nil {

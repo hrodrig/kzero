@@ -3,8 +3,8 @@
 # Submit: send diff to ports@openbsd.org
 
 COMMENT =	declarative Kubernetes workload pipelines (CLI)
-DISTNAME =	kzero_v0.7.2_openbsd_${MACHINE_ARCH:S/aarch64/arm64/}
-PKGNAME =	kzero-0.7.2
+DISTNAME =	kzero_v0.7.3_openbsd_${MACHINE_ARCH:S/aarch64/arm64/}
+PKGNAME =	kzero-0.7.3
 CATEGORIES =	sysutils
 HOMEPAGE =	https://github.com/hrodrig/kzero
 MAINTAINER =	hrodrig@usb.ve
@@ -16,8 +16,8 @@ PERMIT_DISTFILES =	Yes
 # Local test before release: copy tarball to DISTDIR or use
 #   make fetch MASTER_SITES=file:///absolute/path/to/dir/
 # See README.md "Test with a local tarball".
-MASTER_SITES =	https://github.com/hrodrig/kzero/releases/download/v0.7.2/
-DISTFILES =	kzero_v0.7.2_openbsd_${MACHINE_ARCH:S/aarch64/arm64/}.tar.gz
+MASTER_SITES =	https://github.com/hrodrig/kzero/releases/download/v0.7.3/
+DISTFILES =	kzero_v0.7.3_openbsd_${MACHINE_ARCH:S/aarch64/arm64/}.tar.gz
 EXTRACT_SUFX =	.tar.gz
 
 ONLY_FOR_ARCHS =	amd64 arm64 aarch64

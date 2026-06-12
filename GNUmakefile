@@ -14,7 +14,7 @@ VERSION  ?= $(shell v=$$(cat VERSION 2>/dev/null | tr -d '\n\r'); [ -n "$$v" ] &
 COMMIT   := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BRANCH   := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
 BUILDDATE := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
-LDFLAGS  := -ldflags "-s -w -X github.com/hrodrig/kzero/internal/cli.Version=$(VERSION) -X github.com/hrodrig/kzero/internal/cli.Commit=$(COMMIT) -X github.com/hrodrig/kzero/internal/cli.BuildDate=$(BUILDDATE) -X github.com/hrodrig/kzero/internal/cli.Branch=$(BRANCH)"
+LDFLAGS  := -ldflags "-s -w -X github.com/hrodrig/kzero/internal/cli.Version=$(VERSION) -X github.com/hrodrig/kzero/internal/notify.AppVersion=$(VERSION) -X github.com/hrodrig/kzero/internal/cli.Commit=$(COMMIT) -X github.com/hrodrig/kzero/internal/cli.BuildDate=$(BUILDDATE) -X github.com/hrodrig/kzero/internal/cli.Branch=$(BRANCH)"
 PORT_VERSION := $(shell cat VERSION 2>/dev/null | tr -d '\n\r' | sed 's/^v//')
 
 .DEFAULT_GOAL := help

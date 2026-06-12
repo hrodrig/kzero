@@ -17,8 +17,8 @@ Visual overviews (Mermaid): **[diagrams.md](diagrams.md)**.
 - Phase lifecycle hooks: `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error`.
 - Optional **per-step** hooks: `pre` and `post` (shell scripts) scoped to a single pipeline step, executed immediately before and after that step’s main action.
 - Pipeline step types:
-  - compact resource refs (`<kind>.<namespace>/<name>`)
-  - Helm release refs (`release.<namespace>/<name>`)
+  - compact resource refs (`<kind>.<namespace>/<name>`) for **`deployment`**, **`statefulset`**, **`release`**, **`pvc`**, **`exec`**
+  - Helm release refs (`release.<namespace>/<name>`) — shell script (**`run.execution: shell`**) or Helm SDK chart manifest (**`native`** / **`auto`**)
   - custom script steps (`{ custom: ./path/script.sh }`, optionally with `pre` / `post` in the same mapping)
 - Run modes: `dry-run` and `live` (live can start as minimal implementation).
 - **`retry` block** in YAML (`retry.attempts`, `retry.delay`): per-pipeline-step retries in **`live`** mode with exponential backoff (see [Current engine: sequencing, retry, and worker concurrency](#current-engine-sequencing-retry-and-worker-concurrency)).
@@ -62,7 +62,7 @@ kzero stays **generic** and **configuration-driven**: the engine interprets vali
 - `verify` (optional; post-up readiness — see § **`kzero verify`**)
 - `infra_probe` (optional; pre-destructive probe — see § **`kzero probe`**)
 - `retry.attempts`, `retry.delay` (loaded; engine behavior: see subsection below)
-- `run.kubeconfig`, `run.mode`, `run.execution`, `run.timeout`, `run.operation_timeout`, `run.no_env_passthrough`
+- `run.kubeconfig`, `run.mode`, `run.execution`, `run.color`, `run.timeout`, `run.operation_timeout`, `run.no_env_passthrough`, `run.verify`, `run.probe_cache_dir`
 
 ### `run.kubeconfig` and in-cluster auth
 
@@ -82,7 +82,7 @@ This subsection documents **observable behavior in the codebase today** (strictl
 
 1. **Sequential pipeline steps:** For `kzero down` / `kzero up` / `kzero reset`, each entry in `pipelines.down` or `pipelines.up` runs **after** the previous step completes successfully. Steps do **not** run in parallel. Fail-fast: the first failing hook or step aborts the phase (see §5). On **down**, `deployment` / `statefulset` steps set replicas without waiting for pods to terminate unless a step defines its own wait semantics via hooks or future fields.
 2. **`retry.attempts` and `retry.delay`:** In **`run.mode: live`**, each **pipeline step** (pre-hook, main step, post-hook as one unit) may be retried up to **`retry.attempts`** times. After failure *n*, the engine waits **`retry.delay × 2^(n−1)`** (capped at **2m**) before the next try. Retries apply only to **transient** errors (API timeout/conflict/429/503, `context.DeadlineExceeded`, common connection/timeout strings). **`ErrNotFound`**, **`ErrForbidden`**, and **`context.Canceled`** are not retried. **`dry-run`** does not retry. A line `[retry] pipeline …` is written to the command output stream when a retry occurs.
-3. **`notify`:** When **`run.mode: live`** and at least one channel is **`enabled`**, the CLI sends **`pipeline.start`** (after the **`Kubernetes target:`** block), **`pipeline.success`** on completion, and **`pipeline.error`** on fail-fast **before** the **`on-error`** hook. Channels: **`slack`**, **`discord`**, **`teams`**, **`pagerduty`** (Events API v2), and **`webhook`** (generic JSON payload). **`notify.on_error`** defaults to **true** when any channel is enabled. **`dry-run`** does not send pipeline notifications. Use **`kzero notify test`** to POST a test event without running a pipeline (see § **`kzero notify test`**). Webhook URLs, bearer tokens, and common `*_TOKEN` / `*_KEY` / `*_SECRET` patterns are redacted in notify payloads and engine logs.
+3. **`notify`:** When **`run.mode: live`** and at least one channel is **`enabled`**, the CLI sends **`pipeline.start`** (after the **`Kubernetes target:`** block), **`pipeline.success`** on completion, and **`pipeline.error`** on fail-fast **before** the **`on-error`** hook. Channels: **`slack`** (colored attachment with fields such as `Cluster`, `Client`, `Context`, `User`, `Mode`, `Duration`; footer **`kzero vX.Y.Z`** from build metadata — see [examples/notifications.md](examples/notifications.md)), **`discord`**, **`teams`**, **`pagerduty`** (Events API v2), and **`webhook`** (generic JSON payload including **`kube_context`** when available). **`notify.on_error`** defaults to **true** when any channel is enabled. Override channel keys via **`KZERO_NOTIFY_*`** env vars (same binding rules as other **`KZERO_*`** keys). **`dry-run`** does not send pipeline notifications. Use **`kzero notify test`** to POST a test event without running a pipeline (see § **`kzero notify test`**). Webhook URLs, bearer tokens, and common `*_TOKEN` / `*_KEY` / `*_SECRET` patterns are redacted in notify payloads and engine logs.
 4. **Secret redaction and hook environment:** Engine logs (text and JSON), notify **`pipeline.error`** payloads, and subprocess stdout/stderr written to the output stream scrub common secret patterns. Set **`run.no_env_passthrough: true`** or pass **`--no-env-passthrough`** on **`down`** / **`up`** / **`reset`** to omit the host **`os.Environ()`** from hook, **`custom:`**, **`release`**, and **`kubectl`** subprocesses — only **`KZERO_*`**, optional **`KUBECONFIG`**, and correlation fields remain. Hooks that depend on host **`PATH`**, cloud SDK env vars, or other inherited credentials must not use this flag.
 5. **CLI warnings:** Deferred-feature warnings are reserved for schema fields not yet implemented; **`notify.*`** channels no longer emit deferred warnings once enabled.
 
@@ -110,8 +110,8 @@ Compact step references (`<kind>.<namespace>/<name>`) in `pipelines.down` and `p
 |------|-------------|-----------|
 | `deployment` | scale to 0 (`shell`: `kubectl scale`; `native`: API update) | scale to N (default 1; optional `wait_for_ready` → rollout wait) |
 | `statefulset` | scale to 0 | scale to N (default 1; optional `wait_for_ready` → rollout wait) |
-| `release` | `helm uninstall <name> -n <namespace> --wait --ignore-not-found` (live); dry-run logs the same | `<helm.workspace>/<name>.sh` (install/upgrade script) |
-| `pvc` | delete claim via API (`DeletePropagationBackground`, ignore-not-found) | same (delete only; typically used after scale-down on **`down`**) |
+| `release` | **Shell:** `helm uninstall` (live); dry-run logs the same. **Native/auto:** Helm SDK uninstall (wait, ignore-not-found). | **Shell:** `<helm.workspace>/<name>.sh` with arg `up`. **Native/auto:** Helm SDK `upgrade --install` from `<helm.workspace>/<name>.yaml` (or step overrides) |
+| `pvc` | delete claim via API (`DeletePropagationBackground`, ignore-not-found) | same (delete only; typically used on **`down`** after scale-down) |
 | `exec` | run `command` in pod container via API exec subresource | same |
 
 `daemonset` is **not** a built-in kind in v1 because the Kubernetes API server does not expose a `/scale` subresource for DaemonSet, so `kubectl scale daemonset/...` returns `Error from server (NotFound): the server could not find the requested resource`. Configs that reference `daemonset.<ns>/<name>` are rejected at parse time.
@@ -313,10 +313,10 @@ In order (omit lines when the corresponding config value is empty):
 1. **Header:** `Config`, `Schema`, `Run mode`; optional `Cluster`, `Client id`, `Run timeout`, `Helm workspace`.
 2. **Phase hooks:** one line per set hook (`Hook pre-down:`, `Hook post-down:`, `Hook pre-up:`, `Hook post-up:`, `Hook on-error:`).
 3. **Counts:** `Pipeline steps: down=N up=M`.
-4. **`[down]`** section: for each step, `  <index>: <normalized step>` where the label uses the compact ref (e.g. `deployment.ns/app`) or `custom: <path>`. Optional parenthetical metadata: `pre`, `post`, `replicas`, `wait_for_ready`, `timeout`; for `release.*` steps on **down**, `helm uninstall --wait --ignore-not-found`; on **up**, `script: <helm.workspace>/<release>.sh`.
+4. **`[down]`** section: for each step, `  <index>: <normalized step>` where the label uses the compact ref (e.g. `deployment.ns/app`, `pvc.ns/claim`, `exec.ns/pod`) or `custom: <path>`. Optional parenthetical metadata: `pre`, `post`, `replicas`, `wait_for_ready`, `timeout`, `container`, `command`; for `release.*` on **down**, `helm uninstall --wait --ignore-not-found` (shell) or SDK equivalent; on **up**, `script: …` (shell) or `helm upgrade --install (sdk, …)` (native/auto).
 5. **`[up]`** section: same format as `[down]`.
 6. **`Deferred`** block (only if any deferred field is set): heading `Deferred (accepted by schema; not implemented by v1 engine):` followed by bullet lines summarizing the same messages as stderr warnings.
-7. **`Cluster validation`** (only when the config lists at least one `deployment` or `statefulset` step **and** a Kubernetes client can be built from `run.kubeconfig` / default loading rules): heading `Cluster validation:` followed by one line per unique workload ref (`  OK  <ref>` or `  FAIL  <ref> (<reason>)`). Checks use a read-only **Get** (existence and `spec.replicas` set). If any line is **FAIL**, `analyze` exits non-zero. If the client cannot be loaded, a **non-fatal** note is printed to **stderr** (`cluster validation skipped (...)`) and exit code stays **0** (plan-only mode).
+7. **`Cluster validation`** (when the config lists at least one **`deployment`**, **`statefulset`**, **`pvc`**, or **`exec`** step **and** a Kubernetes client can be built): heading `Cluster validation:` followed by one line per unique ref (`  OK  <ref>` or `  FAIL  <ref> (<reason>)`). Workloads: read-only **Get**; **`pvc`**: claim exists; **`exec`**: pod exists and **`container`** is present. If any line is **FAIL**, `analyze` exits non-zero. If the client cannot be loaded, a **non-fatal** note is printed to **stderr** (`cluster validation skipped (...)`) and exit code stays **0** (plan-only mode).
 
 `analyze` does **not** invoke the execution engine; it does **not** mutate cluster state. For planned hook/script invocations in `dry-run` mode, use `kzero down` / `kzero up` with `run.mode: dry-run`.
 
@@ -356,9 +356,9 @@ Global flag on all commands (default **`text`**). Pipeline commands (`down`, `up
 Text lines follow operator maintenance conventions (timestamp, application name, severity, payload). Example:
 
 ```text
-2026/06/11 16:13:08: kzero - [INF] - [live] scale deployment.cloudbridge/webui -> 0 replicas
+2026/06/11 16:13:08: kzero - [INF] - [live] scale deployment.app/frontend -> 0 replicas
 2026/06/11 16:13:08: kzero - [DBG] - Config: kzero.yaml
-2026/06/11 16:13:08: kzero - [WRN] - warning: notify.teams is accepted by schema but not implemented
+2026/06/11 16:13:08: kzero - [WRN] - [retry] pipeline down step 3: transient error (attempt 2/3)
 2026/06/11 16:13:08: kzero - [ERR] - kzero down failed after 2m11s
 ```
 

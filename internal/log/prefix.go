@@ -11,7 +11,7 @@ import (
 const (
 	// AppName is the application label on every text log line.
 	AppName = "kzero"
-	// TextTimestampLayout matches operator tools that prefix each line (e.g. cbctl-unma).
+	// TextTimestampLayout matches operator tools that prefix each line with date/time and severity.
 	TextTimestampLayout = "2006/01/02 15:04:05"
 )
 

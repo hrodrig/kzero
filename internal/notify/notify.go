@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/hrodrig/kzero/internal/cluster"
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/correlation"
 )
@@ -24,14 +25,17 @@ type HTTPDoer interface {
 
 // Meta is attached to every notify payload.
 type Meta struct {
-	Command    string
-	Mode       string
-	StartedAt  time.Time
-	Duration   time.Duration
-	ClientID   string
-	Cluster    string
-	FailedStep string
-	Error      string
+	Command     string
+	Mode        string
+	StartedAt   time.Time
+	Duration    time.Duration
+	ClientID    string
+	Cluster     string
+	KubeContext string
+	Environment string
+	OSUser      string
+	FailedStep  string
+	Error       string
 }
 
 // AnyEnabled reports whether at least one notify channel is enabled.
@@ -67,7 +71,12 @@ func MetaFromConfig(cfg *config.Config, command string, started time.Time, durat
 		m.Mode = cfg.Run.Mode
 		m.ClientID = correlation.ClientID(cfg)
 		m.Cluster = cfg.Cluster.Name
+		m.Environment = cfg.Cluster.Environment
+		if t, err := cluster.ResolveFromConfig(cfg); err == nil {
+			m.KubeContext = t.ContextName
+		}
 	}
+	m.OSUser = correlation.OperatorUser()
 	return m
 }
 
@@ -83,13 +92,18 @@ func Dispatch(ctx context.Context, cfg *config.Config, event string, meta Meta, 
 	if client == nil {
 		client = http.DefaultClient
 	}
-	return joinErrors(dispatchChannels(ctx, client, cfg.Notify, buildPayload(event, meta)))
+	body := buildPayload(event, meta)
+	return joinErrors(dispatchChannels(ctx, client, cfg, event, meta, body))
 }
 
-func dispatchChannels(ctx context.Context, client HTTPDoer, n config.NotifyConfig, body payload) []error {
+func dispatchChannels(ctx context.Context, client HTTPDoer, cfg *config.Config, event string, meta Meta, body payload) []error {
+	if cfg == nil {
+		return nil
+	}
+	n := cfg.Notify
 	var errs []error
 	if n.Slack.Enabled {
-		if err := postSlack(ctx, client, n.Slack.WebhookURL, body); err != nil {
+		if err := postSlack(ctx, client, n.Slack.WebhookURL, event, meta, body); err != nil {
 			errs = append(errs, err)
 		}
 	}

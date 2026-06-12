@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-06-12
+
+### Added
+
+- **Text log levels:** timestamped lines `YYYY/MM/DD HH:MM:SS: kzero - [DBG|INF|WRN|ERR] - …`; filter with **`--log-level`** (default **`info`**); documented in **SPECIFICATIONS** (Microsoft LogLevel subset).
+- **Slack notify attachments:** colored sidebar (blue start, green completed, red error, yellow test), title **`kzero {action}`**, fields (`Cluster`, `Client`, `Time`, `Context`, `User`, `Mode`, `Duration` on success), footer **`kzero vX.Y.Z`** from build metadata; **`kube_context`** in generic webhook JSON payloads.
+- **`KZERO_NOTIFY_*` env binding** for all notify channel keys (Slack, Discord, Teams, PagerDuty, webhook).
+- **`notify.AppVersion`** ldflags in Makefile, Dockerfile, and GoReleaser for footer/version stamping.
+
+### Changed
+
+- **Helm SDK OCI:** registry login before chart pull; improved credential resolution for private OCI charts.
+
 ## [0.7.2] - 2026-06-10
 
 ### Added
@@ -236,7 +249,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.7.2...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.7.3...HEAD
+[0.7.3]: https://github.com/hrodrig/kzero/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/hrodrig/kzero/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/hrodrig/kzero/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/hrodrig/kzero/compare/v0.6.2...v0.7.0

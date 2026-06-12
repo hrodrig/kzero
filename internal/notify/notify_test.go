@@ -49,8 +49,13 @@ func TestDispatch_liveSlackPostsPayload(t *testing.T) {
 	if len(bodies) != 1 {
 		t.Fatalf("got %d bodies, want 1", len(bodies))
 	}
-	if bodies[0]["text"] == nil {
-		t.Fatalf("slack body missing text: %v", bodies[0])
+	attachments, ok := bodies[0]["attachments"].([]any)
+	if !ok || len(attachments) == 0 {
+		t.Fatalf("slack body missing attachments: %v", bodies[0])
+	}
+	att, ok := attachments[0].(map[string]any)
+	if !ok || att["title"] == nil {
+		t.Fatalf("slack attachment missing title: %v", attachments[0])
 	}
 }
 
@@ -124,5 +129,77 @@ func TestAnyEnabled_falseWhenEmpty(t *testing.T) {
 	t.Parallel()
 	if AnyEnabled(&config.Config{}) {
 		t.Fatal("expected false")
+	}
+	if AnyEnabled(nil) {
+		t.Fatal("expected false for nil config")
+	}
+}
+
+func TestDispatch_discordPostsContent(t *testing.T) {
+	t.Parallel()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+	cfg := &config.Config{
+		Run:    config.RunConfig{Mode: "live"},
+		Notify: config.NotifyConfig{Discord: config.ChannelConfig{Enabled: true, WebhookURL: srv.URL}},
+	}
+	meta := Meta{Command: "up", Mode: "live", StartedAt: time.Now()}
+	if err := Dispatch(context.Background(), cfg, EventStart, meta, srv.Client()); err != nil {
+		t.Fatalf("Dispatch: %v", err)
+	}
+}
+
+func TestDispatch_teamsPostsCard(t *testing.T) {
+	t.Parallel()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+	cfg := &config.Config{
+		Run:    config.RunConfig{Mode: "live"},
+		Notify: config.NotifyConfig{Teams: config.ChannelConfig{Enabled: true, WebhookURL: srv.URL}},
+	}
+	meta := Meta{Command: "down", Mode: "live", StartedAt: time.Now()}
+	if err := Dispatch(context.Background(), cfg, EventError, meta, srv.Client()); err != nil {
+		t.Fatalf("Dispatch: %v", err)
+	}
+}
+
+func TestDispatch_pagerDutyRequiresRoutingKey(t *testing.T) {
+	t.Parallel()
+	cfg := &config.Config{
+		Run:    config.RunConfig{Mode: "live"},
+		Notify: config.NotifyConfig{PagerDuty: config.PagerDutyConfig{Enabled: true}},
+	}
+	meta := Meta{Command: "reset", Mode: "live", StartedAt: time.Now()}
+	if err := Dispatch(context.Background(), cfg, EventStart, meta, http.DefaultClient); err == nil {
+		t.Fatal("expected routing key error")
+	}
+}
+
+func TestDispatch_skipsErrorWhenOnErrorDisabled(t *testing.T) {
+	t.Parallel()
+	called := false
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		called = true
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+	onError := false
+	cfg := &config.Config{
+		Run: config.RunConfig{Mode: "live"},
+		Notify: config.NotifyConfig{
+			OnError: &onError,
+			Slack:   config.ChannelConfig{Enabled: true, WebhookURL: srv.URL},
+		},
+	}
+	meta := Meta{Command: "down", Mode: "live", StartedAt: time.Now(), Error: "boom"}
+	if err := Dispatch(context.Background(), cfg, EventError, meta, srv.Client()); err != nil {
+		t.Fatalf("Dispatch: %v", err)
+	}
+	if called {
+		t.Fatal("expected no notify when on_error is false")
 	}
 }

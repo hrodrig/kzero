@@ -97,7 +97,7 @@ notify:
     webhook_url: "https://hooks.slack.com/services/T…/B…/…"
 ```
 
-Slack receives a short **text** line (not the full JSON). Use **`webhook`** if you need the structured payload in Slack via a middleware.
+Slack receives a **colored attachment** with a vertical bar per event: **blue** (`started`), **green** (`completed`), **red** (`error`), **yellow** (`test`). The title follows **`kzero {action}`**; the attachment **footer** is **`kzero vX.Y.Z`** from the running binary (build metadata). Bullet fields include `Cluster`, `Client`, `Time`, `Context`, `User`, `Mode`, and `Duration` on success. Slack also adds its own incoming-webhook attribution below that footer.
 
 ### Discord webhook
 

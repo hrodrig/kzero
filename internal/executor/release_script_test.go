@@ -18,7 +18,7 @@ func TestResolveReleaseScriptIn_workspaceOverride(t *testing.T) {
 
 func TestEnsureOCIRegistryAuth_invalidOCIRef(t *testing.T) {
 	t.Parallel()
-	err := EnsureOCIRegistryAuth(&config.Config{}, "oci://bad", nil, nil)
+	err := EnsureOCIRegistryAuth(&config.Config{}, "oci://bad", nil, nil, nil)
 	if err == nil {
 		t.Fatal("expected invalid oci ref error")
 	}

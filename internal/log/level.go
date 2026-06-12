@@ -3,6 +3,7 @@ package log
 import (
 	"fmt"
 	"strings"
+	"sync"
 )
 
 // Level is a syslog-style severity for text/JSON log lines.
@@ -15,15 +16,22 @@ const (
 	LevelError Level = 4
 )
 
-var minLevel = LevelInfo
+var (
+	minLevel   = LevelInfo
+	minLevelMu sync.RWMutex
+)
 
 // SetMinLevel filters text and JSON events below the given level (default info).
 func SetMinLevel(l Level) {
+	minLevelMu.Lock()
 	minLevel = l
+	minLevelMu.Unlock()
 }
 
 // MinLevel returns the active minimum level.
 func MinLevel() Level {
+	minLevelMu.RLock()
+	defer minLevelMu.RUnlock()
 	return minLevel
 }
 
@@ -45,6 +53,8 @@ func (l Level) Tag() string {
 
 // Enabled reports whether l should be emitted when minLevel is active.
 func (l Level) Enabled() bool {
+	minLevelMu.RLock()
+	defer minLevelMu.RUnlock()
 	return l >= minLevel
 }
 

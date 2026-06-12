@@ -1,8 +1,10 @@
 # Plan 0.7.x — native cluster ops, Helm SDK, and operator safety
 
-**Status:** **Done** — **`v0.7.2`** tagged on **`main`** (**0.7.x** band closed)
+**Status:** **Band closed** — **`v0.7.2`** on **`main`** (core **0.7.x** deliverables). **`v0.7.3`** patch: text log levels, Slack notify attachments, **`KZERO_NOTIFY_*`**, Helm SDK OCI login hardening.
 
-### Internal merge order (2026-06-11)
+This document is **historical planning context** for the **0.7.x** semver band. For current shipped behavior, see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](ROADMAP.md), and [SPECIFICATIONS.md](SPECIFICATIONS.md). Open work lives under **1.0.0** (**#29** `job`/`cronjob`, **#32–#34**).
+
+### Internal merge order (2026-06-11) — completed
 
 Close **0.6.x #17** first (small, operator-facing, unblocks safer logs before larger executors). Then ship **in-cluster** as a tagged patch, then **Helm SDK** (largest slice), then **`pvc` / `exec` / probe native** for develop2-style distroless pipelines.
 
@@ -26,38 +28,38 @@ After **0.6.x** (notify, verify, probe, preflight, structured logs), operators n
 1. **Distroless / in-cluster** runs without bastion kubeconfig mounts  
 2. **`release.*`** without host **`helm`** + **`.sh`** scripts (**Helm SDK**)  
 3. **Data reset and maintenance** primitives (**`pvc`**, **`exec`**) without shell in the image  
-4. **Safer logs and hooks** — complete **#17** (only notify URL redaction exists today)
+4. **Safer logs and hooks** — **#17** shipped in **v0.7.1** (redaction + **`--no-env-passthrough`**)
 
 **1.0.0** items (**default native**, PVC strategy doc, product-repo kind CI) stay in [ROADMAP.md](ROADMAP.md) **1.0.0**.
 
 ---
 
-## #17 — current state vs plan (important)
+## #17 — shipped in v0.7.1
 
-| Area | Today | **#17** target |
-|------|--------|----------------|
-| Notify HTTP **errors** | `redactURL()` masks webhook URLs in error strings | Keep; extend to routing keys in error text |
-| Notify **payloads** | `Meta.Error` copied verbatim into JSON | Redact tokens/URLs before POST |
-| Engine **logs** (`text` / `json`) | No general secret scrubbing | Scrub known patterns before write (URLs with creds, `Bearer`, common `*_TOKEN` / `*_KEY` env echoes) |
-| Hook / subprocess **environment** | Full `os.Environ()` passed to hooks and release scripts | Optional **`--no-env-passthrough`** + `run.no_env_passthrough: true` → only `KZERO_*`, `KUBECONFIG` (if set), and explicit config env |
+| Area | Shipped (**v0.7.1**) |
+|------|----------------------|
+| Notify HTTP **errors** | Webhook URLs and routing keys redacted in error strings |
+| Notify **payloads** | `Meta.Error` and sensitive fields scrubbed before POST |
+| Engine **logs** (`text` / `json`) | Common secret patterns scrubbed; timestamped **`[DBG|INF|WRN|ERR]`** lines since **v0.7.3** |
+| Hook / subprocess **environment** | **`--no-env-passthrough`** / **`run.no_env_passthrough: true`** → only `KZERO_*`, optional `KUBECONFIG`, correlation fields |
 
-**Already shipped (0.6.x PR2):** minimal notify URL redaction only — **#17 is not closed** in [ROADMAP.md](ROADMAP.md).
+See [ROADMAP.md](ROADMAP.md) **0.6.x #17** and **CHANGELOG** **[0.7.1]**.
 
 ---
 
-## Success criteria (0.7.x band)
+## Success criteria (0.7.x band) — all met except optional #29
 
-| # | Criterion | Roadmap |
-|---|-----------|---------|
-| 1 | Empty **`run.kubeconfig`** in a Pod uses in-cluster SA; **`Kubernetes target:`** shows `in-cluster` block | (enabler; on `develop`) |
-| 2 | **`--no-env-passthrough`** / config flag documented; hooks do not inherit host secrets when enabled | **#17** |
-| 3 | Notify payloads and engine error logs scrub webhook URLs, routing keys, and common secret patterns | **#17** |
-| 4 | **`release.*`** live **up**/**down** via **helm.sh/helm/v3** (install/uninstall + wait); analyze shows SDK plan | **#25** |
-| 5 | **`pvc`** step deletes named PVCs via API | **#24** |
-| 6 | **`exec`** step runs command in pod/container via remotecommand | **#23** |
-| 7 | **`infra_probe`** checks runnable with native step types (no probe `.sh` required) | **#26** |
-| 8 | Optional: pods **Pending** due to selectors/taints surfaced in verify or probe | **#27** |
-| 9 | Total coverage ≥ 80%; `make release-check` green on each PR merge to **`develop`**; full release checklist only at band-close tag | — |
+| # | Criterion | Roadmap | Status |
+|---|-----------|---------|--------|
+| 1 | Empty **`run.kubeconfig`** in a Pod uses in-cluster SA; **`Kubernetes target:`** shows `in-cluster` block | — | **Done** (**v0.7.1**) |
+| 2 | **`--no-env-passthrough`** / config flag documented; hooks do not inherit host secrets when enabled | **#17** | **Done** (**v0.7.1**) |
+| 3 | Notify payloads and engine error logs scrub webhook URLs, routing keys, and common secret patterns | **#17** | **Done** (**v0.7.1**) |
+| 4 | **`release.*`** live **up**/**down** via **helm.sh/helm/v3**; analyze shows SDK plan | **#25** | **Done** (**v0.7.2**) |
+| 5 | **`pvc`** step deletes named PVCs via API | **#24** | **Done** (**v0.7.2**) |
+| 6 | **`exec`** step runs command in pod/container via remotecommand | **#23** | **Done** (**v0.7.2**) |
+| 7 | **`infra_probe`** checks runnable with native step types (no probe `.sh` required) | **#26** | **Done** (**v0.7.2**) |
+| 8 | Pods **Pending** due to selectors/taints surfaced in verify or probe | **#27** | **Done** (**v0.7.2**) |
+| 9 | Total coverage ≥ 80%; `make release-check` green | — | **Done** (band-close tags) |
 
 **In-cluster PO readiness (scale-only):** criteria **1** + [kzero-selfhosted `run/in-cluster/`](https://github.com/hrodrig/kzero-selfhosted/tree/develop/run/in-cluster) — met after **0.7.1** tag.
 
@@ -203,10 +205,11 @@ pipelines:
 |-----|----------|
 | **`v0.7.0`** | **Done** — Cosign + SBOM (**#28**) |
 | **`v0.7.1`** | **Done** — **#17** + InClusterConfig (PO / in-cluster smoke track) |
-| **`v0.7.2`** | **Done (develop)** — band close: **#25–#27**, **#30–#31** (OCI registry login, **`pods_schedulable`**, **`custom:`** parity, **`script:`** paths); **#29** deferred |
+| **`v0.7.2`** | **Done** — band close: **#25–#27**, **#30–#31** (OCI registry login, **`pods_schedulable`**, **`custom:`** parity, **`script:`** paths); **#29** deferred |
+| **`v0.7.3`** | **Done** — text log levels (`--log-level`), Slack rich attachments + **`KZERO_NOTIFY_*`**, Helm SDK private OCI login hardening |
 | **`v0.8.0` or `1.0.0`** | **1.0.0** contract items if band splits |
 
-**Cadence (2026-06):** merge **PR3–PR7** on **`develop`** with **`make release-check`** per PR; **do not** bump **`VERSION`**, tag, or refresh selfhosted GHCR pins until **PR7** lands. **0.7.1** stays the pin for in-cluster PO smoke until then.
+**Cadence (2026-06):** **PR3–PR7** merged on **`develop`**; **`v0.7.2`** closed the band. **`v0.7.3`** is a operator-facing patch (logs + notify + OCI) without new step types.
 
 ---
 
@@ -254,6 +257,19 @@ sequenceDiagram
   Job->>API: exec / verify
   Job->>N: pipeline.success
 ```
+
+---
+
+## Post-band patch — v0.7.3 (2026-06-12)
+
+Not part of the original PR1–PR7 slices; shipped after pilot validation:
+
+| Item | Notes |
+|------|--------|
+| **Text log levels** | Global **`--log-level`**, timestamped **`YYYY/MM/DD HH:MM:SS: kzero - [LEVEL] -`** prefix; documented in SPEC § log levels |
+| **Slack notify UX** | Colored attachments, fixed **`kzero {action}`** titles, footer **`kzero vX.Y.Z`** from build metadata |
+| **`KZERO_NOTIFY_*`** | Env binding for all notify channel keys |
+| **OCI login hardening** | Registry login before **`LocateChart`** on private **`oci://`** charts (pilot-tested) |
 
 ---
 

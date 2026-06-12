@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-06-11 (**v0.7.2** tagged — **0.7.x** band closed; see [plan-0.7.x.md](plan-0.7.x.md))
+**Last reviewed:** 2026-06-12 (**v0.7.3** — **0.7.x** band closed; patch release for log levels, Slack notify UX, OCI auth hardening)
 
 ### Versioning note
 
@@ -17,9 +17,9 @@ The first **public** releases are **0.2.0** onward (there was no prior `1.0.x` l
 
 The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`**: `shell` (default), **`native`** (client-go scale + rollout wait), or **`auto`** (native with shell fallback).
 
-**Target architecture (single container image):** expand the **native executor** so the published **distroless** image does not require separate `kubectl` / `helm` binaries on `PATH`. Workloads already use **client-go**; planned extensions include **in-cluster command execution** (`remotecommand`), **PVC lifecycle** via the API, **preflight connectivity** checks, and a **Helm SDK** path for **`release.*`** (install/uninstall/wait and optional OCI registry authentication). Phase hooks and **`custom:`** shell scripts remain valid on hosts with a shell; **containerized** runs should prefer **declarative pipeline steps** over `.sh` inside the image.
+**Target architecture (single container image):** the **native executor** covers **`deployment` / `statefulset`** scale and rollout wait, **`release.*`** via **Helm SDK**, **`pvc` delete**, and **`exec` in pod** — so the published **distroless** image can run full maintenance pipelines without host **`kubectl`** / **`helm`**. Set **`run.execution: native`** (or **`auto`**) for that path. Phase hooks and **`custom:`** shell scripts remain valid on bastions with **`/bin/sh`**; in-cluster Jobs should prefer declarative **`pvc`**, **`exec`**, and SDK **`release.*`** over host-only scripts.
 
-**Honest gap until 0.7.x #25:** the distroless image is **not self-contained** for the most common operator path today—**`release.*`** steps still invoke **`<helm.workspace>/<name>.sh`** (shell + external `helm` on the host or in a sidecar image). **0.6.x** adds notify, structured logs, verify, and infra probe around that model; **Helm SDK** closes the container gap in **0.7.x**, not because of abstract architecture preference but because **`release.*` without bundled helm** is an operational limitation from day one.
+**Remaining gap before 1.0.0:** default **`run.execution: native`** when omitted (**#32**), documented PVC/data-reset patterns beyond delete primitives (**#33**), and product-repo **kind**/envtest CI (**#34**). **`release.*`** on the **shell** path still requires **`<helm.workspace>/<name>.sh`** and external **`helm`** on **`PATH`**.
 
 **Log capture** before or after pipelines is **out of scope** for the engine—invoke external tools via phase hooks when operators need archives.
 
@@ -31,10 +31,10 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 |------|------------|
 | **0.5.x** | **Closed** (last item **#15** in **v0.5.7**) |
 | **0.6.x** | **Closed** in **v0.6.0** (notify, slog, verify, infra probe, preflight, OS audit, Helm workspace SPEC) |
-| **0.7.x** | **Helm SDK** (**#25**), **`exec`**, **`pvc` delete**, **probe checks native**, scheduling/affinity sanity, **`custom:`** parity, OCI auth + non-flat helm paths — **0.7.0** Cosign/SBOM, **0.7.1** in-cluster + **#17**, **0.7.2** band close on develop |
-| **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI |
+| **0.7.x** | **Closed** (**#23–#28**, **#30–#31** in **v0.7.2**; **#29** `job`/`cronjob` still open). **v0.7.3** patch: text log levels, Slack attachment UX, **`KZERO_NOTIFY_*`**, OCI login hardening. |
+| **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**) |
 
-**Helm** stays on **workspace scripts** until the **Helm SDK** executor lands (**0.7.x #24**). Shell-backed hooks remain for operator-maintained scripts on the host.
+**Shell path:** **`run.execution: shell`** (default) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native/auto** uses the Helm SDK and API primitives above.
 
 ---
 
@@ -59,6 +59,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.7.0** | **Cosign** keyless signing and **SPDX/CycloneDX SBOM** in GoReleaser (roadmap **0.7.x #28**). |
 | **0.7.1** | **In-cluster auth** (empty **`run.kubeconfig`** → service account token); **#17** secret redaction and **`--no-env-passthrough`**. |
 | **0.7.2** | **0.7.x band close:** Helm SDK (**#25**), **`pvc`** / **`exec`**, probe native (**#26**), **`pods_schedulable`** (**#27**), OCI **`helm.registries`**, **`script:`** paths (**#31**), **`custom:`** env parity (**#30**). |
+| **0.7.3** | **Text log levels** (`--log-level`, timestamped `[DBG|INF|WRN|ERR]` lines); **Slack notify** rich attachments + **`KZERO_NOTIFY_*`** env; Helm SDK **OCI login** hardening (private registry pilot). |
 
 ---
 
@@ -68,7 +69,7 @@ Close the gap between **schema** and **engine** before larger execution changes.
 
 | # | Item | Status |
 |---|------|--------|
-| 1 | **CLI warnings** for config the engine does not honor: deferred **`notify.*`** channels (and formerly `worker_concurrency`; removed from contract in 0.5.3). **`retry`** is implemented since **0.5.2**. | **Done** (0.2.2) |
+| 1 | **CLI warnings** for config the engine does not honor (formerly `worker_concurrency`; removed from contract in 0.5.3). **`notify.*`** channels are implemented since **0.6.0**; deferred warnings apply only to schema keys still without engine support. **`retry`** is implemented since **0.5.2**. | **Done** (0.2.2; notify warnings removed 0.6.0) |
 | 2 | **Explicit allow-list** for compact pipeline step kinds at parse time. | **Done** (0.2.1) |
 | 3 | **Richer `analyze` output**: list normalized steps and summarize deferred schema fields. | **Done** (0.2.3) |
 | 4 | **DaemonSet**: not a built-in scalable kind; document `custom:` workaround. | **Done** (0.2.1) |
@@ -127,9 +128,9 @@ Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subpr
 
 ## 0.7.x — native cluster operations and Helm SDK
 
-**Implementation plan:** [plan-0.7.x.md](plan-0.7.x.md) (carry-over **0.6.x #17**, then in-cluster **0.7.1**, **Helm SDK**, **`exec`/`pvc`**, probe native).
+**Implementation plan:** [plan-0.7.x.md](plan-0.7.x.md) (**band closed** at **`v0.7.2`**; **`v0.7.3`** patch documented there).
 
-Broader pipeline primitives via **client-go** and **helm.sh/helm/v3**, keeping a **single distroless image** without fork/exec to external `kubectl` / `helm` for built-in step types.
+Broader pipeline primitives via **client-go** and **helm.sh/helm/v3**, keeping a **single distroless image** without fork/exec to external `kubectl` / `helm` for built-in step types when **`run.execution: native`** or **`auto`**.
 
 | # | Item | Status |
 |---|------|--------|
@@ -163,4 +164,4 @@ Major when YAML **`schema_version`**, executor behavior, and step types are stab
 - **Coverage artifact:** `coverage.out` is deny-all gitignored; `make clean` removes it locally so clones do not accumulate stale artifacts (`git add -f` risk).
 - **GoReleaser**: address `nfpms` deprecation warnings (`maintainer`, `builds` → `ids`) on the next housekeeping release.
 - **client-go version**: pin `k8s.io/*` modules to a supported Kubernetes minor; document minimum cluster version in README.
-- **Integration tests**: **0.4.x** delivered fake-client coverage (band complete). **1.0.0 #28** targets optional **kind** / envtest in CI once flake policy is agreed (see SPEC testing baseline).
+- **Integration tests**: **0.4.x** delivered fake-client coverage (band complete). **1.0.0 #34** targets optional **kind** / envtest in CI once flake policy is agreed (see SPEC testing baseline).

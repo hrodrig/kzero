@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -11,9 +12,13 @@ import (
 
 	"github.com/hrodrig/kzero/internal/config"
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/cli/values"
+	"helm.sh/helm/v3/pkg/registry"
+	helmrelease "helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -86,8 +91,9 @@ func (h *SDKHelm) UpgradeInstall(ctx context.Context, step config.PipelineStep) 
 	client.ChartPathOptions.Version = spec.Version
 
 	chartRef := resolveChartRef(h.cfg, spec.Chart)
-	if err := EnsureOCIRegistryAuth(h.cfg, chartRef, h.loggedIn, &h.loginMu); err != nil {
-		return fmt.Errorf("helm sdk auth for %s: %w", step.Ref, err)
+	regClient, err := h.prepareOCIRegistry(client, chartRef, step.Ref)
+	if err != nil {
+		return err
 	}
 	chartPath, err := client.LocateChart(chartRef, h.settings)
 	if err != nil {
@@ -104,11 +110,88 @@ func (h *SDKHelm) UpgradeInstall(ctx context.Context, step config.PipelineStep) 
 		return fmt.Errorf("helm sdk merge values for %s: %w", step.Ref, err)
 	}
 
-	_, err = client.Run(step.Name, ch, vals)
+	return h.runInstallOrUpgrade(ctx, actionConfig, client, step, spec, ch, vals, regClient)
+}
+
+func (h *SDKHelm) prepareOCIRegistry(client *action.Upgrade, chartRef, stepRef string) (*registry.Client, error) {
+	if !strings.HasPrefix(chartRef, "oci://") {
+		return nil, nil
+	}
+	regClient, err := NewHelmRegistryClient()
+	if err != nil {
+		return nil, fmt.Errorf("helm sdk registry client for %s: %w", stepRef, err)
+	}
+	client.SetRegistryClient(regClient)
+	if err := EnsureOCIRegistryAuth(h.cfg, chartRef, regClient, h.loggedIn, &h.loginMu); err != nil {
+		return nil, fmt.Errorf("helm sdk auth for %s: %w", stepRef, err)
+	}
+	return regClient, nil
+}
+
+func (h *SDKHelm) runInstallOrUpgrade(
+	ctx context.Context,
+	actionConfig *action.Configuration,
+	client *action.Upgrade,
+	step config.PipelineStep,
+	spec ChartSpec,
+	ch *chart.Chart,
+	vals map[string]interface{},
+	regClient *registry.Client,
+) error {
+	needsInstall, err := releaseNeedsInstall(actionConfig, step.Name)
+	if err != nil {
+		return fmt.Errorf("helm sdk history %s/%s: %w", step.Namespace, step.Name, err)
+	}
+	if needsInstall {
+		return h.helmInstall(ctx, actionConfig, step, spec, ch, vals, regClient, client.ChartPathOptions)
+	}
+	_, err = client.RunWithContext(ctx, step.Name, ch, vals)
 	if err != nil {
 		return fmt.Errorf("helm sdk upgrade --install %s/%s: %w", step.Namespace, step.Name, err)
 	}
 	return nil
+}
+
+func (h *SDKHelm) helmInstall(
+	ctx context.Context,
+	actionConfig *action.Configuration,
+	step config.PipelineStep,
+	spec ChartSpec,
+	ch *chart.Chart,
+	vals map[string]interface{},
+	regClient *registry.Client,
+	chartPathOpts action.ChartPathOptions,
+) error {
+	inst := action.NewInstall(actionConfig)
+	inst.ReleaseName = step.Name
+	inst.CreateNamespace = spec.CreateNamespace
+	inst.Wait = spec.Wait
+	inst.Timeout = spec.Timeout
+	inst.Namespace = step.Namespace
+	inst.ChartPathOptions = chartPathOpts
+	if regClient != nil {
+		inst.SetRegistryClient(regClient)
+	}
+	if _, err := inst.RunWithContext(ctx, ch, vals); err != nil {
+		return fmt.Errorf("helm sdk install %s/%s: %w", step.Namespace, step.Name, err)
+	}
+	return nil
+}
+
+func releaseNeedsInstall(actionConfig *action.Configuration, name string) (bool, error) {
+	hist := action.NewHistory(actionConfig)
+	hist.Max = 1
+	versions, err := hist.Run(name)
+	if errors.Is(err, driver.ErrReleaseNotFound) {
+		return true, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if len(versions) == 0 {
+		return true, nil
+	}
+	return versions[0].Info.Status == helmrelease.StatusUninstalled, nil
 }
 
 func (h *SDKHelm) actionConfig(namespace string) (*action.Configuration, error) {

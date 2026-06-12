@@ -109,6 +109,17 @@ func bindConfigEnv(v *viper.Viper) {
 		"infra_probe.enabled",
 		"run.probe_cache_dir",
 		"run.no_env_passthrough",
+		"notify.on_error",
+		"notify.slack.enabled",
+		"notify.slack.webhook_url",
+		"notify.discord.enabled",
+		"notify.discord.webhook_url",
+		"notify.teams.enabled",
+		"notify.teams.webhook_url",
+		"notify.pagerduty.enabled",
+		"notify.pagerduty.routing_key",
+		"notify.webhook.enabled",
+		"notify.webhook.url",
 	} {
 		_ = v.BindEnv(key)
 	}

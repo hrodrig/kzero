@@ -6,9 +6,8 @@ import (
 	"strings"
 )
 
-func postSlack(ctx context.Context, client HTTPDoer, webhookURL string, p payload) error {
-	line := summaryLine(p)
-	body := map[string]string{"text": line}
+func postSlack(ctx context.Context, client HTTPDoer, webhookURL string, event string, meta Meta, p payload) error {
+	body := buildSlackBody(event, meta, p)
 	return postJSON(ctx, client, webhookURL, nil, body)
 }
 

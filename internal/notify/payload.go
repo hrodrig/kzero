@@ -9,25 +9,27 @@ import (
 )
 
 type payload struct {
-	Event      string `json:"event"`
-	Command    string `json:"command"`
-	Mode       string `json:"mode"`
-	ClientID   string `json:"client_id,omitempty"`
-	Cluster    string `json:"cluster_name,omitempty"`
-	StartedAt  string `json:"started_at"`
-	Duration   string `json:"duration,omitempty"`
-	FailedStep string `json:"failed_step,omitempty"`
-	Error      string `json:"error,omitempty"`
+	Event       string `json:"event"`
+	Command     string `json:"command"`
+	Mode        string `json:"mode"`
+	ClientID    string `json:"client_id,omitempty"`
+	Cluster     string `json:"cluster_name,omitempty"`
+	KubeContext string `json:"kube_context,omitempty"`
+	StartedAt   string `json:"started_at"`
+	Duration    string `json:"duration,omitempty"`
+	FailedStep  string `json:"failed_step,omitempty"`
+	Error       string `json:"error,omitempty"`
 }
 
 func buildPayload(event string, meta Meta) payload {
 	p := payload{
-		Event:     event,
-		Command:   meta.Command,
-		Mode:      meta.Mode,
-		ClientID:  meta.ClientID,
-		Cluster:   meta.Cluster,
-		StartedAt: meta.StartedAt.UTC().Format(time.RFC3339),
+		Event:       event,
+		Command:     meta.Command,
+		Mode:        meta.Mode,
+		ClientID:    meta.ClientID,
+		Cluster:     meta.Cluster,
+		KubeContext: meta.KubeContext,
+		StartedAt:   meta.StartedAt.UTC().Format(time.RFC3339),
 	}
 	if meta.Duration > 0 {
 		p.Duration = meta.Duration.Round(time.Millisecond).String()
