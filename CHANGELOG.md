@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`kzero --print-sample-config`** — writes sample YAML to stdout (same as `configs/kzero.sample.yml`); documented in README and SPECIFICATIONS.
 - **Planning:** [docs/plan-0.8.x.md](docs/plan-0.8.x.md) — **0.8.x** band (API watchdog, notify delivery visibility, reset phase preflight) from production network-loss incident learnings; [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md) operator mitigations until **0.8.0**.
 
 ### Changed

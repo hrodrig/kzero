@@ -190,11 +190,14 @@ Use a **release tag** instead of `@latest` if you want a pinned version (for exa
 
 kzero reads **one YAML file** per invocation (default **`./kzero.yaml`**; after a `.deb`/`.rpm` install use **`kzero --config /etc/kzero/kzero.yaml`**).
 
-1. Start from **[`configs/kzero.sample.yml`](configs/kzero.sample.yml)** (clone, release tarball, or **`/etc/kzero/kzero.yaml`**).
+1. Start from **[`configs/kzero.sample.yml`](configs/kzero.sample.yml)** (clone, release tarball, **`/etc/kzero/kzero.yaml`**, or **`kzero --print-sample-config > kzero.yaml`**).
 2. Keep **`run.mode: dry-run`** until **`kzero analyze`** matches expectations; see [SPECIFICATIONS.md](docs/SPECIFICATIONS.md).
 
 ```bash
+# From clone or tarball:
 cp configs/kzero.sample.yml kzero.yaml
+# Homebrew / binary-only install (no configs/ in PATH):
+kzero --print-sample-config > kzero.yaml
 kzero analyze
 kzero down    # dry-run when run.mode: dry-run
 ```

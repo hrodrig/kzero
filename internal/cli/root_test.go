@@ -24,6 +24,39 @@ func stubClusterValidationSkipped(t *testing.T) {
 	t.Cleanup(func() { validate.DefaultClientFactory = old })
 }
 
+func TestRoot_printSampleConfig(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	cmd := newRootCmd()
+	cmd.SetOut(&stdout)
+	cmd.SetErr(&stderr)
+	cmd.SetArgs([]string{"--print-sample-config"})
+	err := cmd.Execute()
+	if err != nil && !errors.Is(err, errPrintSampleDone) {
+		t.Fatalf("Execute: %v", err)
+	}
+	if stdout.Len() == 0 || !strings.Contains(stdout.String(), `schema_version: "1.0"`) {
+		t.Fatalf("expected sample on stdout, got %q", stdout.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("sample must not go to stderr; stderr=%q", stderr.String())
+	}
+}
+
+func TestAnalyze_printSampleConfig(t *testing.T) {
+	var stdout bytes.Buffer
+	cmd := newRootCmd()
+	cmd.SetOut(&stdout)
+	cmd.SetErr(&stdout)
+	cmd.SetArgs([]string{"analyze", "--print-sample-config"})
+	err := cmd.Execute()
+	if err != nil && !errors.Is(err, errPrintSampleDone) {
+		t.Fatalf("Execute: %v", err)
+	}
+	if !strings.Contains(stdout.String(), "pipelines:") {
+		t.Fatalf("expected sample on stdout, got %q", stdout.String())
+	}
+}
+
 func TestRootCommand_HasExpectedSubcommands(t *testing.T) {
 	// Do not use t.Parallel: newRootCmd binds package-level cfgFile and
 	// registers cobra.OnInitialize, which races under go test -race.
