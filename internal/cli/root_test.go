@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,6 +23,37 @@ func stubClusterValidationSkipped(t *testing.T) {
 		return nil, errors.New("test: skip cluster validation")
 	}
 	t.Cleanup(func() { validate.DefaultClientFactory = old })
+}
+
+func TestExecute_printSampleConfig(t *testing.T) {
+	oldArgs := os.Args
+	t.Cleanup(func() { os.Args = oldArgs })
+	os.Args = []string{"kzero", "--print-sample-config"}
+
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldStdout := os.Stdout
+	os.Stdout = w
+	errCh := make(chan error, 1)
+	var out bytes.Buffer
+	go func() {
+		_, e := io.Copy(&out, r)
+		errCh <- e
+	}()
+
+	if err := Execute(); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	w.Close()
+	os.Stdout = oldStdout
+	if e := <-errCh; e != nil {
+		t.Fatal(e)
+	}
+	if !strings.Contains(out.String(), "pipelines:") {
+		t.Fatalf("expected sample on stdout, got %q", out.String())
+	}
 }
 
 func TestRoot_printSampleConfig(t *testing.T) {
