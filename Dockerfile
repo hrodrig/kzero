@@ -11,6 +11,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY cmd/ ./cmd/
 COPY internal/ ./internal/
+COPY configs/ ./configs/
 RUN CGO_ENABLED=0 go build -trimpath \
 	-ldflags "-s -w -X github.com/hrodrig/kzero/internal/cli.Version=${VERSION} -X github.com/hrodrig/kzero/internal/notify.AppVersion=${VERSION} -X github.com/hrodrig/kzero/internal/cli.Commit=${COMMIT} -X github.com/hrodrig/kzero/internal/cli.BuildDate=${BUILDDATE} -X github.com/hrodrig/kzero/internal/cli.Branch=${BRANCH}" \
 	-o /kzero ./cmd/kzero
