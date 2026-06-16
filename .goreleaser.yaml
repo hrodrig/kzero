@@ -180,6 +180,9 @@ homebrew_casks:
       verified: "github.com/hrodrig/kzero/"
     manpages:
       - share/man/man1/kzero.1
+    caveats: |
+      Sample configuration is not bundled with the Homebrew cask.
+      Generate it with `kzero --print-sample-config > kzero.yaml`.
     hooks:
       post:
         install: |

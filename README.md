@@ -2,7 +2,7 @@
 
 <a id="top"></a>
 
-[![Version](https://img.shields.io/badge/version-0.7.3-blue.svg)](https://github.com/hrodrig/kzero/releases)
+[![Version](https://img.shields.io/badge/version-0.7.4-blue.svg)](https://github.com/hrodrig/kzero/releases)
 [![GitHub release](https://img.shields.io/github/v/release/hrodrig/kzero)](https://github.com/hrodrig/kzero/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -30,13 +30,13 @@
 
 Regenerate from the repo root: **[docs/README.md — Terminal demo](docs/README.md#terminal-demo-vhs)**.
 
-Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (and **reset**) pipelines from YAML, with phase hooks, optional **per-step** `pre` / `post` scripts, `kubectl` scale targets, Helm release helper scripts, and custom steps.
+Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (and **reset**) pipelines from YAML, with phase hooks, optional **per-step** `pre` / `post` scripts, workload scale steps, **Helm releases** (shell scripts or **Helm SDK** chart manifests under **`helm.workspace`**), **`pvc`** / **`exec`** API steps, and **`custom:`** scripts.
 
-**Operator deployment (bastion, cron, kind e2e, docker run patterns):** **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)** — production paths and examples live there; **this** repo ships the CLI binary, packages, container image, and Homebrew cask only (same split as [pgwd](https://github.com/hrodrig/pgwd) / [pgwd-selfhosted](https://github.com/hrodrig/pgwd-selfhosted)).
+**Operator deployment (bastion, cron, kind e2e, full-reset examples):** **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)** — production paths and annotated profiles live there; **this** repo ships the CLI binary, packages, container image, and Homebrew cask only (same split as [pgwd](https://github.com/hrodrig/pgwd) / [pgwd-selfhosted](https://github.com/hrodrig/pgwd-selfhosted)).
 
 **Releases** ([GitHub Releases](https://github.com/hrodrig/kzero/releases)) ship standalone **binaries** and archives (**`.tar.gz`** / **`.zip`**), Linux **`.deb`** / **`.rpm`**, **Docker** images on **`ghcr.io/hrodrig/kzero`**, and **Homebrew** ([`brew install hrodrig/kzero/kzero`](#homebrew-macos--linux)). **Supply chain (v0.7.0+):** each release attaches **SPDX** and **CycloneDX** SBOMs plus **Cosign** signatures for **`checksums.txt`** and GHCR images — verify with **`cosign verify-blob`** / **`cosign verify`** (see release assets). This repository does **not** ship Helm charts as a release artifact.
 
-Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md)**. **Planned work** (prioritized): **[docs/ROADMAP.md](docs/ROADMAP.md)**. **Diagrams** (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
+Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md)**. **Planned work** (prioritized): **[docs/ROADMAP.md](docs/ROADMAP.md)** — next band **[0.8.x](docs/plan-0.8.x.md)** (API watchdog, notify delivery visibility for long live **`reset`** on bastions). **Operator mitigations today:** [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). **Diagrams** (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
 
 ## Table of contents
 
@@ -64,10 +64,11 @@ Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.
 ## Features
 
 - **Configuration-first** (`schema_version: "1.0"`): pipelines and hooks live in config, not hardcoded playbooks.
-- **Commands**: `analyze`, `target`, `notify test`, `verify`, `probe`, `down`, `up`, `reset`, `version` — global **`--log-format text|json`** on pipeline output (see SPEC). (`reset` = full `down` then `up`; if `down` fails, `up` does not run). Every pipeline command prints a **`Kubernetes target:`** block (`started_at`, optional `client_id`, context, cluster, API server, kubeconfig path) before work starts. **`kzero notify test`** verifies outbound **`notify.*`** channels without running a pipeline. **`analyze`** optionally checks the API that each `deployment` / `statefulset` in the plan exists when kubeconfig loads.
+- **Commands**: `analyze`, `target`, `notify test`, `verify`, `probe`, `down`, `up`, `reset`, `version` — global **`--log-format text|json`** and **`--log-level`** on pipeline output (see SPEC). (`reset` = full `down` then `up`; if `down` fails, `up` does not run). Every pipeline command prints a **`Kubernetes target:`** block (`started_at`, optional `client_id`, context, cluster, API server, kubeconfig path) before work starts. **`kzero notify test`** verifies outbound **`notify.*`** channels without running a pipeline. **`analyze`** optionally checks the API that each `deployment` / `statefulset` in the plan exists when kubeconfig loads.
 - **Phase hooks**: `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error` (shell script paths).
 - **Per-step hooks** (`pre` / `post`): optional shell scripts for a **single** pipeline step—run immediately before and after that step’s main action; **`post` runs only if the main action succeeds**.
-- **Step types**: compact refs (`deployment.ns/name`, `statefulset.ns/name`), `release.ns/name` (scripts under `helm.workspace`), and `custom: ./script.sh` (with optional sibling `pre` / `post` keys on the same YAML mapping). DaemonSet is **not** supported as a built-in kind because `kubectl scale` rejects it (no `/scale` subresource); use a `custom:` step with `kubectl patch` to set a `nodeSelector` that drains the pods.
+- **Step types**: compact refs (`deployment.ns/name`, `statefulset.ns/name`, `pvc.ns/claim`, `exec.ns/pod`), `release.ns/name` (**Helm SDK** chart manifest **`<release>.yaml`** or legacy **`<release>.sh`** under `helm.workspace`), and `custom: ./script.sh` (with optional sibling `pre` / `post` keys on the same YAML mapping). DaemonSet is **not** supported as a built-in kind because `kubectl scale` rejects it (no `/scale` subresource); use a `custom:` step with `kubectl patch` to set a `nodeSelector` that drains the pods.
+- **`run.execution`**: **`shell`** (default — **`kubectl`** / **`helm`** subprocesses), **`native`** (client-go scale + **Helm SDK** + API **`pvc`** / **`exec`**), or **`auto`** (native with shell fallback). Recommended for distroless / in-cluster Jobs: **`native`** — see [SPEC — `run.execution`](docs/SPECIFICATIONS.md#workload-execution-backend-runexecution).
 - **Run modes**: `dry-run` (plan only, no cluster mutations) and `live`.
 
 **Libraries** (see [`go.mod`](go.mod)): [Cobra](https://github.com/spf13/cobra) **v1.10.2**, [Viper](https://github.com/spf13/viper) **v1.21.0**.
@@ -76,9 +77,15 @@ Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.
 
 ## Requirements
 
-- **`kubectl`** on `PATH` (or set **`command.kubectl`** in YAML) with a kubeconfig that can reach the target cluster
-- **RBAC** sufficient for the operations in your pipelines (for example **`get`/`patch`/`scale`** on workloads, Helm if you use **`release.*`** steps)
-- **`helm`** on `PATH` when you use **`release.namespace/name`** steps (or set **`command.helm`**); not required for workload-only configs
+Host tooling depends on **`run.execution`** and your pipeline step types (see [SPECIFICATIONS.md](docs/SPECIFICATIONS.md)):
+
+| Path | Host tools |
+|------|------------|
+| **`run.execution: shell`** (default) | **`kubectl`** on `PATH` (or **`command.kubectl`**); **`helm`** when using **`release.*`** shell scripts |
+| **`run.execution: native`** / **`auto`** | Valid **kubeconfig** (or in-cluster SA); **no host `kubectl`** for scale/wait/**`pvc`**/**`exec`**/**Helm SDK** **`release.*`** |
+| Phase hooks, **`custom:`**, per-step **`pre`/`post`** | **`/bin/sh`**; scripts often call **`kubectl`** themselves |
+
+- **RBAC** sufficient for the operations in your pipelines (for example **`get`/`patch`/`scale`**, PVC delete, Helm releases, pod exec)
 - **Go 1.26.4+** if you [build from source](#quick-start) (`make build`) or use [`go install`](#install-with-go)
 
 [↑ Back to top](#top)
@@ -87,7 +94,7 @@ Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.
 
 Pre-built **`.deb`**, **`.rpm`**, **`.tar.gz`** (and **`.zip`** on Windows), plus **multi-arch** container images on **`ghcr.io/hrodrig/kzero`**, are on **[GitHub Releases](https://github.com/hrodrig/kzero/releases)** and **[latest release](https://github.com/hrodrig/kzero/releases/latest)**. The **release** badge at the top of this README shows the current tag at a glance.
 
-**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. GoReleaser here uses the **git tag (with `v`)** in Linux package and archive basenames (for example **`kzero_v0.4.1_linux_amd64.deb`**), while the download path is still `…/download/v0.4.1/…`. **Pick names from the release page**, use the **snippet below**, or use the **badge**.
+**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. GoReleaser here uses the **git tag (with `v`)** in Linux package and archive basenames (for example **`kzero_v0.7.4_linux_amd64.deb`**), while the download path is still `…/download/v0.7.4/…`. **Pick names from the release page**, use the **snippet below**, or use the **badge**.
 
 ### Install latest `.deb` (Debian / Ubuntu, `amd64`)
 
@@ -124,18 +131,18 @@ Paste the block **as a whole**, or chain with `&&`, so **`apt` does not run** af
 
 ### Fixed-tag examples (copy from the release page if you prefer)
 
-| Format | Example (tag **`v0.4.1`** in the URL path; artifact basename includes the same **`v0.4.1`**) |
+| Format | Example (tag **`v0.7.4`** in the URL path; artifact basename includes the same **`v0.7.4`**) |
 |--------|------------------------------------------------------------------|
-| **`.deb`** | `curl -fsSL -o /tmp/kzero_v0.4.1_linux_amd64.deb https://github.com/hrodrig/kzero/releases/download/v0.4.1/kzero_v0.4.1_linux_amd64.deb` then `sudo apt install /tmp/kzero_v0.4.1_linux_amd64.deb` |
-| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.4.1/kzero_v0.4.1_linux_amd64.rpm` then `sudo rpm -Uvh kzero_v0.4.1_linux_amd64.rpm` or `sudo dnf install ./kzero_v0.4.1_linux_amd64.rpm` |
-| **`.tar.gz` (Linux)** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.4.1/kzero_v0.4.1_linux_amd64.tar.gz` then `tar xzf kzero_v0.4.1_linux_amd64.tar.gz` and run **`./kzero`** from the extracted tree (see **`share/examples/kzero/kzero.sample.yml`**) |
-| **`.tar.gz` (macOS)** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.4.1/kzero_v0.4.1_darwin_amd64.tar.gz` (or **`…_darwin_arm64.tar.gz`** on Apple silicon) |
+| **`.deb`** | `curl -fsSL -o /tmp/kzero_v0.7.4_linux_amd64.deb https://github.com/hrodrig/kzero/releases/download/v0.7.4/kzero_v0.7.4_linux_amd64.deb` then `sudo apt install /tmp/kzero_v0.7.4_linux_amd64.deb` |
+| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.7.4/kzero_v0.7.4_linux_amd64.rpm` then `sudo rpm -Uvh kzero_v0.7.4_linux_amd64.rpm` or `sudo dnf install ./kzero_v0.7.4_linux_amd64.rpm` |
+| **`.tar.gz` (Linux)** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.7.4/kzero_v0.7.4_linux_amd64.tar.gz` then `tar xzf kzero_v0.7.4_linux_amd64.tar.gz` and run **`./kzero`** from the extracted tree (see **`share/examples/kzero/kzero.sample.yml`**) |
+| **`.tar.gz` (macOS)** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.7.4/kzero_v0.7.4_darwin_amd64.tar.gz` (or **`…_darwin_arm64.tar.gz`** on Apple silicon) |
 
 **Update:** download a newer release and run the same install command again (`rpm -Uvh`, `apt install` over the `.deb`, or replace the tarball tree).
 
-**Windows:** use the **`.zip`** asset for your arch (for example **`kzero_v0.4.1_windows_amd64.zip`**), unpack, run **`kzero.exe`** where **`kubectl`** is available.
+**Windows:** use the **`.zip`** asset for your arch (for example **`kzero_v0.7.4_windows_amd64.zip`**), unpack, run **`kzero.exe`** where **`kubectl`** is available.
 
-**Docker:** `docker pull ghcr.io/hrodrig/kzero:v0.4.1` (match the image tag to the **[release](https://github.com/hrodrig/kzero/releases)** you want). Published images use **`gcr.io/distroless/static-debian12:nonroot`** (static **`kzero`** binary only: no shell, no BusyBox/Alpine runtime). **`Dockerfile`** in this repo uses the same final stage. Package: [ghcr.io/hrodrig/kzero](https://github.com/hrodrig/kzero/pkgs/container/kzero).
+**Docker:** `docker pull ghcr.io/hrodrig/kzero:v0.7.4` (match the image tag to the **[release](https://github.com/hrodrig/kzero/releases)** you want). Published images use **`gcr.io/distroless/static-debian12:nonroot`** (static **`kzero`** binary only: no shell, no BusyBox/Alpine runtime). **`Dockerfile`** in this repo uses the same final stage. Package: [ghcr.io/hrodrig/kzero](https://github.com/hrodrig/kzero/pkgs/container/kzero).
 
 **Homebrew** and **BSD packaging** helpers: see **[Install or update](#install-or-update)** and **`contrib/README.md`**.
 
@@ -173,7 +180,9 @@ From any machine with Go **1.26.4+** (installs to `$(go env GOPATH)/bin`; ensure
 go install github.com/hrodrig/kzero/cmd/kzero@latest
 ```
 
-Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.4.1`). Module reference: [pkg.go.dev/github.com/hrodrig/kzero](https://pkg.go.dev/github.com/hrodrig/kzero).
+Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.7.4`). Module reference: [pkg.go.dev/github.com/hrodrig/kzero](https://pkg.go.dev/github.com/hrodrig/kzero).
+
+**End-to-end operator profile** (maintenance reset: truncate, Helm infra, PVC wipe, **`infra_probe`**, notify): **[kzero-selfhosted — full-reset-example](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/full-reset-example)** with [validation runbook](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/full-reset-validation.md).
 
 [↑ Back to top](#top)
 
@@ -181,16 +190,19 @@ Use a **release tag** instead of `@latest` if you want a pinned version (for exa
 
 kzero reads **one YAML file** per invocation (default **`./kzero.yaml`**; after a `.deb`/`.rpm` install use **`kzero --config /etc/kzero/kzero.yaml`**).
 
-1. Start from **[`configs/kzero.sample.yml`](configs/kzero.sample.yml)** (clone, release tarball, or **`/etc/kzero/kzero.yaml`**).
+1. Start from **[`configs/kzero.sample.yml`](configs/kzero.sample.yml)** (clone, release tarball, **`/etc/kzero/kzero.yaml`**, or **`kzero --print-sample-config > kzero.yaml`**).
 2. Keep **`run.mode: dry-run`** until **`kzero analyze`** matches expectations; see [SPECIFICATIONS.md](docs/SPECIFICATIONS.md).
 
 ```bash
+# From clone or tarball:
 cp configs/kzero.sample.yml kzero.yaml
+# Homebrew / binary-only install (no configs/ in PATH):
+kzero --print-sample-config > kzero.yaml
 kzero analyze
 kzero down    # dry-run when run.mode: dry-run
 ```
 
-For **bastion**, **cron**, **CI**, and **live** patterns: **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)** → [run/README.md](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/README.md).
+For **bastion**, **cron**, **CI**, and **live** patterns: **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)** → [run/README.md](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/README.md). For a **full platform reset** playbook (hooks, Helm SDK manifests, transcripts): [full-reset-example](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/full-reset-example).
 
 [↑ Back to top](#top)
 
@@ -198,12 +210,14 @@ For **bastion**, **cron**, **CI**, and **live** patterns: **[kzero-selfhosted](h
 
 | Goal | Start here |
 |------|------------|
+| **Full platform reset** (truncate, PVC, Helm SDK, probe) | [kzero-selfhosted/run/examples/full-reset-example/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/full-reset-example) · [validation runbook](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/full-reset-validation.md) |
 | **Bastion / cron / systemd** | [kzero-selfhosted/run/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run) — [standalone](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/standalone/README.md), [automation & CI](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/automation-and-pipelines.md) |
+| **Network loss during live reset** | [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md) — mitigations until **v0.8.0**; [plan-0.8.x.md](docs/plan-0.8.x.md) |
 | **`docker run`** (analyze / version; live limits) | [run/docker/README.md](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docker/README.md) |
 | **kind e2e** smoke | [testing/kind/README.md](https://github.com/hrodrig/kzero-selfhosted/blob/main/testing/kind/README.md) |
 | **Reference hooks & probe assets** | [run/examples/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples) |
 
-Install the **CLI** here ([Install or update](#install-or-update)); run it from a host with **`kubectl`**, **`helm`** (when needed), and **`kubeconfig`** as documented in **kzero-selfhosted**.
+Install the **CLI** here ([Install or update](#install-or-update)); run it from a host with **kubeconfig** and the tools your YAML requires (**`kubectl`** / **`helm`** on the shell path; **`native`** reduces host dependencies — see [Requirements](#requirements)).
 
 [↑ Back to top](#top)
 
@@ -282,7 +296,7 @@ Full schema, validation, and acceptance criteria: **[docs/SPECIFICATIONS.md](doc
 |-------------|---------|
 | **`schema_version`** | Must be **`1.0`** today. |
 | **`cluster`** | Metadata (`name`, `environment`, …) for labels and notifications. |
-| **`helm`** | **`workspace`**: directory with `<release>.sh` scripts and values for **`release.ns/name`** steps. |
+| **`helm`** | **`workspace`**: directory of **`<release>.yaml`** Helm SDK chart manifests (recommended with **`run.execution: native`**) and/or legacy **`<release>.sh`** scripts; optional **`registries`** for OCI login. |
 | **`command`** | Optional paths for **`kubectl`** and **`helm`**. |
 | **`hooks`** | Optional global scripts: **`pre-down`**, **`post-down`**, **`pre-up`**, **`post-up`**, **`on-error`**. |
 | **`notify`** | Optional outbound alerts: **`slack`**, **`discord`**, **`teams`**, **`pagerduty`**, **`webhook`**; fires on pipeline start/success/error in **`live`** mode. Test with **`kzero notify test`** (see [docs/examples/notifications.md](docs/examples/notifications.md)). |
@@ -294,7 +308,8 @@ Full schema, validation, and acceptance criteria: **[docs/SPECIFICATIONS.md](doc
 
 | Key | Purpose |
 |-----|---------|
-| **`mode`** | **`dry-run`** (log plan only) or **`live`** (execute `kubectl` / `helm`). Required. |
+| **`mode`** | **`dry-run`** (log plan only) or **`live`** (execute steps). Required. |
+| **`execution`** | **`shell`**, **`native`**, or **`auto`** — see [Features](#features) and SPEC. |
 | **`timeout`** | Wall-clock budget for a full **`down`**, **`up`**, or **`reset`** (Go duration, e.g. **`25m`**). |
 | **`kubeconfig`** | Path passed to **`kubectl`** / **`helm`**; empty uses the process environment / default kubeconfig search. |
 | **`operation_timeout`** | Per-operation ceiling (e.g. **`45s`**) for individual kubectl/helm calls inside a step. |
@@ -313,9 +328,9 @@ Retries rerun the whole step (per-step **pre**, main, **post**). Only **transien
 ### `pipelines`
 
 - **`down`** and **`up`** are ordered lists. Each item is either:
-  - a **string** step reference: **`deployment.ns/name`**, **`statefulset.ns/name`**, **`release.ns/name`** (DaemonSet is not a built-in kind — see [Features](#features)); or
+  - a **string** step reference: **`deployment.ns/name`**, **`statefulset.ns/name`**, **`pvc.ns/claim`**, **`exec.ns/pod`**, **`release.ns/name`** (DaemonSet is not a built-in kind — see [Features](#features)); or
   - a **single-key map** whose key is one of the above **or** **`custom`**, with optional fields beside that key (see below).
-- **`release.*`** steps require **`helm.workspace`** to point at the directory of **`<release>.sh`** scripts (see SPEC and sample).
+- **`release.*`** steps require **`helm.workspace`**. With **`run.execution: native`** / **`auto`**, use **`<release>.yaml`** chart manifests (Helm SDK); with **`shell`**, use **`<release>.sh`** scripts (see SPEC and [full-reset-example](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/full-reset-example/helm)).
 
 Optional fields on a **map** step (same YAML mapping as the step ref, alongside **`pre`** / **`post`**):
 
@@ -347,7 +362,7 @@ Only those two literals are accepted (see validation in [`internal/config/load.g
 
 ### `helm.workspace is required when pipelines include release steps`
 
-Any **`release.ns/name`** entry requires **`helm.workspace`** in the root config. Set it to the directory that contains your **`<release>.sh`** scripts, or remove **`release.*`** steps if you are not using Helm-driven releases.
+Any **`release.ns/name`** entry requires **`helm.workspace`** in the root config. Set it to the directory that contains **`<release>.yaml`** (Helm SDK) and/or **`<release>.sh`** (shell path), or remove **`release.*`** steps if you are not using Helm-driven releases.
 
 ### `reset` never ran `up` / pipeline stopped halfway
 

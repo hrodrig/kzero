@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.4] - 2026-06-16
+
+### Added
+
+- **`kzero --print-sample-config`** — writes sample YAML to stdout (same as `configs/kzero.sample.yml`); documented in README and SPECIFICATIONS.
+- **Planning:** [docs/plan-0.8.x.md](docs/plan-0.8.x.md) — **0.8.x** band (API watchdog, notify delivery visibility, reset phase preflight) from production network-loss incident learnings; [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md) operator mitigations until **0.8.0**.
+
+### Changed
+
+- **README:** install examples and Docker pin updated to **v0.7.4**; document **Helm SDK** / **`run.execution: native`**, **`pvc`** / **`exec`** steps, and link to **kzero-selfhosted** [full-reset-example](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/full-reset-example).
+- **ROADMAP:** **0.8.x** band **#35–#41**; current focus shifted from **1.0.0** prep.
+
+### Fixed
+
+- **Docker image build:** include **`configs/`** in build context so embedded sample YAML compiles in CI **`docker-scan`**.
+
 ## [0.7.3] - 2026-06-12
 
 ### Added
@@ -249,7 +265,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.7.3...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.7.4...HEAD
+[0.7.4]: https://github.com/hrodrig/kzero/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/hrodrig/kzero/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/hrodrig/kzero/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/hrodrig/kzero/compare/v0.7.0...v0.7.1

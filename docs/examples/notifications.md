@@ -191,5 +191,8 @@ When configured, notifications include **`client_id`** from **`client.id`** and 
 | HTTP 4xx from webhook | URL, auth headers, and firewall egress |
 | Duplicate error alerts | **`pipeline.error`** fires before **`on-error`** hook; hook may send its own alert |
 | Secrets in logs | kzero redacts webhook URLs in notify **error messages**; keep URLs out of committed YAML |
+| Live reset ran but no Slack after API outage | **v0.7.3:** notify POST failures are not logged; no mid-pipeline API watchdog — see [pipeline-network-loss.md](pipeline-network-loss.md) and [plan-0.8.x.md](../plan-0.8.x.md) |
 
 Contract details: [SPECIFICATIONS.md](../SPECIFICATIONS.md) → **`notify`** and **`kzero notify test`**.
+
+**Production live `reset`:** run **`kzero notify test --event error`** before destructive work; tee stdout to a log file; consider an external watchdog — [pipeline-network-loss.md](pipeline-network-loss.md).

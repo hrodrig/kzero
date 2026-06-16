@@ -344,6 +344,8 @@ Four severity levels, aligned with [Microsoft.Extensions.Logging.LogLevel](https
 
 Global flag on all commands: **`--log-level debug|info|warn|error`** (default **`info`**).
 
+Global flag on all commands: **`--print-sample-config`** — writes sample YAML to **stdout** and exits (same content as **`configs/kzero.sample.yml`**). Use **`kzero --print-sample-config > kzero.yaml`** when the sample file is not on disk (e.g. Homebrew cask).
+
 ### Log format (`--log-format`)
 
 Global flag on all commands (default **`text`**). Pipeline commands (`down`, `up`, `reset`, `notify test`) emit engine events through the structured logger:
