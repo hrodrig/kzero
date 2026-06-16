@@ -26,7 +26,6 @@ func TestFormatHumanDuration(t *testing.T) {
 }
 
 func TestSlackFooter_version(t *testing.T) {
-	t.Parallel()
 	old := AppVersion
 	t.Cleanup(func() { AppVersion = old })
 	AppVersion = "v0.7.2"
