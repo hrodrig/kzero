@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.4] - 2026-06-16
+
 ### Added
 
 - **`kzero --print-sample-config`** — writes sample YAML to stdout (same as `configs/kzero.sample.yml`); documented in README and SPECIFICATIONS.
@@ -14,8 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **README:** install examples and Docker pin updated to **v0.7.3**; document **Helm SDK** / **`run.execution: native`**, **`pvc`** / **`exec`** steps, and link to **kzero-selfhosted** [full-reset-example](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/full-reset-example).
+- **README:** install examples and Docker pin updated to **v0.7.4**; document **Helm SDK** / **`run.execution: native`**, **`pvc`** / **`exec`** steps, and link to **kzero-selfhosted** [full-reset-example](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/full-reset-example).
 - **ROADMAP:** **0.8.x** band **#35–#41**; current focus shifted from **1.0.0** prep.
+
+### Fixed
+
+- **Docker image build:** include **`configs/`** in build context so embedded sample YAML compiles in CI **`docker-scan`**.
 
 ## [0.7.3] - 2026-06-12
 
@@ -259,7 +265,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.7.3...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.7.4...HEAD
+[0.7.4]: https://github.com/hrodrig/kzero/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/hrodrig/kzero/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/hrodrig/kzero/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/hrodrig/kzero/compare/v0.7.0...v0.7.1

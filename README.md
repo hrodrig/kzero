@@ -2,7 +2,7 @@
 
 <a id="top"></a>
 
-[![Version](https://img.shields.io/badge/version-0.7.3-blue.svg)](https://github.com/hrodrig/kzero/releases)
+[![Version](https://img.shields.io/badge/version-0.7.4-blue.svg)](https://github.com/hrodrig/kzero/releases)
 [![GitHub release](https://img.shields.io/github/v/release/hrodrig/kzero)](https://github.com/hrodrig/kzero/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -94,7 +94,7 @@ Host tooling depends on **`run.execution`** and your pipeline step types (see [S
 
 Pre-built **`.deb`**, **`.rpm`**, **`.tar.gz`** (and **`.zip`** on Windows), plus **multi-arch** container images on **`ghcr.io/hrodrig/kzero`**, are on **[GitHub Releases](https://github.com/hrodrig/kzero/releases)** and **[latest release](https://github.com/hrodrig/kzero/releases/latest)**. The **release** badge at the top of this README shows the current tag at a glance.
 
-**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. GoReleaser here uses the **git tag (with `v`)** in Linux package and archive basenames (for example **`kzero_v0.7.3_linux_amd64.deb`**), while the download path is still `…/download/v0.7.3/…`. **Pick names from the release page**, use the **snippet below**, or use the **badge**.
+**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. GoReleaser here uses the **git tag (with `v`)** in Linux package and archive basenames (for example **`kzero_v0.7.4_linux_amd64.deb`**), while the download path is still `…/download/v0.7.4/…`. **Pick names from the release page**, use the **snippet below**, or use the **badge**.
 
 ### Install latest `.deb` (Debian / Ubuntu, `amd64`)
 
@@ -131,18 +131,18 @@ Paste the block **as a whole**, or chain with `&&`, so **`apt` does not run** af
 
 ### Fixed-tag examples (copy from the release page if you prefer)
 
-| Format | Example (tag **`v0.7.3`** in the URL path; artifact basename includes the same **`v0.7.3`**) |
+| Format | Example (tag **`v0.7.4`** in the URL path; artifact basename includes the same **`v0.7.4`**) |
 |--------|------------------------------------------------------------------|
-| **`.deb`** | `curl -fsSL -o /tmp/kzero_v0.7.3_linux_amd64.deb https://github.com/hrodrig/kzero/releases/download/v0.7.3/kzero_v0.7.3_linux_amd64.deb` then `sudo apt install /tmp/kzero_v0.7.3_linux_amd64.deb` |
-| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.7.3/kzero_v0.7.3_linux_amd64.rpm` then `sudo rpm -Uvh kzero_v0.7.3_linux_amd64.rpm` or `sudo dnf install ./kzero_v0.7.3_linux_amd64.rpm` |
-| **`.tar.gz` (Linux)** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.7.3/kzero_v0.7.3_linux_amd64.tar.gz` then `tar xzf kzero_v0.7.3_linux_amd64.tar.gz` and run **`./kzero`** from the extracted tree (see **`share/examples/kzero/kzero.sample.yml`**) |
-| **`.tar.gz` (macOS)** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.7.3/kzero_v0.7.3_darwin_amd64.tar.gz` (or **`…_darwin_arm64.tar.gz`** on Apple silicon) |
+| **`.deb`** | `curl -fsSL -o /tmp/kzero_v0.7.4_linux_amd64.deb https://github.com/hrodrig/kzero/releases/download/v0.7.4/kzero_v0.7.4_linux_amd64.deb` then `sudo apt install /tmp/kzero_v0.7.4_linux_amd64.deb` |
+| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.7.4/kzero_v0.7.4_linux_amd64.rpm` then `sudo rpm -Uvh kzero_v0.7.4_linux_amd64.rpm` or `sudo dnf install ./kzero_v0.7.4_linux_amd64.rpm` |
+| **`.tar.gz` (Linux)** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.7.4/kzero_v0.7.4_linux_amd64.tar.gz` then `tar xzf kzero_v0.7.4_linux_amd64.tar.gz` and run **`./kzero`** from the extracted tree (see **`share/examples/kzero/kzero.sample.yml`**) |
+| **`.tar.gz` (macOS)** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v0.7.4/kzero_v0.7.4_darwin_amd64.tar.gz` (or **`…_darwin_arm64.tar.gz`** on Apple silicon) |
 
 **Update:** download a newer release and run the same install command again (`rpm -Uvh`, `apt install` over the `.deb`, or replace the tarball tree).
 
-**Windows:** use the **`.zip`** asset for your arch (for example **`kzero_v0.7.3_windows_amd64.zip`**), unpack, run **`kzero.exe`** where **`kubectl`** is available.
+**Windows:** use the **`.zip`** asset for your arch (for example **`kzero_v0.7.4_windows_amd64.zip`**), unpack, run **`kzero.exe`** where **`kubectl`** is available.
 
-**Docker:** `docker pull ghcr.io/hrodrig/kzero:v0.7.3` (match the image tag to the **[release](https://github.com/hrodrig/kzero/releases)** you want). Published images use **`gcr.io/distroless/static-debian12:nonroot`** (static **`kzero`** binary only: no shell, no BusyBox/Alpine runtime). **`Dockerfile`** in this repo uses the same final stage. Package: [ghcr.io/hrodrig/kzero](https://github.com/hrodrig/kzero/pkgs/container/kzero).
+**Docker:** `docker pull ghcr.io/hrodrig/kzero:v0.7.4` (match the image tag to the **[release](https://github.com/hrodrig/kzero/releases)** you want). Published images use **`gcr.io/distroless/static-debian12:nonroot`** (static **`kzero`** binary only: no shell, no BusyBox/Alpine runtime). **`Dockerfile`** in this repo uses the same final stage. Package: [ghcr.io/hrodrig/kzero](https://github.com/hrodrig/kzero/pkgs/container/kzero).
 
 **Homebrew** and **BSD packaging** helpers: see **[Install or update](#install-or-update)** and **`contrib/README.md`**.
 
@@ -180,7 +180,7 @@ From any machine with Go **1.26.4+** (installs to `$(go env GOPATH)/bin`; ensure
 go install github.com/hrodrig/kzero/cmd/kzero@latest
 ```
 
-Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.7.3`). Module reference: [pkg.go.dev/github.com/hrodrig/kzero](https://pkg.go.dev/github.com/hrodrig/kzero).
+Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.7.4`). Module reference: [pkg.go.dev/github.com/hrodrig/kzero](https://pkg.go.dev/github.com/hrodrig/kzero).
 
 **End-to-end operator profile** (maintenance reset: truncate, Helm infra, PVC wipe, **`infra_probe`**, notify): **[kzero-selfhosted — full-reset-example](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/full-reset-example)** with [validation runbook](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/full-reset-validation.md).
 

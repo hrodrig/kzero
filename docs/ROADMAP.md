@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-06-12 (**v0.7.3** shipped; **0.8.x** plan published — pipeline resilience after production network-loss incident)
+**Last reviewed:** 2026-06-16 (**v0.7.4** shipped — **`--print-sample-config`**; **0.8.x** plan published)
 
 ### Versioning note
 
@@ -31,7 +31,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 |------|------------|
 | **0.5.x** | **Closed** (last item **#15** in **v0.5.7**) |
 | **0.6.x** | **Closed** in **v0.6.0** (notify, slog, verify, infra probe, preflight, OS audit, Helm workspace SPEC) |
-| **0.7.x** | **Closed** (**#23–#28**, **#30–#31** in **v0.7.2**; **#29** `job`/`cronjob` still open). **v0.7.3** patch: text log levels, Slack attachment UX, **`KZERO_NOTIFY_*`**, OCI login hardening. |
+| **0.7.x** | **Closed** (**#23–#28**, **#30–#31** in **v0.7.2**; **#29** `job`/`cronjob` still open). **v0.7.3** patch: text log levels, Slack attachment UX, **`KZERO_NOTIFY_*`**, OCI login hardening. **v0.7.4**: **`--print-sample-config`** (Homebrew / binary-only bootstrap). |
 | **0.8.x** | **Current focus** — API watchdog, notify delivery visibility, reset phase preflight, progress logs (**#35–#41**). Plan: [plan-0.8.x.md](plan-0.8.x.md). |
 | **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**); **#29** optional in band or pre-1.0. |
 
@@ -61,6 +61,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.7.1** | **In-cluster auth** (empty **`run.kubeconfig`** → service account token); **#17** secret redaction and **`--no-env-passthrough`**. |
 | **0.7.2** | **0.7.x band close:** Helm SDK (**#25**), **`pvc`** / **`exec`**, probe native (**#26**), **`pods_schedulable`** (**#27**), OCI **`helm.registries`**, **`script:`** paths (**#31**), **`custom:`** env parity (**#30**). |
 | **0.7.3** | **Text log levels** (`--log-level`, timestamped `[DBG|INF|WRN|ERR]` lines); **Slack notify** rich attachments + **`KZERO_NOTIFY_*`** env; Helm SDK **OCI login** hardening (private registry pilot). |
+| **0.7.4** | **`kzero --print-sample-config`** (stdout sample YAML for Homebrew / binary-only installs); **0.8.x** planning docs; Docker build includes **`configs/`**. |
 
 ---
 
