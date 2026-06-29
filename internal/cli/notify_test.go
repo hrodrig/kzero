@@ -87,6 +87,30 @@ func TestDown_logsErrOnNotifyDispatchFailure(t *testing.T) {
 	defer srv.Close()
 
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
+	kcPath := filepath.Join(t.TempDir(), "kubeconfig")
+	// Provide a minimal kubeconfig so writeKubernetesTarget succeeds and
+	// EventStart fires before the engine's preflight fails on CI (which
+	// has no real kubeconfig).
+	if err := os.WriteFile(kcPath, []byte(`
+apiVersion: v1
+kind: Config
+current-context: test
+contexts:
+- context:
+    cluster: test
+    user: test
+  name: test
+clusters:
+- cluster:
+    server: https://127.0.0.1:1
+  name: test
+users:
+- name: test
+  user:
+    token: test
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	if err := os.WriteFile(cfgPath, []byte(`
 schema_version: "1.0"
 pipelines:
@@ -94,6 +118,7 @@ pipelines:
   up: []
 run:
   mode: "live"
+  kubeconfig: "`+kcPath+`"
 notify:
   webhook:
     enabled: true
