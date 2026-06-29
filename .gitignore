@@ -8,6 +8,7 @@
 !.goreleaser.yaml
 !.github/
 !.github/**
+!.govulncheck-ignore.yaml
 
 !Dockerfile
 !Dockerfile.release

@@ -110,18 +110,20 @@ tools:
 
 security:
 	@echo "Running govulncheck..."
-	@output=$$(go run golang.org/x/vuln/cmd/govulncheck@latest ./... 2>&1); \
+	@output=$$(go run golang.org/x/vuln/cmd/govulncheck@latest ./...); \
 	status=$$?; \
 	echo "$$output"; \
-	# Filter out 3 false positives that only affect containerd v2.x CRI \
-	# checkpoint (kzero uses containerd v1.x). These have "Fixed in: N/A" \
-	# because v1 will never receive a patch for v2-only features. \
-	only_false_positives=$$(echo "$$output" | grep -cE 'GO-2026-5622|GO-2026-5338|GO-2026-5064'); \
+	ignored_ids=$$(grep 'id:' .govulncheck-ignore.yaml 2>/dev/null | cut -d'"' -f2); \
 	total_vulns=$$(echo "$$output" | grep -c 'Vulnerability #'); \
-	if [ $$total_vulns -gt 0 ] && [ $$total_vulns -eq $$only_false_positives ]; then \
-		echo "(filtered $$only_false_positives false positives — containerd v2-only advisories)"; \
-	elif [ $$total_vulns -gt 0 ] && [ $$total_vulns -ne $$only_false_positives ]; then \
-		echo "ERROR: unfiltered vulnerabilities found."; \
+	matching=0; \
+	for id in $$ignored_ids; do \
+		c=$$(echo "$$output" | grep -c "^Vulnerability.*$$id"); \
+		matching=$$((matching + c)); \
+	done; \
+	if [ $$total_vulns -gt 0 ] && [ $$total_vulns -eq $$matching ]; then \
+		echo "(filtered $$matching false positives - see .govulncheck-ignore.yaml)"; \
+	elif [ $$total_vulns -gt 0 ] && [ $$total_vulns -ne $$matching ]; then \
+		echo "ERROR: $$((total_vulns - matching)) unfiltered vulnerabilities found."; \
 		exit 1; \
 	fi
 
