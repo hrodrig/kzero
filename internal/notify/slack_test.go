@@ -121,3 +121,27 @@ func TestBuildSlackBody_errorIncludesFailedStep(t *testing.T) {
 		t.Fatalf("color: %q", msg.Attachments[0].Color)
 	}
 }
+
+func TestSlackBody_stalledEvent(t *testing.T) {
+	t.Parallel()
+
+	meta := Meta{
+		Command:    "reset",
+		Mode:       "test",
+		StartedAt:  time.Now().Add(-3 * time.Minute),
+		Duration:   3 * time.Minute,
+		FailedStep: "deployment.app/api",
+		Error:      "API unreachable",
+	}
+	body := buildPayload(EventStalled, meta)
+	msg := buildSlackBody(EventStalled, meta, body)
+	if !strings.Contains(msg.Attachments[0].Text, "*Error:* `API unreachable`") {
+		t.Fatalf("text: %q", msg.Attachments[0].Text)
+	}
+	if msg.Attachments[0].Color != slackColorStalled {
+		t.Fatalf("color: %q, want %q", msg.Attachments[0].Color, slackColorStalled)
+	}
+	if msg.Attachments[0].Title != "🟠 kzero stalled (API unreachable)" {
+		t.Fatalf("title: %q", msg.Attachments[0].Title)
+	}
+}
