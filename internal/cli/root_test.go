@@ -251,6 +251,40 @@ notify:
 	}
 }
 
+func TestAnalyze_apiWatchdogEnabledShowsDeferredWarning(t *testing.T) {
+	stubClusterValidationSkipped(t)
+	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
+	if err := os.WriteFile(cfgPath, []byte(`
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.argocd/argocd-server
+run:
+  mode: "dry-run"
+  api_watchdog:
+    enabled: true
+    interval: 60s
+    fail_after: 5m
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	cmd := newRootCmd()
+	cmd.SetOut(&stdout)
+	cmd.SetErr(&stderr)
+	cmd.SetArgs([]string{"analyze", "--config", cfgPath})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if !strings.Contains(stderr.String(), "warning:") {
+		t.Fatalf("expected deferred warning for api_watchdog, got: %q", stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "Deferred") {
+		t.Fatalf("expected Deferred summary in stdout, got: %q", stdout.String())
+	}
+}
+
 // TestClientID_e2eAnalyzeAndDownDryRun verifies client.id appears on analyze stdout
 // and in engine dry-run log lines (integration across config load → CLI → engine).
 func TestClientID_e2eAnalyzeAndDownDryRun(t *testing.T) {
