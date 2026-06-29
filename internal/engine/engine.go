@@ -159,5 +159,16 @@ func dispatchPipelineError(ctx context.Context, eng *Engine, cfg *config.Config,
 	if errors.As(err, &pe) {
 		meta.FailedStep = pe.FailedStep()
 	}
-	_ = notify.Dispatch(ctx, cfg, notify.EventError, meta, nil)
+	if dispatchErr := notify.Dispatch(ctx, cfg, notify.EventError, meta, nil); dispatchErr != nil {
+		// #35: surface dispatch failures. Emit() redacts Msg and Err so
+		// webhook URLs / bearer tokens do not leak into the log stream.
+		if eng.Log != nil {
+			eng.Log.Emit(log.Entry{
+				Kind:  log.KindLive,
+				Level: log.LevelError,
+				Msg:   "notify dispatch failed (" + notify.EventError + ")",
+				Err:   dispatchErr.Error(),
+			})
+		}
+	}
 }

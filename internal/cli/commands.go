@@ -12,6 +12,7 @@ import (
 	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/notify"
 	"github.com/hrodrig/kzero/internal/probe"
+	"github.com/hrodrig/kzero/internal/redact"
 	"github.com/spf13/cobra"
 )
 
@@ -56,7 +57,10 @@ func runPipelineCommand(cmd *cobra.Command, command string, cfg *config.Config, 
 		ctx := cmd.Context()
 		if notify.AnyEnabled(cfg) {
 			meta := notify.MetaFromConfig(cfg, command, started, 0)
-			_ = notify.Dispatch(ctx, cfg, notify.EventStart, meta, nil)
+			if err := notify.Dispatch(ctx, cfg, notify.EventStart, meta, nil); err != nil {
+				_ = log.WriteLine(cmd.ErrOrStderr(), log.LevelError,
+					"notify dispatch failed ("+notify.EventStart+"): "+redact.String(err.Error()))
+			}
 		}
 		emit := log.New(cmd.OutOrStdout(), format)
 		emit.SetCommand(command)
@@ -78,7 +82,10 @@ func runPipelineCommand(cmd *cobra.Command, command string, cfg *config.Config, 
 		}
 		if notify.AnyEnabled(cfg) {
 			meta := notify.MetaFromConfig(cfg, command, started, time.Since(started))
-			_ = notify.Dispatch(ctx, cfg, notify.EventSuccess, meta, nil)
+			if err := notify.Dispatch(ctx, cfg, notify.EventSuccess, meta, nil); err != nil {
+				_ = log.WriteLine(cmd.ErrOrStderr(), log.LevelError,
+					"notify dispatch failed ("+notify.EventSuccess+"): "+redact.String(err.Error()))
+			}
 		}
 		return nil
 	})
