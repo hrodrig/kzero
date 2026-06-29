@@ -9,6 +9,7 @@ import (
 
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/executor"
+	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/redact"
 	"github.com/hrodrig/kzero/internal/subprocess"
 )
@@ -68,7 +69,9 @@ func (r *LiveRunner) runScaledWorkload(ctx context.Context, cfg *config.Config, 
 	if phase == PhaseUp && step.WaitForReady {
 		timeout := rolloutTimeout(cfg, step)
 		r.logLive("wait rollout %s (timeout %s)", step.Ref, timeout)
-		return wl.WaitRollout(opCtx, step.Type, step.Namespace, step.Name, timeout)
+		return r.withThrottledProgress(ctx, step, "waiting rollout", func(_ context.Context) error {
+			return wl.WaitRollout(opCtx, step.Type, step.Namespace, step.Name, timeout)
+		})
 	}
 	return nil
 }
@@ -187,7 +190,9 @@ func (r *LiveRunner) runReleaseScript(ctx context.Context, cfg *config.Config, p
 		} else {
 			r.logLive("helm uninstall %s/%s (--wait --ignore-not-found)", step.Namespace, step.Name)
 		}
-		return helm.Uninstall(opCtx, step)
+		return r.withThrottledProgress(ctx, step, "uninstalling release", func(_ context.Context) error {
+			return helm.Uninstall(opCtx, step)
+		})
 	}
 
 	if helm.UsesSDK() {
@@ -196,7 +201,9 @@ func (r *LiveRunner) runReleaseScript(ctx context.Context, cfg *config.Config, p
 			return err
 		}
 		r.logLive("helm sdk upgrade --install %s/%s (%s)", step.Namespace, step.Name, executor.FormatChartPlan(spec))
-		return helm.UpgradeInstall(opCtx, step)
+		return r.withThrottledProgress(ctx, step, "installing release", func(_ context.Context) error {
+			return helm.UpgradeInstall(opCtx, step)
+		})
 	}
 
 	ws := cfg.Helm.Workspace
@@ -208,7 +215,9 @@ func (r *LiveRunner) runReleaseScript(ctx context.Context, cfg *config.Config, p
 		return err
 	}
 	r.logLive("release script %s (%s)", script, phase)
-	return helm.UpgradeInstall(opCtx, step)
+	return r.withThrottledProgress(ctx, step, "running release script", func(_ context.Context) error {
+		return helm.UpgradeInstall(opCtx, step)
+	})
 }
 
 func (r *LiveRunner) helmFor(cfg *config.Config) (executor.HelmReleases, error) {
@@ -263,4 +272,34 @@ func rolloutTimeout(cfg *config.Config, step config.PipelineStep) time.Duration 
 		return cfg.Run.OperationTimeout
 	}
 	return 5 * time.Minute
+}
+
+// withThrottledProgress wraps a long-running operation with periodic
+// progress lines (every 30s). Avoids log spam by throttling to one
+// line per 30s even if the underlying operation lasts minutes.
+func (r *LiveRunner) withThrottledProgress(ctx context.Context, step config.PipelineStep, action string, fn func(context.Context) error) error {
+	if r.Log == nil {
+		return fn(ctx)
+	}
+	start := time.Now()
+	done := make(chan error, 1)
+	go func() {
+		done <- fn(ctx)
+	}()
+
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case err := <-done:
+			return err
+		case <-ticker.C:
+			r.Log.Emit(log.Entry{
+				Kind:  log.KindLive,
+				Level: log.LevelInfo,
+				Msg:   fmt.Sprintf("still %s %s (elapsed %s)", action, step.Ref, time.Since(start).Round(time.Second)),
+			})
+		}
+	}
 }
