@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-06-29
+
+### Fixed
+
+- **`kzero analyze` deferred warning**: remove incorrect Deferred message for **`run.api_watchdog.enabled`** now that the engine watchdog ships in **v0.8.0**; **`notify.require_delivery`** warning text updated to match current behavior (**#35** logs **`[ERR]`**; pipeline fail-fast on delivery error still deferred).
+
+### Changed
+
+- **Docs:** post-**v0.8.0** sync for [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md), [docs/README.md](docs/README.md), and related operator cookbooks (no longer “until **0.8.0**”).
+
 ## [0.8.0] - 2026-06-29
 
 ### Added
@@ -279,7 +289,9 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.7.4...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/hrodrig/kzero/compare/v0.8.0...v0.8.1
+[0.8.0]: https://github.com/hrodrig/kzero/compare/v0.7.4...v0.8.0
 [0.7.4]: https://github.com/hrodrig/kzero/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/hrodrig/kzero/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/hrodrig/kzero/compare/v0.7.1...v0.7.2

@@ -5,7 +5,7 @@
 
 This document captures operator learnings as **product requirements** for **kzero**. It does not name legacy tooling or tenant stacks. For current shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMAP.md), and [SPECIFICATIONS.md](../SPECIFICATIONS.md).
 
-**Operator mitigations today (pre-0.8):** timestamped logs via wrappers ([kzero-selfhosted `run-kzero`](https://github.com/hrodrig/kzero-selfhosted/blob/develop/run/examples/full-reset-example/run-kzero)), short **`run.operation_timeout`**, **`on-error`** hooks, external watchdog — see [pipeline-network-loss.md](examples/pipeline-network-loss.md) (added with this plan).
+**Supplemental operator mitigations (still recommended):** timestamped logs via wrappers ([kzero-selfhosted `run-kzero`](https://github.com/hrodrig/kzero-selfhosted/blob/develop/run/examples/full-reset-example/run-kzero)), short **`run.operation_timeout`**, **`on-error`** hooks, external watchdog — see [pipeline-network-loss.md](examples/pipeline-network-loss.md). Engine features above shipped in **v0.8.0**; wrappers and external monitors remain the last line of defense when the bastion loses all network paths.
 
 ---
 

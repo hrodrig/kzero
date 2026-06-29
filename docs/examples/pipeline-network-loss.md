@@ -2,7 +2,7 @@
 
 Operator patterns when a **bastion** runs **`kzero down`**, **`up`**, or **`reset`** against a remote API server (AKS, RKE, on-prem, etc.). Complements [notifications.md](notifications.md) and [SPECIFICATIONS.md](../../SPECIFICATIONS.md) preflight/notify sections.
 
-**Planned engine improvements:** [plan-0.8.x.md](../plan-0.8.x.md) (**API watchdog**, notify delivery visibility, reset phase-boundary preflight).
+**Engine features (shipped v0.8.0):** [plan-0.8.x.md](../plan-0.8.x.md) — **API watchdog**, notify delivery **`[ERR]`** logs, reset phase-boundary preflight, throttled progress logs, **`pipeline.stalled`** event.
 
 ---
 
@@ -11,7 +11,8 @@ Operator patterns when a **bastion** runs **`kzero down`**, **`up`**, or **`rese
 ```text
 Phase 1 — API path fails (~15–30 min)
   Bastion may still reach Slack/PagerDuty.
-  Risk: process blocked on helm --wait / rollout status; no alert sent.
+  Risk: process blocked on helm --wait / rollout status; watchdog should trip
+        and dispatch pipeline.stalled / pipeline.error when configured.
 
 Phase 2 — Total bastion network loss (~30 min+)
   No API, no notify, no SSH recovery.
@@ -22,19 +23,38 @@ Design maintenance assuming **both** phases can happen.
 
 ---
 
-## What kzero does today (v0.7.3)
+## What kzero does today (v0.8.0)
 
 | Mechanism | Behavior |
 |-----------|----------|
 | **`pipeline.start` / `pipeline.error` / success** | Slack/webhook on live pipeline start, step failure, success |
-| **Preflight** | **`ServerVersion`** once at start of each **`down`** / **`up`** phase — **not** continuous |
+| **`pipeline.stalled`** | Distinct notify event when **`run.api_watchdog`** trips mid-pipeline (**v0.8.0**) |
+| **Preflight** | **`ServerVersion`** at start of each **`down`** / **`up`** phase; **re-run after `down` before `up`** on **`reset`** (**#37**) |
+| **`run.api_watchdog`** | Periodic API reachability during live runs; cancels stuck step and dispatches **`pipeline.stalled`** when **`fail_after`** exceeded (**#36**) |
+| **Notify dispatch failures** | Failed POSTs log **`[ERR]`** with redacted URLs (**#35**); pipeline exit unchanged unless **`notify.require_delivery: true`** (schema only — engine fail-fast on delivery error not wired yet) |
+| **Long waits** | Throttled **`[INF]`** progress lines every 30s during rollout/Helm waits (**#38**) |
 | **Timeouts** | **`run.timeout`** (whole pipeline), **`run.operation_timeout`** (per operation), Helm/step **`timeout`** |
 | **Logs** | Timestamped **`[INF|WRN|ERR]`** on stdout; wrappers can tee to **`.logs/`** |
-| **Gap** | Notify POST failures are not surfaced; no mid-pipeline API watchdog |
+| **Remaining gap** | Total bastion network loss still blocks all notify paths; no automatic pipeline resume |
+
+### Example: enable API watchdog
+
+```yaml
+run:
+  mode: live
+  timeout: 45m
+  operation_timeout: 8m
+  api_watchdog:
+    enabled: true
+    interval: 60s
+    fail_after: 5m
+```
+
+Tune **`interval`** / **`fail_after`** per cluster; see [SPECIFICATIONS.md](../../SPECIFICATIONS.md) → **`run.api_watchdog`**.
 
 ---
 
-## Operator mitigations (until v0.8.0)
+## Supplemental operator mitigations
 
 ### 1. Aggressive timeouts in production YAML
 
@@ -97,6 +117,6 @@ Where possible: API via private link/VPN; notify via public HTTPS. Phase 1 alert
 
 ## See also
 
-- [plan-0.8.x.md](../plan-0.8.x.md) — **0.8.x** API watchdog and notify delivery
+- [plan-0.8.x.md](../plan-0.8.x.md) — **0.8.x** incident learnings and success criteria (shipped **v0.8.0**)
 - [waiting-between-pipeline-steps.md](waiting-between-pipeline-steps.md) — Helm/rollout waits
 - [kzero-selfhosted automation](https://github.com/hrodrig/kzero-selfhosted/blob/develop/run/docs/automation-and-pipelines.md)

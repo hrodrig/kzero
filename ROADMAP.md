@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-06-29 (**v0.7.4** shipped — **`--print-sample-config`**; **0.8.x** plan published; added **1.0.0 #42** — documented exit code taxonomy after [groot 0.9.x #82](https://github.com/hrodrig/groot/blob/main/pkg/cmd/exitcode.go))
+**Last reviewed:** 2026-06-29 (**v0.8.1** patch — deferred-warning fix + post-**0.8.0** operator docs; **v0.8.0** shipped API watchdog band **#35–#41**; **1.0.0 #42** — documented exit code taxonomy after [groot 0.9.x #82](https://github.com/hrodrig/groot/blob/main/pkg/cmd/exitcode.go))
 
 ### Versioning note
 

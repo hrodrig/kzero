@@ -251,7 +251,7 @@ notify:
 	}
 }
 
-func TestAnalyze_apiWatchdogEnabledShowsDeferredWarning(t *testing.T) {
+func TestAnalyze_apiWatchdogEnabledNoDeferredWarning(t *testing.T) {
 	stubClusterValidationSkipped(t)
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`
@@ -277,11 +277,75 @@ run:
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
-	if !strings.Contains(stderr.String(), "warning:") {
-		t.Fatalf("expected deferred warning for api_watchdog, got: %q", stderr.String())
+	if strings.Contains(stderr.String(), "api_watchdog") {
+		t.Fatalf("unexpected api_watchdog deferred warning after v0.8.0 engine wiring: %q", stderr.String())
 	}
-	if !strings.Contains(stdout.String(), "Deferred") {
-		t.Fatalf("expected Deferred summary in stdout, got: %q", stdout.String())
+	if strings.Contains(stdout.String(), "Deferred (accepted by schema") {
+		t.Fatalf("unexpected Deferred summary for implemented api_watchdog: %q", stdout.String())
+	}
+}
+
+func TestAnalyze_notifyRequireDeliveryShowsDeferredSummary(t *testing.T) {
+	stubClusterValidationSkipped(t)
+	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
+	if err := os.WriteFile(cfgPath, []byte(`
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.argocd/argocd-server
+run:
+  mode: "dry-run"
+notify:
+  require_delivery: true
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	cmd := newRootCmd()
+	cmd.SetOut(&stdout)
+	cmd.SetErr(&stderr)
+	cmd.SetArgs([]string{"analyze", "--config", cfgPath})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if !strings.Contains(stdout.String(), "Deferred (accepted by schema") {
+		t.Fatalf("expected Deferred summary on stdout, got: %q", stdout.String())
+	}
+	if !strings.Contains(stdout.String(), "notify.require_delivery") {
+		t.Fatalf("expected require_delivery in Deferred summary, got: %q", stdout.String())
+	}
+	if !strings.Contains(stderr.String(), "warning: notify.require_delivery") {
+		t.Fatalf("expected deferred warning on stderr for analyze, got stderr=%q", stderr.String())
+	}
+}
+
+func TestDown_dryRunRequireDeliveryDeferredWarningOnStderr(t *testing.T) {
+	stubClusterValidationSkipped(t)
+	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
+	if err := os.WriteFile(cfgPath, []byte(`
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.argocd/argocd-server
+run:
+  mode: "dry-run"
+notify:
+  require_delivery: true
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	cmd := newRootCmd()
+	cmd.SetOut(&stdout)
+	cmd.SetErr(&stderr)
+	cmd.SetArgs([]string{"down", "--config", cfgPath})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if !strings.Contains(stderr.String(), "warning: notify.require_delivery") {
+		t.Fatalf("expected deferred warning on stderr for down, got stderr=%q stdout=%q", stderr.String(), stdout.String())
 	}
 }
 
