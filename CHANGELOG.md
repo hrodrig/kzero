@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-29
+
+### Added
+
+- **API watchdog** (`run.api_watchdog`): periodic Kubernetes API reachability check during live `down`/`up`/`reset`. Configurable `interval`, `fail_after`. When cumulative unreachability exceeds `fail_after`, the running pipeline step is cancelled and `pipeline.stalled` is dispatched (**#36**, **#39**).
+- **`pipeline.stalled` notify event**: distinct event type for API watchdog trips (vs step failure). Separate Slack color (dark orange) and title. Support in `kzero notify test --event stalled` (**#41**).
+- **Reset phase-boundary preflight**: after `down` completes and before `up` begins in `kzero reset`, re-run the API preflight check (**#37**).
+- **Throttled progress logs**: during long waits (rollout wait, Helm install/uninstall, release scripts), emit `[INF]` lines every 30s: step ref, elapsed time (**#38**).
+- **`run.api_watchdog` and `notify.require_delivery` schema**: YAML parsing + `KZERO_RUN_API_WATCHDOG_*` / `KZERO_NOTIFY_REQUIRE_DELIVERY` env overrides. Surfaced in `kzero analyze` Deferred summary until the engine fully wires `require_delivery` (**#39**).
+
+### Fixed
+
+- **Notify dispatch failures now logged**: `_ = notify.Dispatch(...)` replaced with error handling across all three call sites (CLI `EventStart`/`EventSuccess`, engine `EventError`). Failed notify POSTs produce `[ERR]` log lines with redacted webhook URLs (**#35**).
+
 ## [0.7.4] - 2026-06-16
 
 ### Added

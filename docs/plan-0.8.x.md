@@ -1,6 +1,6 @@
 # Plan 0.8.x — pipeline resilience, API watchdog, and notify delivery
 
-**Status:** **In development** — PR1, PR2, PR3 merged to `develop`. Target band **`v0.8.0`**.  
+**Status:** **Done** — all items merged to `develop`, tagged **`v0.8.0`**.  
 **Motivation:** production maintenance incident — control-plane path failed mid-run; ~15 minutes later the process detected API loss but **did not alert**; ~30 minutes later **total bastion network loss**; recovery ~4 hours later; **local logs** were the only evidence.
 
 This document captures operator learnings as **product requirements** for **kzero**. It does not name legacy tooling or tenant stacks. For current shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMAP.md), and [SPECIFICATIONS.md](../SPECIFICATIONS.md).
