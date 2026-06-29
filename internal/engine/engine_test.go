@@ -11,6 +11,7 @@ import (
 
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/executor"
+	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/validate"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
@@ -519,6 +520,40 @@ func TestRunDown_dryRunSkipsRetry(t *testing.T) {
 	}
 	if stepCalls != 1 {
 		t.Fatalf("dry-run should not retry, got %d step calls", stepCalls)
+	}
+}
+
+func TestStartAPIObserver_disabledDoesNotModifyCtx(t *testing.T) {
+	cfg := &config.Config{
+		Run: config.RunConfig{Mode: "dry-run"},
+	}
+	eng := &Engine{}
+	ctx := context.Background()
+	derivedCtx, wd := eng.startAPIObserver(ctx, cfg)
+	if derivedCtx != ctx {
+		t.Fatal("expected same context when api_watchdog not enabled")
+	}
+	if wd != nil {
+		t.Fatal("expected nil watchdog when api_watchdog not enabled")
+	}
+}
+
+func TestStartAPIObserver_defaultsWhenZeroConfig(t *testing.T) {
+	cfg := &config.Config{
+		Run: config.RunConfig{
+			Mode:        "live",
+			APIWatchdog: &config.APIWatchdogConfig{Enabled: true},
+		},
+	}
+	eng := &Engine{Log: log.New(io.Discard, log.FormatText)}
+	ctx := context.Background()
+	derivedCtx, wd := eng.startAPIObserver(ctx, cfg)
+	if wd != nil {
+		wd.Stop()
+		t.Fatal("expected nil watchdog when REST config unavailable")
+	}
+	if derivedCtx != ctx {
+		t.Fatal("expected original context on REST config failure")
 	}
 }
 

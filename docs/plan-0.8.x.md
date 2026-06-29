@@ -1,6 +1,6 @@
 # Plan 0.8.x — pipeline resilience, API watchdog, and notify delivery
 
-**Status:** **Planned** — target band **`v0.8.0`** (first tag of the band).  
+**Status:** **In development** — PR1, PR2, PR3 merged to `develop`. Target band **`v0.8.0`**.  
 **Motivation:** production maintenance incident — control-plane path failed mid-run; ~15 minutes later the process detected API loss but **did not alert**; ~30 minutes later **total bastion network loss**; recovery ~4 hours later; **local logs** were the only evidence.
 
 This document captures operator learnings as **product requirements** for **kzero**. It does not name legacy tooling or tenant stacks. For current shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMAP.md), and [SPECIFICATIONS.md](../SPECIFICATIONS.md).
@@ -76,9 +76,9 @@ Merge to **`develop`** in order:
 
 | PR | Item | Roadmap | Notes |
 |----|------|---------|--------|
-| PR1 | Notify **`[ERR]`** on dispatch failure; remove silent `_ = Dispatch` in CLI/engine | **#35** | Small; high value |
-| PR2 | **`run.api_watchdog`** config parse + env binding + analyze deferred summary | **#39** | Schema first |
-| PR3 | Watchdog goroutine in engine live runs; cancel step context on trip | **#36** | Core behavior |
+| PR1 | Notify **`[ERR]`** on dispatch failure; remove silent `_ = Dispatch` in CLI/engine | **#35** | **Done** (44e07b7) |
+| PR2 | **`run.api_watchdog`** config parse + env binding + analyze deferred summary | **#39** | **Done** (f3b09d7) |
+| PR3 | Watchdog goroutine in engine live runs; cancel step context on trip | **#36** | **Done** (this commit) |
 | PR4 | Reset phase-boundary preflight | **#37** | One function call in **`RunReset`** |
 | PR5 | Throttled progress logs on native wait / helm wait | **#38** | Avoid log spam |
 | PR6 | Optional **`pipeline.stalled`** event + **`notify test --event stalled`** | **#41** | Optional |

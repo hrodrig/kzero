@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hrodrig/kzero/internal/cluster"
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/notify"
 	"github.com/hrodrig/kzero/internal/redact"
 	"github.com/hrodrig/kzero/internal/retry"
+	"github.com/hrodrig/kzero/internal/watchdog"
+	"k8s.io/client-go/rest"
 )
 
 // Engine runs phased pipelines using a Runner (dry-run or live).
@@ -19,6 +22,70 @@ type Engine struct {
 	Log     *log.Emitter
 	Command string    // CLI command name: down, up, reset (for notify metadata)
 	Started time.Time // pipeline start time (for notify metadata)
+}
+
+// startAPIObserver returns a derived context and a watchdog that periodically
+// probes the API server. When the watchdog trips (cumulative unreachability
+// exceeds cfg.Run.APIWatchdog.FailAfter), the derived context is cancelled,
+// causing the running pipeline step to fail with context.Canceled.
+// Returns the original context and nil watchdog when api_watchdog is
+// disabled or when the REST config cannot be loaded (non-fatal).
+func (e *Engine) startAPIObserver(ctx context.Context, cfg *config.Config) (context.Context, *watchdog.Watchdog) {
+	if cfg == nil || cfg.Run.APIWatchdog == nil || !cfg.Run.APIWatchdog.Enabled {
+		return ctx, nil
+	}
+
+	restCfg, err := cluster.LoadRESTConfig(cfg.Run.Kubeconfig)
+	if err != nil {
+		// Non-fatal: warn via emitter and proceed without watchdog.
+		if e.Log != nil {
+			e.Log.Emit(log.Entry{
+				Kind:  log.KindLive,
+				Level: log.LevelWarn,
+				Msg:   "api_watchdog: cannot create Kubernetes client; watchdog disabled",
+				Err:   err.Error(),
+			})
+		}
+		return ctx, nil
+	}
+
+	client, err := rest.RESTClientFor(restCfg)
+	if err != nil {
+		if e.Log != nil {
+			e.Log.Emit(log.Entry{
+				Kind:  log.KindLive,
+				Level: log.LevelWarn,
+				Msg:   "api_watchdog: cannot create REST client; watchdog disabled",
+				Err:   err.Error(),
+			})
+		}
+		return ctx, nil
+	}
+
+	interval := cfg.Run.APIWatchdog.Interval
+	if interval <= 0 {
+		interval = 60 * time.Second
+	}
+	failAfter := cfg.Run.APIWatchdog.FailAfter
+	if failAfter <= 0 {
+		failAfter = 5 * time.Minute
+	}
+
+	stepCtx, stepCancel := context.WithCancel(ctx)
+
+	w := watchdog.New(stepCtx, watchdog.Config{
+		Interval:  interval,
+		FailAfter: failAfter,
+		Healthz: func(probeCtx context.Context) error {
+			_, err := client.Get().AbsPath("/healthz").DoRaw(probeCtx)
+			return err
+		},
+		OnTrip: func() {
+			stepCancel()
+		},
+	})
+
+	return stepCtx, w
 }
 
 // New builds an Engine for cfg.Run.Mode, writing dry-run / live lines to emit.
@@ -39,6 +106,10 @@ func New(cfg *config.Config, emit *log.Emitter) *Engine {
 func (e *Engine) RunDown(ctx context.Context, cfg *config.Config) error {
 	ctx, cancel := withRunTimeout(ctx, cfg)
 	defer cancel()
+	ctx, wd := e.startAPIObserver(ctx, cfg)
+	if wd != nil {
+		defer wd.Stop()
+	}
 	return e.runDown(ctx, cfg)
 }
 
@@ -46,6 +117,10 @@ func (e *Engine) RunDown(ctx context.Context, cfg *config.Config) error {
 func (e *Engine) RunUp(ctx context.Context, cfg *config.Config) error {
 	ctx, cancel := withRunTimeout(ctx, cfg)
 	defer cancel()
+	ctx, wd := e.startAPIObserver(ctx, cfg)
+	if wd != nil {
+		defer wd.Stop()
+	}
 	return e.runUp(ctx, cfg)
 }
 
@@ -53,6 +128,10 @@ func (e *Engine) RunUp(ctx context.Context, cfg *config.Config) error {
 func (e *Engine) RunReset(ctx context.Context, cfg *config.Config) error {
 	ctx, cancel := withRunTimeout(ctx, cfg)
 	defer cancel()
+	ctx, wd := e.startAPIObserver(ctx, cfg)
+	if wd != nil {
+		defer wd.Stop()
+	}
 	if err := e.runDown(ctx, cfg); err != nil {
 		return fmt.Errorf("reset down: %w", err)
 	}
