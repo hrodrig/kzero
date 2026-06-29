@@ -135,6 +135,10 @@ func (e *Engine) RunReset(ctx context.Context, cfg *config.Config) error {
 	if err := e.runDown(ctx, cfg); err != nil {
 		return fmt.Errorf("reset down: %w", err)
 	}
+	// Phase-boundary preflight (#37): re-check API after down, before up.
+	if err := e.runPreflight(ctx, cfg); err != nil {
+		return fmt.Errorf("reset phase preflight: %w", err)
+	}
 	if err := e.runUp(ctx, cfg); err != nil {
 		return fmt.Errorf("reset up: %w", err)
 	}
