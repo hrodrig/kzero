@@ -151,5 +151,5 @@ After a successful probe in **live** mode, **`cache_ttl`** skips re-running prob
 
 ## Related
 
-- [SPECIFICATIONS.md § infra_probe](../SPECIFICATIONS.md)
+- [SPECIFICATIONS.md § infra_probe](../../SPECIFICATIONS.md)
 - [notifications.md](notifications.md) — optional alerts on pipeline failure after probe passes

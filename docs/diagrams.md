@@ -1,6 +1,6 @@
 # kzero diagrams (Mermaid)
 
-Visual complements to [SPECIFICATIONS.md](SPECIFICATIONS.md). All diagrams describe the **v1** CLI and engine contract.
+Visual complements to [SPECIFICATIONS.md](../SPECIFICATIONS.md). All diagrams describe the **v1** CLI and engine contract.
 
 ## 1. CLI and engine (high level)
 

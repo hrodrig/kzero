@@ -1,0 +1,21 @@
+# govulncheck known false positives
+#
+# These advisories only affect containerd v2.x CRI checkpoint features.
+# kzero uses containerd v1.x (github.com/containerd/containerd, not
+# /v2). The Go vulndb incorrectly flags them against the v1 module;
+# they will never have a "Fixed in: v1.x.Y" because v1 is not affected.
+#
+# Tracked upstream:
+#   GHSA-cvxm-645q-p574 (GO-2026-5338)
+#   GHSA-rgh6-rfwx-v388 (GO-2026-5622)
+#   GHSA-* (GO-2026-5064) - CDI annotation smuggling, also v2-only
+ignored:
+  - id: "GO-2026-5622"
+    reason: "containerd v2-only CRI checkpoint symlink — does not affect containerd v1"
+    reference: "https://github.com/containerd/containerd/security/advisories/GHSA-rgh6-rfwx-v388"
+  - id: "GO-2026-5338"
+    reason: "containerd v2-only CRI checkpoint image tag poisoning — does not affect containerd v1"
+    reference: "https://github.com/containerd/containerd/security/advisories/GHSA-cvxm-645q-p574"
+  - id: "GO-2026-5064"
+    reason: "containerd v2-only CRI checkpoint CDI smuggling — does not affect containerd v1"
+    reference: "https://pkg.go.dev/vuln/GO-2026-5064"

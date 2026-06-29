@@ -87,12 +87,19 @@ type HooksConfig struct {
 }
 
 type NotifyConfig struct {
-	OnError   *bool                `mapstructure:"on_error"`
-	Slack     ChannelConfig        `mapstructure:"slack"`
-	Discord   ChannelConfig        `mapstructure:"discord"`
-	Teams     ChannelConfig        `mapstructure:"teams"`
-	PagerDuty PagerDutyConfig      `mapstructure:"pagerduty"`
-	Webhook   GenericWebhookConfig `mapstructure:"webhook"`
+	OnError *bool `mapstructure:"on_error"`
+	// RequireDelivery, when true, fails the pipeline if pipeline.error
+	// notify POST(s) cannot be sent. Channel-fanout is allowed: at least
+	// one channel must succeed; otherwise the pipeline exits non-zero.
+	// Today (#39, v0.8.x) the flag is parsed and reported via the Deferred
+	// summary; the engine still ignores it (failure path lands in v0.8.0
+	// once #35 wiring is complemented).
+	RequireDelivery *bool                `mapstructure:"require_delivery"`
+	Slack           ChannelConfig        `mapstructure:"slack"`
+	Discord         ChannelConfig        `mapstructure:"discord"`
+	Teams           ChannelConfig        `mapstructure:"teams"`
+	PagerDuty       PagerDutyConfig      `mapstructure:"pagerduty"`
+	Webhook         GenericWebhookConfig `mapstructure:"webhook"`
 }
 
 type ChannelConfig struct {
@@ -163,4 +170,23 @@ type RunConfig struct {
 	ProbeCacheDir string `mapstructure:"probe_cache_dir"`
 	// NoEnvPassthrough when true omits os.Environ from hook/release/kubectl subprocesses.
 	NoEnvPassthrough bool `mapstructure:"no_env_passthrough"`
+	// APIWatchdog configures the periodic API reachability check between
+	// steps and during long waits (planned: live down/up/reset only).
+	// nil means "not configured" (engine default). When present, schema is
+	// parsed and the value drives the Deferred summary; the watchdog
+	// goroutine itself lands in PR3 #36.
+	APIWatchdog *APIWatchdogConfig `mapstructure:"api_watchdog"`
+}
+
+// APIWatchdogConfig mirrors run.api_watchdog.* in YAML.
+//
+//	enabled:    activates the watchdog during live runs.
+//	interval:   period between API reachability checks (Go duration, e.g. "60s").
+//	fail_after: cumulative deadline after which a run is aborted if the API
+//	            has remained unreachable; uses the engine's notify pipeline.error
+//	            channel. Implemented in PR3 #36.
+type APIWatchdogConfig struct {
+	Enabled   bool          `mapstructure:"enabled"`
+	Interval  time.Duration `mapstructure:"interval"`
+	FailAfter time.Duration `mapstructure:"fail_after"`
 }

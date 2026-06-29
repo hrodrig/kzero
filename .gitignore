@@ -8,12 +8,15 @@
 !.goreleaser.yaml
 !.github/
 !.github/**
+!.govulncheck-ignore.yaml
 
 !Dockerfile
 !Dockerfile.release
 !GNUmakefile
 !Makefile
 !README.md
+!ROADMAP.md
+!SPECIFICATIONS.md
 !VERSION
 !LICENSE
 !CHANGELOG.md

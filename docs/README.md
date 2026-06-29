@@ -2,8 +2,8 @@
 
 | Document | Purpose |
 |----------|---------|
-| [SPECIFICATIONS.md](SPECIFICATIONS.md) | Behavior contract, config shape, and TDD baseline |
-| [ROADMAP.md](ROADMAP.md) | Prioritized planned work and known gaps (in-repo source of truth) |
+| [../SPECIFICATIONS.md](../SPECIFICATIONS.md) | Behavior contract, config shape, and TDD baseline |
+| [../ROADMAP.md](../ROADMAP.md) | Prioritized planned work and known gaps (in-repo source of truth) |
 | [plan-0.6.0.md](plan-0.6.0.md) | Implementation plan for **v0.6.0** (notify, preflight, verify, infra probe, slog) |
 | [plan-0.8.x.md](plan-0.8.x.md) | **Planned** **0.8.x** band — API watchdog, notify delivery visibility, reset phase-boundary preflight |
 | [diagrams.md](diagrams.md) | Mermaid diagrams: CLI vs engine, phase ordering, `reset`, failure path |

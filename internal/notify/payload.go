@@ -58,6 +58,8 @@ func summaryLine(p payload) string {
 			return fmt.Sprintf("kzero %s failed at %s: %s", p.Command, p.FailedStep, p.Error)
 		}
 		return fmt.Sprintf("kzero %s failed: %s", p.Command, p.Error)
+	case EventStalled:
+		return fmt.Sprintf("kzero %s stalled: %s", p.Command, p.Error)
 	case EventTest:
 		return fmt.Sprintf("kzero notify test (mode=%s)", p.Mode)
 	default:

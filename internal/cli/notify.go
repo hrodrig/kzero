@@ -54,6 +54,6 @@ pipeline.success, or pipeline.error payload formatting.`,
 			})
 		},
 	}
-	cmd.Flags().StringVar(&event, "event", notify.EventTest, "event to send: notify.test, pipeline.start, pipeline.success, pipeline.error")
+	cmd.Flags().StringVar(&event, "event", notify.EventTest, "event to send: notify.test, pipeline.start, pipeline.success, pipeline.error, pipeline.stalled")
 	return cmd
 }

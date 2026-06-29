@@ -16,6 +16,7 @@ const (
 	slackColorSuccess = "#36a64f" // green — pipeline.success
 	slackColorError   = "#E01E5A" // red — pipeline.error
 	slackColorTest    = "#ECB22E" // yellow — notify.test
+	slackColorStalled = "#FF8C00" // dark orange — pipeline.stalled
 )
 
 type slackAttachment struct {
@@ -58,7 +59,7 @@ func buildSlackBody(event string, meta Meta, body payload) slackBody {
 	if event == EventSuccess && meta.Duration > 0 {
 		addField("Duration", formatHumanDuration(meta.Duration))
 	}
-	if event == EventError {
+	if event == EventError || event == EventStalled {
 		addField("Failed step", meta.FailedStep)
 		addField("Error", body.Error)
 	}
@@ -91,6 +92,8 @@ func slackColorAndTitle(event string) (color, title string) {
 		return slackColorSuccess, fmt.Sprintf("✅ %s completed", notifyAppName)
 	case EventError:
 		return slackColorError, fmt.Sprintf("❌ %s error", notifyAppName)
+	case EventStalled:
+		return slackColorStalled, fmt.Sprintf("🟠 %s stalled (API unreachable)", notifyAppName)
 	case EventTest:
 		return slackColorTest, fmt.Sprintf("🔔 %s test", notifyAppName)
 	default:

@@ -3,11 +3,11 @@
 This file is the **in-repo** source of truth for **planned** work and known gaps. It complements:
 
 - **[SPECIFICATIONS.md](SPECIFICATIONS.md)** — behavior contract, schema, and what the engine does **today**
-- **[CHANGELOG.md](../CHANGELOG.md)** — what shipped in each release
+- **[CHANGELOG.md](CHANGELOG.md)** — what shipped in each release
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-06-16 (**v0.7.4** shipped — **`--print-sample-config`**; **0.8.x** plan published)
+**Last reviewed:** 2026-06-29 (**v0.7.4** shipped — **`--print-sample-config`**; **0.8.x** plan published; added **1.0.0 #42** — documented exit code taxonomy after [groot 0.9.x #82](https://github.com/hrodrig/groot/blob/main/pkg/cmd/exitcode.go))
 
 ### Versioning note
 
@@ -19,20 +19,20 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 
 **Target architecture (single container image):** the **native executor** covers **`deployment` / `statefulset`** scale and rollout wait, **`release.*`** via **Helm SDK**, **`pvc` delete**, and **`exec` in pod** — so the published **distroless** image can run full maintenance pipelines without host **`kubectl`** / **`helm`**. Set **`run.execution: native`** (or **`auto`**) for that path. Phase hooks and **`custom:`** shell scripts remain valid on bastions with **`/bin/sh`**; in-cluster Jobs should prefer declarative **`pvc`**, **`exec`**, and SDK **`release.*`** over host-only scripts.
 
-**Remaining gap before 1.0.0:** **0.8.x** API watchdog and notify delivery visibility during long live resets (**#35–#41**); then default **`run.execution: native`** when omitted (**#32**), documented PVC/data-reset patterns (**#33**), and product-repo **kind**/envtest CI (**#34**). **`release.*`** on the **shell** path still requires **`<helm.workspace>/<name>.sh`** and external **`helm`** on **`PATH`**.
+**Remaining gap before 1.0.0:** default **`run.execution: native`** when omitted (**#32**), documented PVC/data-reset patterns (**#33**), and product-repo **kind**/envtest CI (**#34**). **`release.*`** on the **shell** path still requires **`<helm.workspace>/<name>.sh`** and external **`helm`** on **`PATH`**.
 
-**Log capture** before or after pipelines is **out of scope** for the engine—invoke external tools via phase hooks when operators need archives. **Local stdout/stderr** (and wrapper tee to disk) is the audit trail when notify and API are both unavailable; see [examples/pipeline-network-loss.md](examples/pipeline-network-loss.md).
+**Log capture** before or after pipelines is **out of scope** for the engine—invoke external tools via phase hooks when operators need archives. **Local stdout/stderr** (and wrapper tee to disk) is the audit trail when notify and API are both unavailable; see [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md).
 
-**Completed bands:** **0.3.x** (operator honesty), **0.4.x** (native client + analyze validation + server-side dry-run on native). **0.5.x** retry, **`client.id`**, live audit logs, and sequential-only contract shipped through **v0.5.6**.
+**Completed bands:** **0.3.x** (operator honesty), **0.4.x** (native client + analyze validation + server-side dry-run on native). **0.5.x** retry, **`client.id`**, live audit logs, and sequential-only contract shipped through **v0.5.6**. **0.6.x** notify, slog, verify, infra probe, preflight, OS audit, Helm workspace SPEC through **v0.6.0**. **0.7.x** Helm SDK, PVC/exec/schedulable primitives through **v0.7.2** (secret redaction in **v0.7.1**, text log levels in **v0.7.3**, sample-config in **v0.7.4**). **0.8.x** API watchdog, notify delivery visibility, reset phase-boundary preflight, progress logs, stalled event through **v0.8.0**.
 
 **Current focus (planned work):**
 
 | Band | Open items |
 |------|------------|
 | **0.5.x** | **Closed** (last item **#15** in **v0.5.7**) |
-| **0.6.x** | **Closed** in **v0.6.0** (notify, slog, verify, infra probe, preflight, OS audit, Helm workspace SPEC) |
-| **0.7.x** | **Closed** (**#23–#28**, **#30–#31** in **v0.7.2**; **#29** `job`/`cronjob` still open). **v0.7.3** patch: text log levels, Slack attachment UX, **`KZERO_NOTIFY_*`**, OCI login hardening. **v0.7.4**: **`--print-sample-config`** (Homebrew / binary-only bootstrap). |
-| **0.8.x** | **Current focus** — API watchdog, notify delivery visibility, reset phase preflight, progress logs (**#35–#41**). Plan: [plan-0.8.x.md](plan-0.8.x.md). |
+| **0.6.x** | **Closed** in **v0.6.0** |
+| **0.7.x** | **Closed** — **#23–#31** in **v0.7.2**; **#29** `job`/`cronjob` still open. **v0.7.3**: text log levels. **v0.7.4**: `--print-sample-config`. |
+| **0.8.x** | **Closed** — API watchdog, notify delivery, stalled event (**#35–#41**) in **v0.8.0**. |
 | **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**); **#29** optional in band or pre-1.0. |
 
 **Shell path:** **`run.execution: shell`** (default) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native/auto** uses the Helm SDK and API primitives above.
@@ -62,6 +62,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.7.2** | **0.7.x band close:** Helm SDK (**#25**), **`pvc`** / **`exec`**, probe native (**#26**), **`pods_schedulable`** (**#27**), OCI **`helm.registries`**, **`script:`** paths (**#31**), **`custom:`** env parity (**#30**). |
 | **0.7.3** | **Text log levels** (`--log-level`, timestamped `[DBG|INF|WRN|ERR]` lines); **Slack notify** rich attachments + **`KZERO_NOTIFY_*`** env; Helm SDK **OCI login** hardening (private registry pilot). |
 | **0.7.4** | **`kzero --print-sample-config`** (stdout sample YAML for Homebrew / binary-only installs); **0.8.x** planning docs; Docker build includes **`configs/`**. |
+| **0.8.0** | **0.8.x band close:** API watchdog (`run.api_watchdog`) with throttle and cumulative trip; `[ERR]` log on notify dispatch failure (#35); `notify.require_delivery` schema (#39); reset phase-boundary preflight (#37); throttled progress logs on long waits (#38); `pipeline.stalled` event + `notify test --event stalled` (#41). |
 
 ---
 
@@ -113,7 +114,7 @@ Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subpr
 
 ## 0.6.x — observability, notifications, and preflight
 
-**Implementation plan:** [plan-0.6.0.md](plan-0.6.0.md) (target **`v0.6.0`**). Merge order: **PR1** audit → **notify** → **slog** → **verify** → **infra probe** → **preflight** + SPEC + tag.
+**Implementation plan:** [docs/plan-0.6.0.md](docs/plan-0.6.0.md) (target **`v0.6.0`**). Merge order: **PR1** audit → **notify** → **slog** → **verify** → **infra probe** → **preflight** + SPEC + tag.
 
 | # | Item | Status |
 |---|------|--------|
@@ -130,7 +131,7 @@ Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subpr
 
 ## 0.7.x — native cluster operations and Helm SDK
 
-**Implementation plan:** [plan-0.7.x.md](plan-0.7.x.md) (**band closed** at **`v0.7.2`**; **`v0.7.3`** patch documented there).
+**Implementation plan:** [docs/plan-0.7.x.md](docs/plan-0.7.x.md) (**band closed** at **`v0.7.2`**; **`v0.7.3`** patch documented there).
 
 Broader pipeline primitives via **client-go** and **helm.sh/helm/v3**, keeping a **single distroless image** without fork/exec to external `kubectl` / `helm` for built-in step types when **`run.execution: native`** or **`auto`**.
 
@@ -150,21 +151,21 @@ Broader pipeline primitives via **client-go** and **helm.sh/helm/v3**, keeping a
 
 ## 0.8.x — pipeline resilience (network loss and notify delivery)
 
-**Implementation plan:** [plan-0.8.x.md](plan-0.8.x.md) (target **`v0.8.0`**).
+**Implementation plan:** [docs/plan-0.8.x.md](docs/plan-0.8.x.md) (target **`v0.8.0`**).
 
 Motivation: live **`reset`** on a bastion lost API connectivity mid-run; process detected unreachable control plane after ~15 minutes but **did not alert**; ~30 minutes later **total network loss**; recovery hours later with **logs as sole evidence**.
 
 | # | Item | Status |
 |---|------|--------|
-| 35 | **Notify delivery visibility**: log **`[ERR]`** when outbound notify POST fails (redacted); optional **`notify.require_delivery`** to fail pipeline if error notify cannot be sent. | Pending |
-| 36 | **API watchdog** during live **`down`/`up`/`reset`**: periodic API reachability check between steps and during long waits; fail-fast + **`pipeline.error`** when threshold exceeded. | Pending |
-| 37 | **Preflight between `reset` phases**: re-check API after **`down`**, before **`up`**. | Pending |
-| 38 | **Throttled progress logs** on long rollout/Helm waits (step ref, elapsed, last API OK). | Pending |
-| 39 | **Config `run.api_watchdog`** (+ **`KZERO_RUN_API_WATCHDOG_*`** env binding). | Pending |
-| 40 | **Operator docs**: [examples/pipeline-network-loss.md](examples/pipeline-network-loss.md); selfhosted automation cross-link. | Pending |
-| 41 | *(Optional)* **`pipeline.stalled`** notify event + **`kzero notify test --event stalled`**. | Pending |
+| 35 | **Notify delivery visibility**: log **`[ERR]`** when outbound notify POST fails (redacted); optional **`notify.require_delivery`** to fail pipeline if error notify cannot be sent. | Done (v0.8.0, #35) |
+| 36 | **API watchdog** during live **`down`/`up`/`reset`**: periodic API reachability check between steps and during long waits; fail-fast + **`pipeline.error`** when threshold exceeded. | Done (v0.8.0, #36) |
+| 37 | **Preflight between `reset` phases**: re-check API after **`down`**, before **`up`**. | Done (v0.8.0, #37) |
+| 38 | **Throttled progress logs** on long rollout/Helm waits (step ref, elapsed, last API OK). | Done (v0.8.0, #38) |
+| 39 | **Config `run.api_watchdog`** (+ **`KZERO_RUN_API_WATCHDOG_*`** env binding). | Done (v0.8.0, #39) |
+| 40 | **Operator docs**: [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md); selfhosted automation cross-link. | Done (v0.8.0, #40) |
+| 41 | *(Optional)* **`pipeline.stalled`** notify event + **`kzero notify test --event stalled`**. | Done (v0.8.0, #41) |
 
-**Operator mitigations before 0.8 ships:** short **`run.operation_timeout`**, **`on-error`** hooks, external watchdog, wrapper log files — documented in [pipeline-network-loss.md](examples/pipeline-network-loss.md).
+**Operator mitigations before 0.8 ships:** short **`run.operation_timeout`**, **`on-error`** hooks, external watchdog, wrapper log files — documented in [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md).
 
 ---
 
@@ -177,6 +178,7 @@ Major when YAML **`schema_version`**, executor behavior, and step types are stab
 | 32 | **Default native execution** for workload steps when `run.execution` is omitted (shell opt-in). | Pending |
 | 33 | **PVC / StatefulSet data strategy** documented as pipeline patterns (snapshot, wipe, init-job) beyond core delete primitives. | Pending |
 | 34 | **Integration tests** with **kind** or envtest in CI, with documented flake policy and runtime budget. | Pending |
+| 42 | **Documented exit code taxonomy** for CLI scripts/wrappers: today all non-zero returns collapse to `1` (`cmd/kzero/main.go:14`); map subsystem failures to stable codes (config, Kubernetes client/API, executor aborted, notify delivery, partial failures) following the same pattern adopted for [groot 0.9.x #82](https://github.com/hrodrig/groot/blob/main/pkg/cmd/exitcode.go). Implementation note: not breaking for existing wrappers — codes beyond config error are only emitted where the underlying failure category is unambiguous. | Pending |
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Status:** complete on `develop` — **PR1–PR6** merged; pending **`v0.6.0`** tag on `main`  
 **Target release:** `v0.6.0` on `main` after `make release-check`  
-**Roadmap band:** [ROADMAP.md](ROADMAP.md) **0.6.x** items **#16–#22** (+ **#22bis** SPEC doc); remainder may continue as **0.6.1+**
+**Roadmap band:** [ROADMAP.md](../ROADMAP.md) **0.6.x** items **#16–#22** (+ **#22bis** SPEC doc); remainder may continue as **0.6.1+**
 
 ### Internal merge order (operator review, 2026-06-05)
 
@@ -25,7 +25,7 @@ After **0.5.x** (motor, retry, audit, subprocess taxonomy), the gap for producti
 3. **Structured logs** for cron/CI  
 4. **Operator identity** beyond `client.id`
 
-**Helm SDK**, native `exec`/`pvc`, and scheduling/affinity checks stay in **0.7.x** (see [ROADMAP.md](ROADMAP.md)).
+**Helm SDK**, native `exec`/`pvc`, and scheduling/affinity checks stay in **0.7.x** (see [ROADMAP.md](../ROADMAP.md)).
 
 ## Success criteria (0.6.0)
 
@@ -193,7 +193,7 @@ infra_probe:
 - Clear error: `preflight: cannot reach Kubernetes API: …`  
 - `analyze`: optional warning if preflight would fail (reuse validate client factory pattern)  
 
-**Helm workspace contract** ([SPECIFICATIONS.md](SPECIFICATIONS.md) new section):
+**Helm workspace contract** ([SPECIFICATIONS.md](../SPECIFICATIONS.md) new section):
 
 - Flat `<helm.workspace>/<release-name>.sh` resolution (`release.<ns>/<name>` step → script basename = release **name**)  
 - Required env (`KZERO_PHASE`, `KZERO_RELEASE_*`, correlation vars)  
@@ -266,6 +266,6 @@ sequenceDiagram
 
 ## References
 
-- [SPECIFICATIONS.md](SPECIFICATIONS.md) — update per PR  
+- [SPECIFICATIONS.md](../SPECIFICATIONS.md) — update per PR  
 - [configs/kzero.sample.yml](../configs/kzero.sample.yml) — new blocks  
 - Operator pilot notes (private): infra probe design in operator config repos  

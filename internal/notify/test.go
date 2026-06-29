@@ -14,15 +14,15 @@ import (
 const EventTest = "notify.test"
 
 // TestEvents are valid --event values for `kzero notify test`.
-var TestEvents = []string{EventTest, EventStart, EventSuccess, EventError}
+var TestEvents = []string{EventTest, EventStart, EventSuccess, EventError, EventStalled}
 
 // ValidateTestEvent reports whether event is allowed for notify test.
 func ValidateTestEvent(event string) error {
 	switch strings.TrimSpace(event) {
-	case EventTest, EventStart, EventSuccess, EventError:
+	case EventTest, EventStart, EventSuccess, EventError, EventStalled:
 		return nil
 	default:
-		return fmt.Errorf("notify test: unknown event %q (want: notify.test, pipeline.start, pipeline.success, pipeline.error)", event)
+		return fmt.Errorf("notify test: unknown event %q (want: notify.test, pipeline.start, pipeline.success, pipeline.error, pipeline.stalled)", event)
 	}
 }
 
@@ -45,6 +45,8 @@ func DispatchTest(ctx context.Context, cfg *config.Config, event string, client 
 	case EventError:
 		meta.FailedStep = "deployment.example/app (sample)"
 		meta.Error = "notify test: simulated pipeline error"
+	case EventStalled:
+		meta.Error = "notify test: simulated pipeline stalled (API unreachable)"
 	case EventStart:
 		meta.Duration = 0
 	case EventSuccess:

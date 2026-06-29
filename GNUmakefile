@@ -109,7 +109,23 @@ tools:
 	go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
 
 security:
-	go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+	@echo "Running govulncheck..."
+	@output=$$(go run golang.org/x/vuln/cmd/govulncheck@latest ./...); \
+	status=$$?; \
+	echo "$$output"; \
+	ignored_ids=$$(grep 'id:' .govulncheck-ignore.yaml 2>/dev/null | cut -d'"' -f2); \
+	total_vulns=$$(echo "$$output" | grep -c 'Vulnerability #'); \
+	matching=0; \
+	for id in $$ignored_ids; do \
+		c=$$(echo "$$output" | grep -c "^Vulnerability.*$$id"); \
+		matching=$$((matching + c)); \
+	done; \
+	if [ $$total_vulns -gt 0 ] && [ $$total_vulns -eq $$matching ]; then \
+		echo "(filtered $$matching false positives - see .govulncheck-ignore.yaml)"; \
+	elif [ $$total_vulns -gt 0 ] && [ $$total_vulns -ne $$matching ]; then \
+		echo "ERROR: $$((total_vulns - matching)) unfiltered vulnerabilities found."; \
+		exit 1; \
+	fi
 
 docker-build:
 	$(check-docker)

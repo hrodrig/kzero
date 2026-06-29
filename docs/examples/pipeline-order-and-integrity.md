@@ -1,6 +1,6 @@
 # Pipeline order and integrity on `down`
 
-This page complements [SPECIFICATIONS.md](../SPECIFICATIONS.md#current-engine-sequencing-retry-and-concurrency) with **concrete YAML** for operators who care about **correct ordering**, not only speed.
+This page complements [SPECIFICATIONS.md](../../SPECIFICATIONS.md#current-engine-sequencing-retry-and-concurrency) with **concrete YAML** for operators who care about **correct ordering**, not only speed.
 
 ## What YAML order guarantees
 
@@ -102,7 +102,7 @@ Per-step hooks receive (among others):
 | `KZERO_STEP_NAME` | `consumer` |
 | `KZERO_STEP_REF` | `deployment.app/consumer` |
 
-Full table: [SPECIFICATIONS.md § Per-step pre/post](../SPECIFICATIONS.md#per-step-pre--post-behavior-live-mode).
+Full table: [SPECIFICATIONS.md § Per-step pre/post](../../SPECIFICATIONS.md#per-step-pre--post-behavior-live-mode).
 
 ## `analyze` output
 
@@ -119,4 +119,4 @@ Release steps on **`down`** show `helm uninstall --wait --ignore-not-found` in t
 
 - [waiting-between-pipeline-steps.md](waiting-between-pipeline-steps.md) — Helm `--wait`, `post` on `release.*`, `wait_for_ready` on `up`
 - [README — Per-step pre/post](../../README.md#per-step-pre-post-example)
-- [SPEC — Current engine sequencing](../SPECIFICATIONS.md#current-engine-sequencing-retry-and-concurrency)
+- [SPEC — Current engine sequencing](../../SPECIFICATIONS.md#current-engine-sequencing-retry-and-concurrency)

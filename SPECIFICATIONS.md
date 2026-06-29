@@ -7,7 +7,7 @@ Version 1 focuses on workload orchestration only (Deployments, StatefulSets, Hel
 
 This document is the source of truth for behavior and test expectations.
 
-Visual overviews (Mermaid): **[diagrams.md](diagrams.md)**.
+Visual overviews (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
 
 ## 2. Scope (v1)
 
@@ -62,7 +62,7 @@ kzero stays **generic** and **configuration-driven**: the engine interprets vali
 - `verify` (optional; post-up readiness — see § **`kzero verify`**)
 - `infra_probe` (optional; pre-destructive probe — see § **`kzero probe`**)
 - `retry.attempts`, `retry.delay` (loaded; engine behavior: see subsection below)
-- `run.kubeconfig`, `run.mode`, `run.execution`, `run.color`, `run.timeout`, `run.operation_timeout`, `run.no_env_passthrough`, `run.verify`, `run.probe_cache_dir`
+- `run.kubeconfig`, `run.mode`, `run.execution`, `run.color`, `run.timeout`, `run.operation_timeout`, `run.no_env_passthrough`, `run.verify`, `run.probe_cache_dir`, `run.api_watchdog.{enabled,interval,fail_after}`
 
 ### `run.kubeconfig` and in-cluster auth
 
@@ -82,7 +82,7 @@ This subsection documents **observable behavior in the codebase today** (strictl
 
 1. **Sequential pipeline steps:** For `kzero down` / `kzero up` / `kzero reset`, each entry in `pipelines.down` or `pipelines.up` runs **after** the previous step completes successfully. Steps do **not** run in parallel. Fail-fast: the first failing hook or step aborts the phase (see §5). On **down**, `deployment` / `statefulset` steps set replicas without waiting for pods to terminate unless a step defines its own wait semantics via hooks or future fields.
 2. **`retry.attempts` and `retry.delay`:** In **`run.mode: live`**, each **pipeline step** (pre-hook, main step, post-hook as one unit) may be retried up to **`retry.attempts`** times. After failure *n*, the engine waits **`retry.delay × 2^(n−1)`** (capped at **2m**) before the next try. Retries apply only to **transient** errors (API timeout/conflict/429/503, `context.DeadlineExceeded`, common connection/timeout strings). **`ErrNotFound`**, **`ErrForbidden`**, and **`context.Canceled`** are not retried. **`dry-run`** does not retry. A line `[retry] pipeline …` is written to the command output stream when a retry occurs.
-3. **`notify`:** When **`run.mode: live`** and at least one channel is **`enabled`**, the CLI sends **`pipeline.start`** (after the **`Kubernetes target:`** block), **`pipeline.success`** on completion, and **`pipeline.error`** on fail-fast **before** the **`on-error`** hook. Channels: **`slack`** (colored attachment with fields such as `Cluster`, `Client`, `Context`, `User`, `Mode`, `Duration`; footer **`kzero vX.Y.Z`** from build metadata — see [examples/notifications.md](examples/notifications.md)), **`discord`**, **`teams`**, **`pagerduty`** (Events API v2), and **`webhook`** (generic JSON payload including **`kube_context`** when available). **`notify.on_error`** defaults to **true** when any channel is enabled. Override channel keys via **`KZERO_NOTIFY_*`** env vars (same binding rules as other **`KZERO_*`** keys). **`dry-run`** does not send pipeline notifications. Use **`kzero notify test`** to POST a test event without running a pipeline (see § **`kzero notify test`**). Webhook URLs, bearer tokens, and common `*_TOKEN` / `*_KEY` / `*_SECRET` patterns are redacted in notify payloads and engine logs.
+3. **`notify`:** When **`run.mode: live`** and at least one channel is **`enabled`**, the CLI sends **`pipeline.start`** (after the **`Kubernetes target:`** block), **`pipeline.success`** on completion, **`pipeline.stalled`** when the API watchdog trips, and **`pipeline.error`** on fail-fast **before** the **`on-error`** hook. Channels: **`slack`** (colored attachment with fields such as `Cluster`, `Client`, `Context`, `User`, `Mode`, `Duration`; footer **`kzero vX.Y.Z`** from build metadata — see [docs/examples/notifications.md](docs/examples/notifications.md)), **`discord`**, **`teams`**, **`pagerduty`** (Events API v2), and **`webhook`** (generic JSON payload including **`kube_context`** when available). **`notify.on_error`** defaults to **true** when any channel is enabled. **`notify.require_delivery`** (default `false`; when true a failed pipeline.error POST fails the pipeline). Override channel keys via **`KZERO_NOTIFY_*`** env vars (same binding rules as other **`KZERO_*`** keys). **`dry-run`** does not send pipeline notifications. Use **`kzero notify test`** to POST a test event without running a pipeline (see § **`kzero notify test`**). Webhook URLs, bearer tokens, and common `*_TOKEN` / `*_KEY` / `*_SECRET` patterns are redacted in notify payloads and engine logs.
 4. **Secret redaction and hook environment:** Engine logs (text and JSON), notify **`pipeline.error`** payloads, and subprocess stdout/stderr written to the output stream scrub common secret patterns. Set **`run.no_env_passthrough: true`** or pass **`--no-env-passthrough`** on **`down`** / **`up`** / **`reset`** to omit the host **`os.Environ()`** from hook, **`custom:`**, **`release`**, and **`kubectl`** subprocesses — only **`KZERO_*`**, optional **`KUBECONFIG`**, and correlation fields remain. Hooks that depend on host **`PATH`**, cloud SDK env vars, or other inherited credentials must not use this flag.
 5. **CLI warnings:** Deferred-feature warnings are reserved for schema fields not yet implemented; **`notify.*`** channels no longer emit deferred warnings once enabled.
 
@@ -97,6 +97,22 @@ When `run.mode` is `live`, `deployment` and `statefulset` steps use a **Workload
 | `auto` | Try **native** (workloads + Helm SDK for releases); on client init failure, fall back to **shell** and print a one-line notice on the run output stream. |
 
 Hooks, `custom:` steps, and per-step `pre`/`post` always use `/bin/sh` regardless of `run.execution`.
+
+### API watchdog (`run.api_watchdog`)
+
+When `run.mode` is `live` and `run.api_watchdog.enabled` is `true`, the engine starts a **watchdog goroutine** that periodically probes the Kubernetes API `/healthz` endpoint. The watchdog runs for the duration of `down`/`up`/`reset`.
+
+Config keys (all under `run.api_watchdog`):
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `enabled` | bool | `false` | Activate the watchdog during live runs. |
+| `interval` | Go duration | `60s` | Period between reachability probes. |
+| `fail_after` | Go duration | `5m` | Cumulative unreachability deadline. When the API has been unreachable for at least this long, the watchdog **trips** — the current pipeline step is cancelled and the pipeline exits with `pipeline.stalled`. |
+
+Env overrides: `KZERO_RUN_API_WATCHDOG_ENABLED`, `KZERO_RUN_API_WATCHDOG_INTERVAL`, `KZERO_RUN_API_WATCHDOG_FAIL_AFTER`.
+
+Trips fire exactly once per pipeline run. Recovery resets the failure timer — a transient blip shorter than `fail_after` does not trip the watchdog.
 
 API errors on the native path are wrapped with stable sentinels (`ErrNotFound`, `ErrForbidden`, `ErrConflict` in `internal/executor`) for `errors.Is` in tests or `on-error` hooks.
 
@@ -175,9 +191,9 @@ The `post` script typically runs `kubectl rollout status deployment/consumer` (s
 
 **`wait_for_ready`** applies on **`up`** after scale-up, not for pod drain on **`down`**.
 
-**Waiting between steps on `up`** (Helm `--wait` in release scripts, `post` on `release.*`, `wait_for_ready` on workloads): [examples/waiting-between-pipeline-steps.md](examples/waiting-between-pipeline-steps.md).
+**Waiting between steps on `up`** (Helm `--wait` in release scripts, `post` on `release.*`, `wait_for_ready` on workloads): [docs/examples/waiting-between-pipeline-steps.md](docs/examples/waiting-between-pipeline-steps.md).
 
-More examples (StatefulSet `pre` before scale, assert scripts): [examples/pipeline-order-and-integrity.md](examples/pipeline-order-and-integrity.md).
+More examples (StatefulSet `pre` before scale, assert scripts): [docs/examples/pipeline-order-and-integrity.md](docs/examples/pipeline-order-and-integrity.md).
 
 ### Per-step `pre` / `post` behavior (live mode)
 
@@ -278,7 +294,7 @@ Per-step `pre` / `post` on `release.*` steps use the same hook env table (includ
 ### Operator responsibilities
 
 - Maintain one `.sh` per release name (install/upgrade logic, values files, `helm --wait`, registry auth).
-- **Infra probe** charts follow the same layout (see [examples/infra-probe.md](examples/infra-probe.md)); kzero does not ship mandatory probe charts.
+- **Infra probe** charts follow the same layout (see [docs/examples/infra-probe.md](docs/examples/infra-probe.md)); kzero does not ship mandatory probe charts.
 - **0.7.x** adds SDK-driven install without **`.sh`** when **`run.execution: native`**; configs that keep using **`.sh`** must continue to resolve `<helm.workspace>/<name>.sh` as today (**`run.execution: shell`**).
 
 ## Preflight (live `down` / `up` / `reset`)
@@ -323,11 +339,11 @@ In order (omit lines when the corresponding config value is empty):
 ## `kzero notify test`
 
 - Loads **`notify.*`** from config and POSTs to **every enabled channel**. Does **not** contact the Kubernetes API or run pipeline steps.
-- Default event: **`notify.test`**. Optional **`--event`**: `notify.test`, `pipeline.start`, `pipeline.success`, `pipeline.error` (the last includes sample `failed_step` / `error` fields for formatting checks).
+- Default event: **`notify.test`**. Optional **`--event`**: `notify.test`, `pipeline.start`, `pipeline.success`, `pipeline.error`, `pipeline.stalled` (the last includes sample error text for formatting checks).
 - Exit **0** when all channel POSTs succeed; **non-zero** when config is invalid, no channel is enabled, or any POST fails.
 - Payload **`mode`** is **`test`** (independent of **`run.mode`** in YAML).
 
-Operator cookbook (YAML per channel, env vars, troubleshooting): [examples/notifications.md](examples/notifications.md).
+Operator cookbook (YAML per channel, env vars, troubleshooting): [docs/examples/notifications.md](docs/examples/notifications.md).
 
 ### Log levels (`--log-level`)
 
@@ -405,7 +421,7 @@ infra_probe:
 - **Cache**: timestamp file under **`run.probe_cache_dir`** or OS user cache **`…/kzero/probe/probe-cache.json`**; invalidated when pipeline/check fingerprint changes.
 - Probe steps use the same engine path as main pipelines (**`release.*`** via Helm SDK when **`run.execution`** is **`native`** / **`auto`**; shell scripts when **`shell`**).
 
-Cookbook: [examples/infra-probe.md](examples/infra-probe.md). Reference assets: [kzero-selfhosted/run/examples/infra-probe/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/infra-probe).
+Cookbook: [docs/examples/infra-probe.md](docs/examples/infra-probe.md). Reference assets: [kzero-selfhosted/run/examples/infra-probe/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/infra-probe).
 
 ## `kzero down`
 Execution order:

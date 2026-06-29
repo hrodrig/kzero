@@ -218,4 +218,4 @@ pipelines:
 - [pipeline-order-and-integrity.md](pipeline-order-and-integrity.md) — `down` ordering, drain with `post`, StatefulSet `pre`/`post`
 - [hooks/wait-deployment-scale-down.sh](hooks/wait-deployment-scale-down.sh) — Deployment drain on `down`
 - [hooks/wait-helm-release-ready.sh](hooks/wait-helm-release-ready.sh) — Helm release wait on `up`
-- [SPECIFICATIONS.md § Supported workload kinds](../SPECIFICATIONS.md#supported-workload-kinds) — `release` down uses `helm uninstall --wait`
+- [SPECIFICATIONS.md § Supported workload kinds](../../SPECIFICATIONS.md#supported-workload-kinds) — `release` down uses `helm uninstall --wait`
