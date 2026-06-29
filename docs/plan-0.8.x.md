@@ -80,8 +80,8 @@ Merge to **`develop`** in order:
 | PR2 | **`run.api_watchdog`** config parse + env binding + analyze deferred summary | **#39** | **Done** (f3b09d7) |
 | PR3 | Watchdog goroutine in engine live runs; cancel step context on trip | **#36** | **Done** (64ff2f0) |
 | PR4 | Reset phase-boundary preflight | **#37** | **Done** (89b2fc3) |
-| PR5 | Throttled progress logs on native wait / helm wait | **#38** | **Done** (this commit) |
-| PR6 | Optional **`pipeline.stalled`** event + **`notify test --event stalled`** | **#41** | Optional |
+| PR5 | Throttled progress logs on native wait / helm wait | **#38** | **Done** (97497c1) |
+| PR6 | Optional **`pipeline.stalled`** event + **`notify test --event stalled`** | **#41** | **Done** (this commit) |
 | PR7 | Docs, SPEC, selfhosted link, ROADMAP tick, **`VERSION` 0.8.0**, tag **`v0.8.0`** | **#40** | Band close |
 
 Each PR: **`make lint`**, **`make test`**, **`make cover-check`**.

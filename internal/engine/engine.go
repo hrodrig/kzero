@@ -22,6 +22,17 @@ type Engine struct {
 	Log     *log.Emitter
 	Command string    // CLI command name: down, up, reset (for notify metadata)
 	Started time.Time // pipeline start time (for notify metadata)
+
+	// stalled is set when the API watchdog trips, causing the pipeline
+	// to be aborted due to sustained API unreachability. dispatchPipelineError
+	// checks this to emit EventStalled instead of EventError.
+	stalled bool
+}
+
+// Stalled returns true when the engine aborted a pipeline due to API
+// unreachability (watchdog trip).
+func (e *Engine) Stalled() bool {
+	return e != nil && e.stalled
 }
 
 // startAPIObserver returns a derived context and a watchdog that periodically
@@ -81,6 +92,7 @@ func (e *Engine) startAPIObserver(ctx context.Context, cfg *config.Config) (cont
 			return err
 		},
 		OnTrip: func() {
+			e.stalled = true
 			stepCancel()
 		},
 	})
@@ -228,6 +240,11 @@ func finishWithError(ctx context.Context, eng *Engine, cfg *config.Config, err e
 	return err
 }
 
+// ErrPipelineStalled is a sentinel error returned by the engine when a
+// pipeline is aborted because the API watchdog detected sustained
+// unreachability. It triggers EventStalled instead of EventError.
+var ErrPipelineStalled = errors.New("pipeline stalled: API unreachable")
+
 func dispatchPipelineError(ctx context.Context, eng *Engine, cfg *config.Config, err error) {
 	if eng == nil || err == nil {
 		return
@@ -242,7 +259,13 @@ func dispatchPipelineError(ctx context.Context, eng *Engine, cfg *config.Config,
 	if errors.As(err, &pe) {
 		meta.FailedStep = pe.FailedStep()
 	}
-	if dispatchErr := notify.Dispatch(ctx, cfg, notify.EventError, meta, nil); dispatchErr != nil {
+	// Use pipeline.stalled when the pipeline was cancelled by the API
+	// watchdog (step context cancelled, not user-initiated).
+	event := notify.EventError
+	if eng.Stalled() {
+		event = notify.EventStalled
+	}
+	if dispatchErr := notify.Dispatch(ctx, cfg, event, meta, nil); dispatchErr != nil {
 		// #35: surface dispatch failures. Emit() redacts Msg and Err so
 		// webhook URLs / bearer tokens do not leak into the log stream.
 		if eng.Log != nil {

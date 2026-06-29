@@ -16,6 +16,7 @@ const (
 	EventStart   = "pipeline.start"
 	EventSuccess = "pipeline.success"
 	EventError   = "pipeline.error"
+	EventStalled = "pipeline.stalled"
 )
 
 // HTTPDoer posts notify payloads (stdlib default or httptest in tests).
