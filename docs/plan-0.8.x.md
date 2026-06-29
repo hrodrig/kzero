@@ -3,7 +3,7 @@
 **Status:** **Planned** — target band **`v0.8.0`** (first tag of the band).  
 **Motivation:** production maintenance incident — control-plane path failed mid-run; ~15 minutes later the process detected API loss but **did not alert**; ~30 minutes later **total bastion network loss**; recovery ~4 hours later; **local logs** were the only evidence.
 
-This document captures operator learnings as **product requirements** for **kzero**. It does not name legacy tooling or tenant stacks. For current shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](ROADMAP.md), and [SPECIFICATIONS.md](SPECIFICATIONS.md).
+This document captures operator learnings as **product requirements** for **kzero**. It does not name legacy tooling or tenant stacks. For current shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMAP.md), and [SPECIFICATIONS.md](../SPECIFICATIONS.md).
 
 **Operator mitigations today (pre-0.8):** timestamped logs via wrappers ([kzero-selfhosted `run-kzero`](https://github.com/hrodrig/kzero-selfhosted/blob/develop/run/examples/full-reset-example/run-kzero)), short **`run.operation_timeout`**, **`on-error`** hooks, external watchdog — see [pipeline-network-loss.md](examples/pipeline-network-loss.md) (added with this plan).
 
@@ -33,7 +33,7 @@ This document captures operator learnings as **product requirements** for **kzer
 4. **Audit-friendly progress lines** on long waits  
 5. **Documented** partial/total network loss patterns
 
-**1.0.0** items (**#32–#34**, **#29**) stay in [ROADMAP.md](ROADMAP.md).
+**1.0.0** items (**#32–#34**, **#29**) stay in [ROADMAP.md](../ROADMAP.md).
 
 ---
 

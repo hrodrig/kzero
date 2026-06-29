@@ -36,7 +36,7 @@ Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (an
 
 **Releases** ([GitHub Releases](https://github.com/hrodrig/kzero/releases)) ship standalone **binaries** and archives (**`.tar.gz`** / **`.zip`**), Linux **`.deb`** / **`.rpm`**, **Docker** images on **`ghcr.io/hrodrig/kzero`**, and **Homebrew** ([`brew install hrodrig/kzero/kzero`](#homebrew-macos--linux)). **Supply chain (v0.7.0+):** each release attaches **SPDX** and **CycloneDX** SBOMs plus **Cosign** signatures for **`checksums.txt`** and GHCR images — verify with **`cosign verify-blob`** / **`cosign verify`** (see release assets). This repository does **not** ship Helm charts as a release artifact.
 
-Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md)**. **Planned work** (prioritized): **[docs/ROADMAP.md](docs/ROADMAP.md)** — next band **[0.8.x](docs/plan-0.8.x.md)** (API watchdog, notify delivery visibility for long live **`reset`** on bastions). **Operator mitigations today:** [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). **Diagrams** (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
+Behavior, schema, and acceptance criteria are defined in **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Planned work** (prioritized): **[ROADMAP.md](ROADMAP.md)** — next band **[0.8.x](docs/plan-0.8.x.md)** (API watchdog, notify delivery visibility for long live **`reset`** on bastions). **Operator mitigations today:** [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). **Diagrams** (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
 
 ## Table of contents
 
@@ -68,7 +68,7 @@ Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.
 - **Phase hooks**: `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error` (shell script paths).
 - **Per-step hooks** (`pre` / `post`): optional shell scripts for a **single** pipeline step—run immediately before and after that step’s main action; **`post` runs only if the main action succeeds**.
 - **Step types**: compact refs (`deployment.ns/name`, `statefulset.ns/name`, `pvc.ns/claim`, `exec.ns/pod`), `release.ns/name` (**Helm SDK** chart manifest **`<release>.yaml`** or legacy **`<release>.sh`** under `helm.workspace`), and `custom: ./script.sh` (with optional sibling `pre` / `post` keys on the same YAML mapping). DaemonSet is **not** supported as a built-in kind because `kubectl scale` rejects it (no `/scale` subresource); use a `custom:` step with `kubectl patch` to set a `nodeSelector` that drains the pods.
-- **`run.execution`**: **`shell`** (default — **`kubectl`** / **`helm`** subprocesses), **`native`** (client-go scale + **Helm SDK** + API **`pvc`** / **`exec`**), or **`auto`** (native with shell fallback). Recommended for distroless / in-cluster Jobs: **`native`** — see [SPEC — `run.execution`](docs/SPECIFICATIONS.md#workload-execution-backend-runexecution).
+- **`run.execution`**: **`shell`** (default — **`kubectl`** / **`helm`** subprocesses), **`native`** (client-go scale + **Helm SDK** + API **`pvc`** / **`exec`**), or **`auto`** (native with shell fallback). Recommended for distroless / in-cluster Jobs: **`native`** — see [SPEC — `run.execution`](SPECIFICATIONS.md#workload-execution-backend-runexecution).
 - **Run modes**: `dry-run` (plan only, no cluster mutations) and `live`.
 
 **Libraries** (see [`go.mod`](go.mod)): [Cobra](https://github.com/spf13/cobra) **v1.10.2**, [Viper](https://github.com/spf13/viper) **v1.21.0**.
@@ -77,7 +77,7 @@ Behavior, schema, and acceptance criteria are defined in **[docs/SPECIFICATIONS.
 
 ## Requirements
 
-Host tooling depends on **`run.execution`** and your pipeline step types (see [SPECIFICATIONS.md](docs/SPECIFICATIONS.md)):
+Host tooling depends on **`run.execution`** and your pipeline step types (see [SPECIFICATIONS.md](SPECIFICATIONS.md)):
 
 | Path | Host tools |
 |------|------------|
@@ -191,7 +191,7 @@ Use a **release tag** instead of `@latest` if you want a pinned version (for exa
 kzero reads **one YAML file** per invocation (default **`./kzero.yaml`**; after a `.deb`/`.rpm` install use **`kzero --config /etc/kzero/kzero.yaml`**).
 
 1. Start from **[`configs/kzero.sample.yml`](configs/kzero.sample.yml)** (clone, release tarball, **`/etc/kzero/kzero.yaml`**, or **`kzero --print-sample-config > kzero.yaml`**).
-2. Keep **`run.mode: dry-run`** until **`kzero analyze`** matches expectations; see [SPECIFICATIONS.md](docs/SPECIFICATIONS.md).
+2. Keep **`run.mode: dry-run`** until **`kzero analyze`** matches expectations; see [SPECIFICATIONS.md](SPECIFICATIONS.md).
 
 ```bash
 # From clone or tarball:
@@ -233,7 +233,7 @@ kzero analyze --config ./kzero.yaml
 kzero down --config ./kzero.yaml
 ```
 
-**`analyze`** validates the profile and prints the normalized plan on stdout: run metadata, phase hooks, indexed **`[down]`** / **`[up]`** steps (including release script paths and per-step options), and a **Deferred** block when unimplemented schema fields are set. See [docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md) → **`kzero analyze`**.
+`**analyze`** validates the profile and prints the normalized plan on stdout: run metadata, phase hooks, indexed **`[down]`** / **`[up]`** steps (including release script paths and per-step options), and a **Deferred** block when unimplemented schema fields are set. See [SPECIFICATIONS.md](SPECIFICATIONS.md) → **`kzero analyze`**.
 
 ### Test notifications (no pipeline)
 
@@ -290,7 +290,7 @@ kzero version
 
 ## Configuration reference
 
-Full schema, validation, and acceptance criteria: **[docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md)**. Annotated sample: **[configs/kzero.sample.yml](configs/kzero.sample.yml)**.
+Full schema, validation, and acceptance criteria: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. Annotated sample: **[configs/kzero.sample.yml](configs/kzero.sample.yml)**.
 
 | Block / key | Purpose |
 |-------------|---------|
@@ -314,7 +314,7 @@ Full schema, validation, and acceptance criteria: **[docs/SPECIFICATIONS.md](doc
 | **`kubeconfig`** | Path passed to **`kubectl`** / **`helm`**; empty uses the process environment / default kubeconfig search. |
 | **`operation_timeout`** | Per-operation ceiling (e.g. **`45s`**) for individual kubectl/helm calls inside a step. |
 
-Pipeline steps always run **sequentially** in YAML order (no parallel execution). On **`down`**, workload steps scale to **0** without waiting for pods to exit unless you add per-step **`post`** (or **`pre`** on the next step). See [Pipeline order and integrity on `down`](#pipeline-order-and-integrity-on-down) and [SPEC — Current engine](docs/SPECIFICATIONS.md#current-engine-sequencing-retry-and-concurrency).
+Pipeline steps always run **sequentially** in YAML order (no parallel execution). On **`down`**, workload steps scale to **0** without waiting for pods to exit unless you add per-step **`post`** (or **`pre`** on the next step). See [Pipeline order and integrity on `down`](#pipeline-order-and-integrity-on-down) and [SPEC — Current engine](SPECIFICATIONS.md#current-engine-sequencing-retry-and-concurrency).
 
 ### `retry`
 
@@ -323,7 +323,7 @@ Pipeline steps always run **sequentially** in YAML order (no parallel execution)
 | **`attempts`** | Total tries per pipeline step in **`live`** mode (**integer**, minimum effective **1**). |
 | **`delay`** | Base wait before the first retry (**Go duration**, e.g. **`8s`**); after failure *n*, wait **`delay × 2^(n−1)`** (capped at **2m**; default base **5s** if `delay` is zero). |
 
-Retries rerun the whole step (per-step **pre**, main, **post**). Only **transient** failures retry (API timeouts, conflicts, 429/503, connection errors). **`NotFound`** / **`Forbidden`** fail immediately. **`dry-run`** never retries. See [SPEC — Current engine](docs/SPECIFICATIONS.md#current-engine-sequencing-retry-and-concurrency).
+Retries rerun the whole step (per-step **pre**, main, **post**). Only **transient** failures retry (API timeouts, conflicts, 429/503, connection errors). **`NotFound`** / **`Forbidden`** fail immediately. **`dry-run`** never retries. See [SPEC — Current engine](SPECIFICATIONS.md#current-engine-sequencing-retry-and-concurrency).
 
 ### `pipelines`
 

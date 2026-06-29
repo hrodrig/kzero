@@ -2,7 +2,7 @@
 
 **Status:** **Band closed** — **`v0.7.2`** on **`main`** (core **0.7.x** deliverables). **`v0.7.3`** patch: text log levels, Slack notify attachments, **`KZERO_NOTIFY_*`**, Helm SDK OCI login hardening.
 
-This document is **historical planning context** for the **0.7.x** semver band. For current shipped behavior, see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](ROADMAP.md), and [SPECIFICATIONS.md](SPECIFICATIONS.md). Open work lives under **1.0.0** (**#29** `job`/`cronjob`, **#32–#34**).
+This document is **historical planning context** for the **0.7.x** semver band. For current shipped behavior, see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMAP.md), and [SPECIFICATIONS.md](../SPECIFICATIONS.md). Open work lives under **1.0.0** (**#29** `job`/`cronjob`, **#32–#34**).
 
 ### Internal merge order (2026-06-11) — completed
 
@@ -30,7 +30,7 @@ After **0.6.x** (notify, verify, probe, preflight, structured logs), operators n
 3. **Data reset and maintenance** primitives (**`pvc`**, **`exec`**) without shell in the image  
 4. **Safer logs and hooks** — **#17** shipped in **v0.7.1** (redaction + **`--no-env-passthrough`**)
 
-**1.0.0** items (**default native**, PVC strategy doc, product-repo kind CI) stay in [ROADMAP.md](ROADMAP.md) **1.0.0**.
+**1.0.0** items (**default native**, PVC strategy doc, product-repo kind CI) stay in [ROADMAP.md](../ROADMAP.md) **1.0.0**.
 
 ---
 
@@ -43,7 +43,7 @@ After **0.6.x** (notify, verify, probe, preflight, structured logs), operators n
 | Engine **logs** (`text` / `json`) | Common secret patterns scrubbed; timestamped **`[DBG|INF|WRN|ERR]`** lines since **v0.7.3** |
 | Hook / subprocess **environment** | **`--no-env-passthrough`** / **`run.no_env_passthrough: true`** → only `KZERO_*`, optional `KUBECONFIG`, correlation fields |
 
-See [ROADMAP.md](ROADMAP.md) **0.6.x #17** and **CHANGELOG** **[0.7.1]**.
+See [ROADMAP.md](../ROADMAP.md) **0.6.x #17** and **CHANGELOG** **[0.7.1]**.
 
 ---
 
@@ -275,8 +275,8 @@ Not part of the original PR1–PR7 slices; shipped after pilot validation:
 
 ## References
 
-- [ROADMAP.md](ROADMAP.md) — **0.7.x** / **1.0.0** bands  
+- [ROADMAP.md](../ROADMAP.md) — **0.7.x** / **1.0.0** bands  
 - [plan-0.6.0.md](plan-0.6.0.md) — **#17** explicitly deferred  
-- [SPECIFICATIONS.md](SPECIFICATIONS.md) — update per PR  
+- [SPECIFICATIONS.md](../SPECIFICATIONS.md) — update per PR  
 - [kzero-selfhosted run/in-cluster/](https://github.com/hrodrig/kzero-selfhosted/tree/develop/run/in-cluster) — Job/RBAC smoke  
 - Handoff topic **`kzero/in-cluster-handoff`** — PO track after 0.7.1 + develop2 subset  

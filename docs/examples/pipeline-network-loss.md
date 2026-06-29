@@ -1,6 +1,6 @@
 # Long-running live pipelines and network loss
 
-Operator patterns when a **bastion** runs **`kzero down`**, **`up`**, or **`reset`** against a remote API server (AKS, RKE, on-prem, etc.). Complements [notifications.md](notifications.md) and [SPECIFICATIONS.md](../SPECIFICATIONS.md) preflight/notify sections.
+Operator patterns when a **bastion** runs **`kzero down`**, **`up`**, or **`reset`** against a remote API server (AKS, RKE, on-prem, etc.). Complements [notifications.md](notifications.md) and [SPECIFICATIONS.md](../../SPECIFICATIONS.md) preflight/notify sections.
 
 **Planned engine improvements:** [plan-0.8.x.md](../plan-0.8.x.md) (**API watchdog**, notify delivery visibility, reset phase-boundary preflight).
 
