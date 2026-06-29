@@ -30,13 +30,13 @@
 
 Regenerate from the repo root: **[docs/README.md — Terminal demo](docs/README.md#terminal-demo-vhs)**.
 
-Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (and **reset**) pipelines from YAML, with phase hooks, optional **per-step** `pre` / `post` scripts, workload scale steps, **Helm releases** (shell scripts or **Helm SDK** chart manifests under **`helm.workspace`**), **`pvc`** / **`exec`** API steps, and **`custom:`** scripts.
+Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (and **reset**) pipelines from YAML, with phase hooks, optional **per-step** `pre` / `post` scripts, workload scale steps, **Helm releases** (shell scripts or **Helm SDK** chart manifests under **`helm.workspace`**), **`pvc`** / **`exec`** API steps, **`custom:`** scripts, **API watchdog** with throttled progress logs and **`pipeline.stalled`** alerts.
 
 **Operator deployment (bastion, cron, kind e2e, full-reset examples):** **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)** — production paths and annotated profiles live there; **this** repo ships the CLI binary, packages, container image, and Homebrew cask only (same split as [pgwd](https://github.com/hrodrig/pgwd) / [pgwd-selfhosted](https://github.com/hrodrig/pgwd-selfhosted)).
 
 **Releases** ([GitHub Releases](https://github.com/hrodrig/kzero/releases)) ship standalone **binaries** and archives (**`.tar.gz`** / **`.zip`**), Linux **`.deb`** / **`.rpm`**, **Docker** images on **`ghcr.io/hrodrig/kzero`**, and **Homebrew** ([`brew install hrodrig/kzero/kzero`](#homebrew-macos--linux)). **Supply chain (v0.7.0+):** each release attaches **SPDX** and **CycloneDX** SBOMs plus **Cosign** signatures for **`checksums.txt`** and GHCR images — verify with **`cosign verify-blob`** / **`cosign verify`** (see release assets). This repository does **not** ship Helm charts as a release artifact.
 
-Behavior, schema, and acceptance criteria are defined in **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Planned work** (prioritized): **[ROADMAP.md](ROADMAP.md)** — next band **[0.8.x](docs/plan-0.8.x.md)** (API watchdog, notify delivery visibility for long live **`reset`** on bastions). **Operator mitigations today:** [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). **Diagrams** (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
+Behavior, schema, and acceptance criteria are defined in **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:** **v0.8.0** (API watchdog, notify delivery visibility, reset phase-boundary preflight, pipeline.stalled event — see [CHANGELOG.md](CHANGELOG.md)). **Operator mitigations:** [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). **Diagrams** (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
 
 ## Table of contents
 
