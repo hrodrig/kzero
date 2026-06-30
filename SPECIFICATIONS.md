@@ -66,12 +66,14 @@ kzero stays **generic** and **configuration-driven**: the engine interprets vali
 
 ### `run.kubeconfig` and in-cluster auth
 
-When **`run.kubeconfig`** is empty or omitted, the engine loads API credentials in order: default kubeconfig discovery (`KUBECONFIG`, `~/.kube/config`, in-cluster mount at `/var/run/secrets/kubernetes.io`), then **`rest.InClusterConfig()`** (Pod service account token). This supports **Job/CronJob** runs without mounting a kubeconfig Secret.
+**Deployment posture:** Production **`down`**, **`reset`**, and recovery pipelines should run **out-of-band** (bastion or management host with kubeconfig). See **[docs/deployment-models.md](docs/deployment-models.md)**. In-cluster execution is **optional** and **not recommended** when API reliability is uncertain.
+
+When **`run.kubeconfig`** is empty or omitted, the engine loads API credentials in order: default kubeconfig discovery (`KUBECONFIG`, `~/.kube/config`, in-cluster mount at `/var/run/secrets/kubernetes.io`), then **`rest.InClusterConfig()`** (Pod service account token). This supports **Job/CronJob** runs without mounting a kubeconfig Secret — use only for **non-destructive** or **CI/smoke** scenarios unless you accept shared fate with the cluster.
 
 - Leave **`run.kubeconfig`** empty in in-cluster manifests; mount pipeline YAML via ConfigMap or Secret.
 - The Job **ServiceAccount** needs RBAC in **each namespace referenced by pipeline steps** (`deployment.ns/name`, etc.), not only the Pod namespace.
 - **`Kubernetes target:`** prints an **`in-cluster`** block (API server, service-account namespace) for audit; step namespaces come from compact refs.
-- **`release.*`**, phase hooks, and **`custom:`** still invoke **`/bin/sh`** on the shell path — with **`run.execution: native`** or **`auto`**, **`release.*`** uses the **Helm SDK** (chart manifest under **`helm.workspace`**) instead of host **`helm`** / **`.sh`**. Operator Job examples: [kzero-selfhosted `run/in-cluster/`](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/in-cluster).
+- With **`run.execution: native`** or **`auto`**, **`release.*`** uses the **Helm SDK** (chart manifest under **`helm.workspace`**) instead of host **`helm`** / **`.sh`**. Operator Job examples (optional): [kzero-selfhosted `run/in-cluster/`](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/in-cluster).
 
 **Removed from contract (schema 1.0):** `run.worker_concurrency` is **not** supported. Legacy configs that still set it are ignored (unknown key under `run`). Pipeline parallelism is intentionally out of scope; express ordering and optional batching in YAML step order and `custom:` scripts.
 

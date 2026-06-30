@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-06-29 (**v0.8.1** patch — deferred-warning fix + post-**0.8.0** operator docs; **v0.8.0** shipped API watchdog band **#35–#41**; **1.0.0 #42** — documented exit code taxonomy after [groot 0.9.x #82](https://github.com/hrodrig/groot/blob/main/pkg/cmd/exitcode.go))
+**Last reviewed:** 2026-06-29 (**v0.8.1**; **bastion-first** deployment model in [docs/deployment-models.md](docs/deployment-models.md); **0.9.x** band **#43–#51** drafted; **1.0.0 #42** — exit code taxonomy)
 
 ### Versioning note
 
@@ -17,11 +17,13 @@ The first **public** releases are **0.2.0** onward (there was no prior `1.0.x` l
 
 The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`**: `shell` (default), **`native`** (client-go scale + rollout wait), or **`auto`** (native with shell fallback).
 
-**Target architecture (single container image):** the **native executor** covers **`deployment` / `statefulset`** scale and rollout wait, **`release.*`** via **Helm SDK**, **`pvc` delete**, and **`exec` in pod** — so the published **distroless** image can run full maintenance pipelines without host **`kubectl`** / **`helm`**. Set **`run.execution: native`** (or **`auto`**) for that path. Phase hooks and **`custom:`** shell scripts remain valid on bastions with **`/bin/sh`**; in-cluster Jobs should prefer declarative **`pvc`**, **`exec`**, and SDK **`release.*`** over host-only scripts.
+**Deployment model (operator posture):** kzero **orchestrates** the cluster from **outside** it. The **recommended** production path is **out-of-band** — bastion, management VM, or cron on a host with **kubeconfig** — especially for destructive **`down`**, **`reset`**, and recovery when API or network reliability is uncertain. **In-cluster Job/CronJob** is **supported** (empty **`run.kubeconfig`**, distroless image, **`run.execution: native`**) as **optional packaging** for non-destructive or CI/smoke work, **not** as the target architecture for platform resets. Rationale and tables: **[docs/deployment-models.md](docs/deployment-models.md)**.
+
+**Executor (single binary):** the **native** path covers **`deployment` / `statefulset`** scale and rollout wait, **`release.*`** via **Helm SDK**, **`pvc` delete**, and **`exec` in pod** — on a **bastion** this avoids host **`kubectl`** / **`helm`** while staying out-of-band. Set **`run.execution: native`** (or **`auto`**) for that path. Phase hooks and **`custom:`** shell scripts remain valid on bastions with **`/bin/sh`**; in-cluster Jobs should prefer declarative **`pvc`**, **`exec`**, and SDK **`release.*`** over host-only scripts when used at all.
 
 **Remaining gap before 1.0.0:** default **`run.execution: native`** when omitted (**#32**), documented PVC/data-reset patterns (**#33**), and product-repo **kind**/envtest CI (**#34**). **`release.*`** on the **shell** path still requires **`<helm.workspace>/<name>.sh`** and external **`helm`** on **`PATH`**.
 
-**Log capture** before or after pipelines is **out of scope** for the engine—invoke external tools via phase hooks when operators need archives. **Local stdout/stderr** (and wrapper tee to disk) is the audit trail when notify and API are both unavailable; see [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md).
+**Log capture** before or after pipelines is **out of scope** for the engine—invoke external tools via phase hooks when operators need archives. **Local stdout/stderr** (and wrapper tee to disk on the **management host**) is the audit trail when notify and API are both unavailable; see [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md).
 
 **Completed bands:** **0.3.x** (operator honesty), **0.4.x** (native client + analyze validation + server-side dry-run on native). **0.5.x** retry, **`client.id`**, live audit logs, and sequential-only contract shipped through **v0.5.6**. **0.6.x** notify, slog, verify, infra probe, preflight, OS audit, Helm workspace SPEC through **v0.6.0**. **0.7.x** Helm SDK, PVC/exec/schedulable primitives through **v0.7.2** (secret redaction in **v0.7.1**, text log levels in **v0.7.3**, sample-config in **v0.7.4**). **0.8.x** API watchdog, notify delivery visibility, reset phase-boundary preflight, progress logs, stalled event through **v0.8.0**.
 
@@ -33,7 +35,8 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.6.x** | **Closed** in **v0.6.0** |
 | **0.7.x** | **Closed** — **#23–#31** in **v0.7.2**; **#29** `job`/`cronjob` still open. **v0.7.3**: text log levels. **v0.7.4**: `--print-sample-config`. |
 | **0.8.x** | **Closed** — API watchdog, notify delivery, stalled event (**#35–#41**) in **v0.8.0**. |
-| **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**); **#29** optional in band or pre-1.0. |
+| **0.9.x** | Bastion-first hardening: **`require_delivery`**, graceful shutdown, selfhosted E2E smoke, SPEC contract vs deferred, docs (**#43–#51**) — see [docs/plan-0.9.x.md](docs/plan-0.9.x.md). |
+| **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**); **#29** optional in band or pre-1.0; **#42** exit codes. |
 
 **Shell path:** **`run.execution: shell`** (default) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native/auto** uses the Helm SDK and API primitives above.
 
@@ -165,7 +168,31 @@ Motivation: live **`reset`** on a bastion lost API connectivity mid-run; process
 | 40 | **Operator docs**: [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md); selfhosted automation cross-link. | Done (v0.8.0, #40) |
 | 41 | *(Optional)* **`pipeline.stalled`** notify event + **`kzero notify test --event stalled`**. | Done (v0.8.0, #41) |
 
-**Operator mitigations before 0.8 ships:** short **`run.operation_timeout`**, **`on-error`** hooks, external watchdog, wrapper log files — documented in [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md).
+**Operator mitigations before 0.8 ships:** short **`run.operation_timeout`**, **`on-error`** hooks, external watchdog, wrapper log files on the **bastion** — documented in [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md).
+
+---
+
+## 0.9.x — bastion-first hardening (planned)
+
+**Implementation plan:** [docs/plan-0.9.x.md](docs/plan-0.9.x.md).
+
+Motivation: close **0.8.x** deferred contract gaps and operator posture after external audits — **out-of-band** control as the default story ([deployment-models.md](docs/deployment-models.md)), not in-cluster **`reset`**.
+
+| # | Item | Status |
+|---|------|--------|
+| 43 | **`notify.require_delivery`** — engine fail-fast when error-notify POST fails (finish **#35** deferred) | Pending |
+| 44 | **Graceful shutdown** — SIGTERM/SIGINT cancel pipeline context; log last step (bastion/cron) | Pending |
+| 45 | **E2E smoke in CI** — kind or **kzero-selfhosted** minimal pipeline (not in-cluster production reset) | Pending |
+| 46 | **Watchdog tests** — API unreachable mid-wait scenarios | Pending |
+| 47 | **SPEC: contract vs experimental/deferred** — single operator-facing index | Pending |
+| 48 | **Docs** — [deployment-models.md](docs/deployment-models.md) kickoff **done**; What's new **0.8.x**, **`cosign verify`**, README trim | In progress |
+| 49 | *(Stretch / 0.9.1)* **`kzero validate --strict`** / **`doctor`** — config + connectivity + RBAC hints | Pending |
+| 50 | *(Stretch)* **Retry jitter** on existing backoff | Pending |
+| 51 | *(Stretch)* **JSON Schema** for editor autocomplete | Pending |
+
+**Merge order (see plan):** PR1 docs → **#44** graceful shutdown → **#43** `require_delivery` → E2E/watchdog/SPEC → **v0.9.0**.
+
+**Non-goals for 0.9.x:** promoting in-cluster Job as the primary **`reset`** path; Prometheus/OTel; chaos-mesh; breaking in-cluster auth without migration note.
 
 ---
 

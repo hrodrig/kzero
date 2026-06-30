@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Operator docs:** [docs/deployment-models.md](docs/deployment-models.md) — bastion-first (out-of-band) deployment model; in-cluster Job documented as optional, not recommended for destructive **`reset`** when API reliability is uncertain.
+- **Planning:** [docs/plan-0.9.x.md](docs/plan-0.9.x.md) — **0.9.x** band (**#43–#51**) bastion-first hardening; ROADMAP strategic direction updated.
+
+### Changed
+
+- **ROADMAP / SPEC / README:** cross-links to deployment models; **`run.execution: native`** framed for bastions and optional in-cluster packaging.
+- **docs/deployment-models.md:** quick decision matrix, stronger in-cluster warning, bastion **`docker run`** example, decision flowchart.
+- **docs/plan-0.9.x.md:** priority tiers (0.9.0 vs 0.9.1), no-regression criterion for in-cluster, PR order (**#44** before **#43**).
+
 ## [0.8.1] - 2026-06-29
 
 ### Fixed
