@@ -20,6 +20,8 @@ This document captures **0.9.x** requirements. For shipped behavior see [CHANGEL
 
 **#49** (`kzero doctor` or **`validate --strict`**) is high operator value (kubeconfig reachability, RBAC hints for declared steps, binary presence for **`shell`**) — prioritize in **0.9.1** if it does not fit **0.9.0**.
 
+**Technical priority:** **PR2 / #44** (graceful shutdown) is the highest-impact code change for **0.9.0** — it affects every live run on bastion **cron** / **systemd** when the host sends SIGTERM. Implement before **#43** (`require_delivery`).
+
 ---
 
 ## Roadmap items (0.9.x band)
@@ -58,7 +60,7 @@ Merge to **`develop`** in order:
 | PR | Item | Roadmap | Priority |
 |----|------|---------|----------|
 | PR1 | [deployment-models.md](deployment-models.md) + ROADMAP/SPEC/README cross-links | **#48** (partial) | **Done** (matrix, warnings, docker bastion, decision flow) |
-| PR2 | Graceful shutdown (signal → context cancel) | **#44** | **Required** — implement early; affects all live runs |
+| PR2 | Graceful shutdown (signal → context cancel) | **#44** | **Required** — highest technical priority; bastion cron/systemd reliability |
 | PR3 | **`notify.require_delivery`** engine wiring + tests | **#43** | **Required** |
 | PR4 | E2E smoke job in CI | **#45** | Strongly recommended |
 | PR5 | Watchdog mid-wait tests | **#46** | Strongly recommended |
@@ -76,6 +78,6 @@ Each PR: **`make lint`**, **`make test`**, **`make cover-check`**.
 - In-cluster Job as recommended **`reset`** orchestrator
 - Prometheus metrics, OpenTelemetry, chaos-mesh in product repo
 - Replacing **1.0.0** default-native or exit-code taxonomy work
-- Breaking in-cluster auth or native Job execution without a documented migration
+- Breaking **`run.execution`** (`shell` / `native` / `auto`) or in-cluster auth behavior without documented migration
 
 **Last reviewed:** 2026-06-29

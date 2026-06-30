@@ -14,11 +14,11 @@ This document is the operator-facing source of truth for **where** to run kzero.
 
 | Scenario | Recommended | Alternative |
 |----------|-------------|-------------|
-| Production **`reset`** / destructive maintenance | Bastion / management VM | — |
+| Production **`reset`** / destructive work | **Bastion / management VM** | — |
+| Recovery when API or network may fail | **Bastion only** | — |
 | CI / pre-merge validation | CI runner with kubeconfig | — |
-| Non-critical scheduled scale-down | In-cluster Job (acceptable) | Bastion (better audit trail) |
+| Non-critical scheduled scale-down | **Bastion** (preferred) | In-cluster Job (acceptable) |
 | Air-gapped / strict security | Bastion + **`run.execution: native`** | — |
-| Recovery when API or network may fail | Bastion only | — |
 
 ---
 
@@ -124,6 +124,8 @@ docker run --rm \
 
 Adjust paths, tags, and volume mounts for your environment. Live runs need network reachability to the API server from the **host** running Docker, not from inside the cluster under test.
 
+**Security note:** Mount kubeconfig and config volumes **read-only** (`:ro`). The published image runs as **nonroot** (distroless); do not override the user to root unless your policy requires it and you accept the extra risk.
+
 The image may also run as an optional in-cluster Job; that is **not** the recommended model for production **`reset`**. See [kzero-selfhosted/run/docker/](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docker/README.md).
 
 ---
@@ -132,16 +134,16 @@ The image may also run as an optional in-cluster Job; that is **not** the recomm
 
 ```mermaid
 flowchart TD
-  Q[What are you running?]
-  Q --> R{Destructive reset or recovery<br/>when API may fail?}
-  R -->|Yes| B[Bastion / management VM<br/>kubeconfig on host]
-  R -->|No| N{Production impact?}
+  Q[Pipeline goal?]
+  Q --> R{Destructive reset<br/>or API risk?}
+  R -->|Yes| B[Bastion + kubeconfig]
+  R -->|No| N{Prod impact?}
   N -->|High| B
-  N -->|Low / smoke| J[In-cluster Job optional<br/>native + RBAC]
-  N -->|Validate only| C[CI or laptop<br/>analyze / dry-run]
+  N -->|Low| J[In-cluster Job<br/>optional]
+  N -->|Validate| C[CI / laptop<br/>dry-run]
   B --> E{Host tools?}
-  E -->|kubectl + helm on PATH| S[shell]
-  E -->|Single static binary| NV[native or auto]
+  E -->|kubectl + helm| S[shell]
+  E -->|Static binary| NV[native / auto]
 ```
 
 ---
