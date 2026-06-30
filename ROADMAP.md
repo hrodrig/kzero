@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-06-29 (**v0.8.1**; **bastion-first** deployment model in [docs/deployment-models.md](docs/deployment-models.md); **0.9.x** band **#43–#51** drafted; **1.0.0 #42** — exit code taxonomy)
+**Last reviewed:** 2026-06-30 (**v0.8.1**; **bastion-first** deployment model in [docs/deployment-models.md](docs/deployment-models.md); **0.9.x** band **#43–#53** drafted; **1.0.0 #42** — exit code taxonomy)
 
 ### Versioning note
 
@@ -35,7 +35,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.6.x** | **Closed** in **v0.6.0** |
 | **0.7.x** | **Closed** — **#23–#31** in **v0.7.2**; **#29** `job`/`cronjob` still open. **v0.7.3**: text log levels. **v0.7.4**: `--print-sample-config`. |
 | **0.8.x** | **Closed** — API watchdog, notify delivery, stalled event (**#35–#41**) in **v0.8.0**. |
-| **0.9.x** | Bastion-first hardening: **`require_delivery`**, graceful shutdown, selfhosted E2E smoke, SPEC contract vs deferred, docs (**#43–#51**) — see [docs/plan-0.9.x.md](docs/plan-0.9.x.md). |
+| **0.9.x** | Bastion-first hardening: **`require_delivery`**, graceful shutdown, selfhosted E2E smoke, SPEC contract vs deferred, docs (**#43–#51**), **`kubectl-kzero` plugin (#52)**, shell completion (**#53**) — see [docs/plan-0.9.x.md](docs/plan-0.9.x.md). |
 | **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**); **#29** optional in band or pre-1.0; **#42** exit codes. |
 
 **Shell path:** **`run.execution: shell`** (default) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native/auto** uses the Helm SDK and API primitives above.
@@ -185,12 +185,14 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 | 45 | **E2E smoke in CI** — kind or **kzero-selfhosted** minimal pipeline (not in-cluster production reset) | Pending |
 | 46 | **Watchdog tests** — API unreachable mid-wait scenarios | Pending |
 | 47 | **SPEC: contract vs experimental/deferred** — single operator-facing index | Pending |
-| 48 | **Docs** — [deployment-models.md](docs/deployment-models.md) kickoff **done**; What's new **0.8.x**, **`cosign verify`**, README trim | In progress |
+| 48 | **Docs** — [deployment-models.md](docs/deployment-models.md) kickoff **done**; [scope-and-alternatives.md](docs/scope-and-alternatives.md); What's new **0.8.x**, **`cosign verify`**, README trim | In progress |
 | 49 | *(Stretch / 0.9.1)* **`kzero validate --strict`** / **`doctor`** — config + connectivity + RBAC hints | Pending |
 | 50 | *(Stretch)* **Retry jitter** on existing backoff | Pending |
 | 51 | *(Stretch)* **JSON Schema** for editor autocomplete | Pending |
+| 52 | *(Stretch / 0.9.1)* **`kubectl-kzero` plugin** — `kubectl kzero …` via **`kubectl-kzero`** on PATH (same CLI as **`kzero`**; bastion DX; GoReleaser) | Pending |
+| 53 | *(Stretch / 0.9.1)* **Shell completion** — `kzero completion <bash\|zsh\|fish\|powershell>` with strict validation, tests, README ([groot #80](https://github.com/hrodrig/groot/blob/main/pkg/cmd/completion.go) pattern); **`kubectl kzero completion`** when **#52** ships | Pending |
 
-**Merge order (see plan):** PR1 docs → **#44** graceful shutdown → **#43** `require_delivery` → E2E/watchdog/SPEC → **v0.9.0**.
+**Merge order (see plan):** PR1 docs → **#44** graceful shutdown → **#43** `require_delivery` → E2E/watchdog/SPEC → **v0.9.0** → **#53** / **#52** / **#49** in **0.9.1**.
 
 **Non-goals for 0.9.x:** promoting in-cluster Job as the primary **`reset`** path; Prometheus/OTel; chaos-mesh; breaking in-cluster auth without migration note.
 

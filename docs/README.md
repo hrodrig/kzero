@@ -3,6 +3,7 @@
 | Document | Purpose |
 |----------|---------|
 | [deployment-models.md](deployment-models.md) | **Where to run kzero** — bastion-first (out-of-band); in-cluster optional |
+| [scope-and-alternatives.md](scope-and-alternatives.md) | **When to use kzero** vs Helm, GitOps, scripts, provisioning, DR (by scope) |
 | [../SPECIFICATIONS.md](../SPECIFICATIONS.md) | Behavior contract, config shape, and TDD baseline |
 | [../ROADMAP.md](../ROADMAP.md) | Prioritized planned work and known gaps (in-repo source of truth) |
 | [plan-0.9.x.md](plan-0.9.x.md) | **Planned** — **0.9.x** bastion-first hardening band |
