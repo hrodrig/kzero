@@ -208,6 +208,7 @@ Major when YAML **`schema_version`**, executor behavior, and step types are stab
 | 33 | **PVC / StatefulSet data strategy** documented as pipeline patterns (snapshot, wipe, init-job) beyond core delete primitives. | Pending |
 | 34 | **Integration tests** with **kind** or envtest in CI, with documented flake policy and runtime budget. | Pending |
 | 42 | **Documented exit code taxonomy** for CLI scripts/wrappers: today all non-zero returns collapse to `1` (`cmd/kzero/main.go:14`); map subsystem failures to stable codes (config, Kubernetes client/API, executor aborted, notify delivery, partial failures) following the same pattern adopted for [groot 0.9.x #82](https://github.com/hrodrig/groot/blob/main/pkg/cmd/exitcode.go). Implementation note: not breaking for existing wrappers — codes beyond config error are only emitted where the underlying failure category is unambiguous. | Pending |
+| 55 | *(Optional)* **Post-pipeline log upload** — after a run, push **`run.log_file`** (or wrapper tee output) to S3/GCS/SFTP (env creds, `continue_on_error`, `--no-upload`); hooks/selfhosted patterns remain the default; not a groot-style archive bundle. | Pending |
 
 ---
 
