@@ -88,12 +88,10 @@ type HooksConfig struct {
 
 type NotifyConfig struct {
 	OnError *bool `mapstructure:"on_error"`
-	// RequireDelivery, when true, fails the pipeline if pipeline.error
-	// notify POST(s) cannot be sent. Channel-fanout is allowed: at least
-	// one channel must succeed; otherwise the pipeline exits non-zero.
-	// Today (#39, v0.8.x) the flag is parsed and reported via the Deferred
-	// summary; the engine still ignores it (failure path lands in v0.8.0
-	// once #35 wiring is complemented).
+	// RequireDelivery, when true, fails the pipeline if pipeline.error or
+	// pipeline.stalled notify POST(s) cannot be sent. Channel fan-out is
+	// allowed: at least one channel must succeed; otherwise the pipeline
+	// exits non-zero.
 	RequireDelivery *bool                `mapstructure:"require_delivery"`
 	Slack           ChannelConfig        `mapstructure:"slack"`
 	Discord         ChannelConfig        `mapstructure:"discord"`

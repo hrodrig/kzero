@@ -285,7 +285,7 @@ run:
 	}
 }
 
-func TestAnalyze_notifyRequireDeliveryShowsDeferredSummary(t *testing.T) {
+func TestAnalyze_notifyRequireDeliveryNoDeferredSummary(t *testing.T) {
 	stubClusterValidationSkipped(t)
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`
@@ -309,18 +309,15 @@ notify:
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
-	if !strings.Contains(stdout.String(), "Deferred (accepted by schema") {
-		t.Fatalf("expected Deferred summary on stdout, got: %q", stdout.String())
+	if strings.Contains(stdout.String(), "Deferred (accepted by schema") {
+		t.Fatalf("unexpected Deferred summary for implemented require_delivery: %q", stdout.String())
 	}
-	if !strings.Contains(stdout.String(), "notify.require_delivery") {
-		t.Fatalf("expected require_delivery in Deferred summary, got: %q", stdout.String())
-	}
-	if !strings.Contains(stderr.String(), "warning: notify.require_delivery") {
-		t.Fatalf("expected deferred warning on stderr for analyze, got stderr=%q", stderr.String())
+	if strings.Contains(stderr.String(), "warning: notify.require_delivery") {
+		t.Fatalf("unexpected deferred warning on stderr for analyze: %q", stderr.String())
 	}
 }
 
-func TestDown_dryRunRequireDeliveryDeferredWarningOnStderr(t *testing.T) {
+func TestDown_dryRunRequireDeliveryNoDeferredWarningOnStderr(t *testing.T) {
 	stubClusterValidationSkipped(t)
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`
@@ -344,8 +341,8 @@ notify:
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
-	if !strings.Contains(stderr.String(), "warning: notify.require_delivery") {
-		t.Fatalf("expected deferred warning on stderr for down, got stderr=%q stdout=%q", stderr.String(), stdout.String())
+	if strings.Contains(stderr.String(), "warning: notify.require_delivery") {
+		t.Fatalf("unexpected deferred warning on stderr for down: stderr=%q stdout=%q", stderr.String(), stdout.String())
 	}
 }
 

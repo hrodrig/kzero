@@ -31,7 +31,7 @@ Design maintenance assuming **both** phases can happen.
 | **`pipeline.stalled`** | Distinct notify event when **`run.api_watchdog`** trips mid-pipeline (**v0.8.0**) |
 | **Preflight** | **`ServerVersion`** at start of each **`down`** / **`up`** phase; **re-run after `down` before `up`** on **`reset`** (**#37**) |
 | **`run.api_watchdog`** | Periodic API reachability during live runs; cancels stuck step and dispatches **`pipeline.stalled`** when **`fail_after`** exceeded (**#36**) |
-| **Notify dispatch failures** | Failed POSTs log **`[ERR]`** with redacted URLs (**#35**); pipeline exit unchanged unless **`notify.require_delivery: true`** (schema only — engine fail-fast on delivery error not wired yet) |
+| **Notify dispatch failures** | Failed POSTs log **`[ERR]`** with redacted URLs (**#35**); pipeline exits non-zero when **`notify.require_delivery: true`** and **`pipeline.error`** / **`pipeline.stalled`** POST fails (**#43**, **v0.9.x**) |
 | **Long waits** | Throttled **`[INF]`** progress lines every 30s during rollout/Helm waits (**#38**) |
 | **Timeouts** | **`run.timeout`** (whole pipeline), **`run.operation_timeout`** (per operation), Helm/step **`timeout`** |
 | **Logs** | Timestamped **`[INF|WRN|ERR]`** on stdout; wrappers can tee to **`.logs/`** |

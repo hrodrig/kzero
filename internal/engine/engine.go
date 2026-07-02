@@ -250,7 +250,9 @@ func finishWithError(ctx context.Context, eng *Engine, cfg *config.Config, err e
 	if isUserInterrupt(eng, err) {
 		eng.logPipelineInterrupted()
 	}
-	dispatchPipelineError(ctx, eng, cfg, err)
+	if dispatchErr := dispatchPipelineError(ctx, eng, cfg, err); dispatchErr != nil {
+		return fmt.Errorf("%w: %w", err, dispatchErr)
+	}
 	if cfg.Hooks.OnError == "" {
 		return err
 	}
@@ -265,9 +267,9 @@ func finishWithError(ctx context.Context, eng *Engine, cfg *config.Config, err e
 // unreachability. It triggers EventStalled instead of EventError.
 var ErrPipelineStalled = errors.New("pipeline stalled: API unreachable")
 
-func dispatchPipelineError(ctx context.Context, eng *Engine, cfg *config.Config, err error) {
+func dispatchPipelineError(ctx context.Context, eng *Engine, cfg *config.Config, err error) error {
 	if eng == nil || err == nil {
-		return
+		return nil
 	}
 	started := eng.Started
 	if started.IsZero() {
@@ -292,11 +294,15 @@ func dispatchPipelineError(ctx context.Context, eng *Engine, cfg *config.Config,
 			eng.Log.Emit(log.Entry{
 				Kind:  log.KindLive,
 				Level: log.LevelError,
-				Msg:   "notify dispatch failed (" + notify.EventError + ")",
+				Msg:   "notify dispatch failed (" + event + ")",
 				Err:   dispatchErr.Error(),
 			})
 		}
+		if config.RequireNotifyDelivery(cfg) {
+			return fmt.Errorf("notify delivery required (%s): %w", event, dispatchErr)
+		}
 	}
+	return nil
 }
 
 func (e *Engine) setProgressHook(hook string) {
