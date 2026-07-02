@@ -72,7 +72,7 @@ Tune per cluster; long **`helm --wait`** steps may need explicit step **`timeout
 Use a wrapper that records **`kzero target`** and full stdout/stderr:
 
 - [kzero-selfhosted `run-kzero`](https://github.com/hrodrig/kzero-selfhosted/blob/develop/run/examples/full-reset-example/run-kzero) — pattern reference
-- Store under **`.logs/kzero-<cmd>-<timestamp>.log`** on the bastion disk
+- Store under **`.logs/kzero-<cmd>-<cluster-slug>-<timestamp>.log`** on the bastion disk (`cluster-slug` from `kzero target --output slug`, e.g. `develop-cluster`)
 - Treat logs as **primary evidence** when notify and API are both gone
 
 ### 3. `on-error` hook with redundant alert
@@ -89,7 +89,7 @@ Script runs on the bastion (same host as kzero). Example actions: `curl` seconda
 Separate machine or SaaS monitor:
 
 - Process check: **`kzero`** PID still running after **N** minutes
-- Log mtime: no new lines in **`.logs/kzero-reset-*.log`** for **N** minutes
+- Log mtime: no new lines in **`.logs/kzero-reset-*-<timestamp>.log`** for **N** minutes (glob by cluster slug when multiple targets share a bastion)
 - Alert even if kzero never reaches **`pipeline.error`**
 
 ### 5. Notify test before live reset

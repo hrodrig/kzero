@@ -11,7 +11,7 @@ pipelines:
   up:
     - release.platform/postgresql
     - release.platform/rabbitmq
-    - release.platform/redis-eviction
+    - release.platform/redis-evict-service
 ```
 
 Step 2 starts only after step 1’s **whole unit** succeeds: optional `pre` → main action → optional `post`. If step 1 fails, step 2 never runs.
@@ -83,7 +83,7 @@ pipelines:
         post: ./hooks/wait-helm-release-ready.sh
     - release.platform/rabbitmq:
         post: ./hooks/wait-helm-release-ready.sh
-    - release.platform/redis-eviction:
+    - release.platform/redis-evict-service:
         post: ./hooks/wait-helm-release-ready.sh
 ```
 
@@ -135,15 +135,15 @@ pipelines:
         post: ./hooks/wait-helm-release-ready.sh
     - release.platform/rabbitmq:
         post: ./hooks/wait-helm-release-ready.sh
-    - deployment.platform/config-service:
+    - deployment.platform/config-backend:
         replicas: 1
         wait_for_ready: true
         timeout: 10m
-    - deployment.platform/webui:
+    - deployment.platform/frontend:
         replicas: 3
         wait_for_ready: true
         timeout: 15m
-    - statefulset.platform/data-extractor-slave:
+    - statefulset.platform/extractor-slave:
         replicas: 4
         wait_for_ready: true
         timeout: 20m
@@ -167,11 +167,11 @@ When **masters** (`deployment/…`) scale earlier in the list and **slaves** (`s
 - **`pre: ./hooks/wait-master-ready.sh`** on each `*-slave` step before scale-up (derives `deployment/<name>` from `…-slave`)
 
 ```yaml
-    - deployment.platform/data-extractor:
+    - deployment.platform/extractor:
         replicas: 1
         wait_for_ready: true
     # ... other steps ...
-    - statefulset.platform/data-extractor-slave:
+    - statefulset.platform/extractor-slave:
         pre: ./hooks/wait-master-ready.sh
         replicas: 4
         wait_for_ready: true
@@ -191,17 +191,17 @@ pipelines:
         post: ./hooks/wait-helm-release-ready.sh
     - release.platform/rabbitmq:
         post: ./hooks/wait-helm-release-ready.sh
-    - release.platform/jobstore-data-extractor:
+    - release.platform/store-extractor:
         post: ./hooks/wait-helm-release-ready.sh
     # §3 workload rollout wait
-    - deployment.platform/vaultunsealer:
+    - deployment.platform/unsealer:
         replicas: 1
         wait_for_ready: true
         timeout: 10m
-    - deployment.platform/config-service:
+    - deployment.platform/config-backend:
         replicas: 1
         wait_for_ready: true
-    - deployment.platform/webui:
+    - deployment.platform/frontend:
         replicas: 3
         wait_for_ready: true
         timeout: 15m

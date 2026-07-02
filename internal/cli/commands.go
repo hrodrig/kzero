@@ -162,7 +162,8 @@ func newResetCmd() *cobra.Command {
 }
 
 func newTargetCmd() *cobra.Command {
-	return &cobra.Command{
+	var output string
+	cmd := &cobra.Command{
 		Use:   "target",
 		Short: "Print the Kubernetes API target for the loaded config",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -170,18 +171,32 @@ func newTargetCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("load config: %w", err)
 			}
-			format, err := resolvedLogFormat()
-			if err != nil {
+			switch output {
+			case "block":
+				format, err := resolvedLogFormat()
+				if err != nil {
+					return err
+				}
+				if err := applyLogLevel(); err != nil {
+					return err
+				}
+				return runTimed(cmd.ErrOrStderr(), "target", cfg.Run.Color, format, func() error {
+					return cluster.Print(cmd.OutOrStdout(), cfg)
+				})
+			case "slug":
+				tgt, err := cluster.ResolveFromConfig(cfg)
+				if err != nil {
+					return err
+				}
+				_, err = fmt.Fprintln(cmd.OutOrStdout(), cluster.SanitizeForFilename(tgt.ClusterName))
 				return err
+			default:
+				return fmt.Errorf("target --output: unknown value %q (want block or slug)", output)
 			}
-			if err := applyLogLevel(); err != nil {
-				return err
-			}
-			return runTimed(cmd.ErrOrStderr(), "target", cfg.Run.Color, format, func() error {
-				return cluster.Print(cmd.OutOrStdout(), cfg)
-			})
 		},
 	}
+	cmd.Flags().StringVar(&output, "output", "block", "Output format: block (audit block) or slug (sanitized cluster name for scripting)")
+	return cmd
 }
 
 func newVersionCmd() *cobra.Command {

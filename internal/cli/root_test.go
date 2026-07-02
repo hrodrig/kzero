@@ -457,6 +457,35 @@ run:
 	}
 }
 
+func TestTargetCmd_outputSlug(t *testing.T) {
+	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
+	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
+	if err := os.WriteFile(cfgPath, []byte(`
+schema_version: "1.0"
+pipelines:
+  down: []
+run:
+  mode: "dry-run"
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	cmd := newRootCmd()
+	cmd.SetOut(&stdout)
+	cmd.SetErr(&stderr)
+	cmd.SetArgs([]string{"target", "--config", cfgPath, "--output", "slug"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if got := strings.TrimSpace(stdout.String()); got != "test-cluster" {
+		t.Fatalf("slug output = %q, want test-cluster", got)
+	}
+	if strings.Contains(stderr.String(), "kzero target finished") {
+		t.Fatalf("slug output should not emit command summary, stderr: %q", stderr.String())
+	}
+}
+
 func TestTargetCmd_printsKubernetesTarget(t *testing.T) {
 	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
