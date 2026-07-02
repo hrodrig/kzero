@@ -58,7 +58,7 @@ run:
 	eng := engine.New(cfg, emit)
 	eng.Runner = rec
 
-	if err := runInfraProbeGate(cmd, cfg, eng, "down"); err != nil {
+	if err := runInfraProbeGate(cmd, cfg, eng, "down", cmd.Context()); err != nil {
 		t.Fatalf("runInfraProbeGate: %v\n%s", err, out.String())
 	}
 	if len(rec.Calls) < 2 {
@@ -83,7 +83,7 @@ func TestRunInfraProbeGate_nilLog(t *testing.T) {
 	cmd.SetErr(io.Discard)
 	cmd.SetContext(context.Background())
 	eng := &engine.Engine{Runner: &engine.RecordingRunner{}}
-	if err := runInfraProbeGate(cmd, cfg, eng, "down"); err != nil {
+	if err := runInfraProbeGate(cmd, cfg, eng, "down", cmd.Context()); err != nil {
 		t.Fatalf("runInfraProbeGate: %v", err)
 	}
 }

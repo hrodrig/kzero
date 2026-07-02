@@ -41,7 +41,7 @@ func writeKubernetesTarget(w io.Writer, cfg *config.Config) error {
 	return nil
 }
 
-func runPipelineCommand(cmd *cobra.Command, command string, cfg *config.Config, run func(*engine.Engine, *config.Config) error) error {
+func runPipelineCommand(cmd *cobra.Command, command string, cfg *config.Config, run func(context.Context, *engine.Engine, *config.Config) error) error {
 	format, err := resolvedLogFormat()
 	if err != nil {
 		return err
@@ -54,7 +54,8 @@ func runPipelineCommand(cmd *cobra.Command, command string, cfg *config.Config, 
 		if err := writeKubernetesTarget(cmd.OutOrStdout(), cfg); err != nil {
 			return err
 		}
-		ctx := cmd.Context()
+		ctx, stop := pipelineRunContext(cmd.Context())
+		defer stop()
 		if notify.AnyEnabled(cfg) {
 			meta := notify.MetaFromConfig(cfg, command, started, 0)
 			if err := notify.Dispatch(ctx, cfg, notify.EventStart, meta, nil); err != nil {
@@ -68,11 +69,11 @@ func runPipelineCommand(cmd *cobra.Command, command string, cfg *config.Config, 
 		eng.Command = command
 		eng.Started = started
 		if probe.ShouldGate(cfg, command) {
-			if err := runInfraProbeGate(cmd, cfg, eng, command); err != nil {
+			if err := runInfraProbeGate(cmd, cfg, eng, command, ctx); err != nil {
 				return err
 			}
 		}
-		if err := run(eng, cfg); err != nil {
+		if err := run(ctx, eng, cfg); err != nil {
 			return err
 		}
 		if shouldAutoVerify(cfg, command) {
@@ -132,8 +133,8 @@ func buildPipelineCmd(use, short, label string, run pipelineRunFunc) *cobra.Comm
 			}
 			applyCLIRunOverrides(cfg)
 			writeDeferredFeatureWarnings(cmd.ErrOrStderr(), cfg)
-			return runPipelineCommand(cmd, label, cfg, func(eng *engine.Engine, cfg *config.Config) error {
-				return run(cmd.Context(), eng, cfg)
+			return runPipelineCommand(cmd, label, cfg, func(ctx context.Context, eng *engine.Engine, cfg *config.Config) error {
+				return run(ctx, eng, cfg)
 			})
 		},
 	}

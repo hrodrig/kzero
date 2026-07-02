@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Graceful shutdown (0.9.x #44):** **`SIGINT`** / **`SIGTERM`** cancel **`down`** / **`up`** / **`reset`** / **`probe`** pipeline context; engine logs last hook or step on user interrupt (distinct from API watchdog **`pipeline.stalled`**).
 - **Operator docs:** [docs/deployment-models.md](docs/deployment-models.md) — bastion-first (out-of-band) deployment model; in-cluster Job documented as optional, not recommended for destructive **`reset`** when API reliability is uncertain.
 - **Planning:** [docs/plan-0.9.x.md](docs/plan-0.9.x.md) — **0.9.x** band (**#43–#51**) bastion-first hardening; ROADMAP strategic direction updated.
 

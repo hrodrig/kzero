@@ -181,7 +181,7 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 | # | Item | Status |
 |---|------|--------|
 | 43 | **`notify.require_delivery`** — engine fail-fast when error-notify POST fails (finish **#35** deferred) | Pending |
-| 44 | **Graceful shutdown** — SIGTERM/SIGINT cancel pipeline context; log last step (bastion/cron) | Pending |
+| 44 | **Graceful shutdown** — SIGTERM/SIGINT cancel pipeline context; log last step (bastion/cron) | Done (develop) |
 | 45 | **E2E smoke in CI** — kind or **kzero-selfhosted** minimal pipeline (not in-cluster production reset) | Pending |
 | 46 | **Watchdog tests** — API unreachable mid-wait scenarios | Pending |
 | 47 | **SPEC: contract vs experimental/deferred** — single operator-facing index | Pending |

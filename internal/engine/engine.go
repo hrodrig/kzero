@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/hrodrig/kzero/internal/cluster"
@@ -27,6 +28,16 @@ type Engine struct {
 	// to be aborted due to sustained API unreachability. dispatchPipelineError
 	// checks this to emit EventStalled instead of EventError.
 	stalled bool
+
+	progressMu sync.Mutex
+	progress   pipelineProgress
+}
+
+type pipelineProgress struct {
+	Phase string
+	Index int
+	Ref   string
+	Hook  string
 }
 
 // Stalled returns true when the engine aborted a pipeline due to API
@@ -161,14 +172,17 @@ func (e *Engine) runDown(ctx context.Context, cfg *config.Config) error {
 	if err := e.runPreflight(ctx, cfg); err != nil {
 		return finishWithError(ctx, e, cfg, &PipelineError{Err: err})
 	}
+	e.setProgressHook("pre-down")
 	if err := e.Runner.RunHook(ctx, cfg, "pre-down", cfg.Hooks.PreDown); err != nil {
 		return finishWithError(ctx, e, cfg, &PipelineError{Hook: "pre-down", Err: err})
 	}
 	for i, step := range cfg.Pipelines.Down {
+		e.setProgressStep(PhaseDown, i, step.Ref)
 		if err := e.runPipelineStepWithRetry(ctx, cfg, PhaseDown, i, step); err != nil {
 			return finishWithError(ctx, e, cfg, &PipelineError{Phase: string(PhaseDown), Index: i, Ref: step.Ref, Err: err})
 		}
 	}
+	e.setProgressHook("post-down")
 	if err := e.Runner.RunHook(ctx, cfg, "post-down", cfg.Hooks.PostDown); err != nil {
 		return finishWithError(ctx, e, cfg, &PipelineError{Hook: "post-down", Err: err})
 	}
@@ -179,14 +193,17 @@ func (e *Engine) runUp(ctx context.Context, cfg *config.Config) error {
 	if err := e.runPreflight(ctx, cfg); err != nil {
 		return finishWithError(ctx, e, cfg, &PipelineError{Err: err})
 	}
+	e.setProgressHook("pre-up")
 	if err := e.Runner.RunHook(ctx, cfg, "pre-up", cfg.Hooks.PreUp); err != nil {
 		return finishWithError(ctx, e, cfg, &PipelineError{Hook: "pre-up", Err: err})
 	}
 	for i, step := range cfg.Pipelines.Up {
+		e.setProgressStep(PhaseUp, i, step.Ref)
 		if err := e.runPipelineStepWithRetry(ctx, cfg, PhaseUp, i, step); err != nil {
 			return finishWithError(ctx, e, cfg, &PipelineError{Phase: string(PhaseUp), Index: i, Ref: step.Ref, Err: err})
 		}
 	}
+	e.setProgressHook("post-up")
 	if err := e.Runner.RunHook(ctx, cfg, "post-up", cfg.Hooks.PostUp); err != nil {
 		return finishWithError(ctx, e, cfg, &PipelineError{Hook: "post-up", Err: err})
 	}
@@ -230,6 +247,9 @@ func (e *Engine) runPipelineStepWithRetry(ctx context.Context, cfg *config.Confi
 }
 
 func finishWithError(ctx context.Context, eng *Engine, cfg *config.Config, err error) error {
+	if isUserInterrupt(eng, err) {
+		eng.logPipelineInterrupted()
+	}
 	dispatchPipelineError(ctx, eng, cfg, err)
 	if cfg.Hooks.OnError == "" {
 		return err
@@ -277,4 +297,52 @@ func dispatchPipelineError(ctx context.Context, eng *Engine, cfg *config.Config,
 			})
 		}
 	}
+}
+
+func (e *Engine) setProgressHook(hook string) {
+	if e == nil {
+		return
+	}
+	e.progressMu.Lock()
+	e.progress = pipelineProgress{Hook: hook}
+	e.progressMu.Unlock()
+}
+
+func (e *Engine) setProgressStep(phase Phase, index int, ref string) {
+	if e == nil {
+		return
+	}
+	e.progressMu.Lock()
+	e.progress = pipelineProgress{Phase: string(phase), Index: index, Ref: ref}
+	e.progressMu.Unlock()
+}
+
+func isUserInterrupt(eng *Engine, err error) bool {
+	if err == nil || (eng != nil && eng.Stalled()) {
+		return false
+	}
+	return errors.Is(err, context.Canceled)
+}
+
+func (e *Engine) logPipelineInterrupted() {
+	if e == nil || e.Log == nil {
+		return
+	}
+	e.progressMu.Lock()
+	p := e.progress
+	e.progressMu.Unlock()
+
+	msg := "pipeline interrupted (signal received)"
+	if p.Hook != "" {
+		msg += fmt.Sprintf("; last hook %s", p.Hook)
+	} else if p.Ref != "" {
+		msg += fmt.Sprintf("; last step %s (%s[%d])", p.Ref, p.Phase, p.Index)
+	} else if p.Phase != "" {
+		msg += fmt.Sprintf("; last step %s[%d]", p.Phase, p.Index)
+	}
+	e.Log.Emit(log.Entry{
+		Kind:  log.KindLive,
+		Level: log.LevelWarn,
+		Msg:   msg,
+	})
 }

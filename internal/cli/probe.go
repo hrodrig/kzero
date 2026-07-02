@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hrodrig/kzero/internal/config"
@@ -33,19 +34,21 @@ release_ready), then pipeline.down. Does not run the main pipelines.`,
 				if err := writeKubernetesTarget(cmd.OutOrStdout(), cfg); err != nil {
 					return err
 				}
+				ctx, stop := pipelineRunContext(cmd.Context())
+				defer stop()
 				emit := log.New(cmd.OutOrStdout(), format)
 				emit.SetCommand("probe")
 				eng := engine.New(cfg, emit)
-				return probe.Run(cmd.Context(), cfg, eng, nil, emit)
+				return probe.Run(ctx, cfg, eng, nil, emit)
 			})
 		},
 	}
 }
 
-func runInfraProbeGate(cmd *cobra.Command, cfg *config.Config, eng *engine.Engine, command string) error {
+func runInfraProbeGate(cmd *cobra.Command, cfg *config.Config, eng *engine.Engine, command string, ctx context.Context) error {
 	emit := eng.Log
 	if emit == nil {
 		emit = log.New(cmd.OutOrStdout(), log.FormatText)
 	}
-	return probe.RunGate(cmd.Context(), cfg, eng, nil, emit, command)
+	return probe.RunGate(ctx, cfg, eng, nil, emit, command)
 }
