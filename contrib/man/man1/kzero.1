@@ -1,6 +1,6 @@
 .\" kzero(1) - declarative Kubernetes workload pipelines
 .\" Manual page for kzero
-.TH KZERO 1 "2026-06-29" "kzero v0.8.1" "User Commands"
+.TH KZERO 1 "2026-07-08" "kzero v0.9.0" "User Commands"
 .SH NAME
 kzero \- declarative Kubernetes workload shutdown and startup pipelines
 .SH SYNOPSIS
@@ -46,6 +46,28 @@ optional
 .B run.api_watchdog
 monitors API reachability and can cancel a stalled step after
 .BR fail_after .
+.PP
+On
+.BR down ,
+.BR up ,
+.BR reset ,
+and
+.B probe ,
+.BR SIGINT
+and
+.BR SIGTERM
+cancel the pipeline context and log the last hook or step (distinct from API watchdog
+.BR pipeline.stalled ).
+.PP
+When
+.B notify.require_delivery
+is
+.BR true ,
+a failed
+.BR pipeline.error
+or
+.BR pipeline.stalled
+notify POST fails the pipeline.
 .PP
 kzero is not self-contained: hooks and
 .B custom:

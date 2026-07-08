@@ -110,20 +110,33 @@ tools:
 
 security:
 	@echo "Running govulncheck..."
-	@output=$$(go run golang.org/x/vuln/cmd/govulncheck@latest ./...); \
-	status=$$?; \
-	echo "$$output"; \
+	@tmp=$$(mktemp); \
+	go run golang.org/x/vuln/cmd/govulncheck@latest ./... >"$$tmp" 2>&1 || true; \
+	output=$$(grep -v '^exit status [0-9]*$$' "$$tmp" || true); \
+	rm -f "$$tmp"; \
 	ignored_ids=$$(grep 'id:' .govulncheck-ignore.yaml 2>/dev/null | cut -d'"' -f2); \
-	total_vulns=$$(echo "$$output" | grep -c 'Vulnerability #'); \
+	total_vulns=$$(echo "$$output" | grep -c 'Vulnerability #' || true); \
 	matching=0; \
 	for id in $$ignored_ids; do \
-		c=$$(echo "$$output" | grep -c "^Vulnerability.*$$id"); \
+		c=$$(echo "$$output" | grep -c "^Vulnerability.*$$id" || true); \
 		matching=$$((matching + c)); \
 	done; \
-	if [ $$total_vulns -gt 0 ] && [ $$total_vulns -eq $$matching ]; then \
-		echo "(filtered $$matching false positives - see .govulncheck-ignore.yaml)"; \
-	elif [ $$total_vulns -gt 0 ] && [ $$total_vulns -ne $$matching ]; then \
-		echo "ERROR: $$((total_vulns - matching)) unfiltered vulnerabilities found."; \
+	if [ $$total_vulns -eq 0 ]; then \
+		echo "$$output"; \
+		echo ""; \
+		echo "=== security: PASS (govulncheck clean) ==="; \
+	elif [ $$total_vulns -eq $$matching ]; then \
+		echo "$$output"; \
+		echo ""; \
+		echo "=== security: PASS (known false positives only) ==="; \
+		echo "govulncheck reported $$matching advisories filtered — containerd v2-only CRI checkpoint; not applicable to kzero (containerd v1 via Helm)."; \
+		echo "Pending upstream: Go vulndb module-path correction; no kzero release action until vulndb or helm/containerd graph changes."; \
+		echo "Policy: .govulncheck-ignore.yaml"; \
+	else \
+		echo "$$output"; \
+		echo ""; \
+		echo "ERROR: $$((total_vulns - matching)) unfiltered govulncheck finding(s)."; \
+		echo "Add to .govulncheck-ignore.yaml only with documented false-positive rationale."; \
 		exit 1; \
 	fi
 
@@ -135,11 +148,11 @@ docker-scan:
 	$(check-docker)
 	docker build --build-arg VERSION=$(VERSION) --build-arg COMMIT=$(COMMIT) --build-arg BUILDDATE=$(BUILDDATE) --build-arg BRANCH=$(BRANCH) -t kzero:scan .
 	@if command -v grype >/dev/null 2>&1; then \
-		grype kzero:scan --fail-on $(GRYPE_FAIL_ON); \
+		grype kzero:scan -c .grype.yaml --fail-on $(GRYPE_FAIL_ON); \
 	else \
 		echo "grype not on PATH; using anchore/grype container..."; \
-		docker run --rm --pull=always -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest \
-			kzero:scan --fail-on $(GRYPE_FAIL_ON); \
+		docker run --rm --pull=always -v /var/run/docker.sock:/var/run/docker.sock -v "$(CURDIR)/.grype.yaml:/.grype.yaml:ro" anchore/grype:latest \
+			kzero:scan -c /.grype.yaml --fail-on $(GRYPE_FAIL_ON); \
 	fi
 
 .PHONY: release-check

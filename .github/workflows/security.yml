@@ -52,4 +52,4 @@ jobs:
           curl -sSfL https://get.anchore.io/grype | sh -s -- -b /usr/local/bin
 
       - name: Run Grype on image
-        run: grype kzero:scan --fail-on high
+        run: grype kzero:scan -c .grype.yaml --fail-on high

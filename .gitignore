@@ -9,6 +9,7 @@
 !.github/
 !.github/**
 !.govulncheck-ignore.yaml
+!.grype.yaml
 
 !Dockerfile
 !Dockerfile.release
@@ -62,6 +63,9 @@ contrib/man/man1/kzero.1.gz
 
 !/tools/
 !/tools/**
+
+!testing/
+!testing/**
 
 !/configs/
 !/configs/**

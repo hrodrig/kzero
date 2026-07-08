@@ -1,0 +1,12 @@
+schema_version: "1.0"
+# CI smoke profile: no cluster workloads; fake kubeconfig for analyze target block only.
+pipelines:
+  down:
+    - custom: ./testing/smoke/noop.sh
+  up:
+    - custom: ./testing/smoke/noop.sh
+run:
+  mode: "dry-run"
+  execution: native
+  timeout: 5m
+  kubeconfig: ./testing/smoke/fake-kubeconfig.yaml

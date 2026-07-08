@@ -1,6 +1,6 @@
 # Plan 0.9.x — bastion-first hardening
 
-**Status:** **Planned** — band not yet tagged.
+**Status:** **Ready for tag** — **#43–#47** on `develop`; merge `develop` → `main`, push tag **`v0.9.0`**; **GitHub Actions Release** runs GoReleaser (local `make release` is manual fallback only).
 
 **Motivation:** External audits (2026-06) and operator learnings from **0.8.x** agree: kzero should **orchestrate** clusters from **out-of-band** hosts (bastion, management VM, cron). In-cluster Job is **supported** but must not be marketed as the primary **`reset`** path when API or network reliability is uncertain. See [deployment-models.md](deployment-models.md).
 
@@ -68,10 +68,10 @@ Merge to **`develop`** in order:
 | PR1 | [deployment-models.md](deployment-models.md) + ROADMAP/SPEC/README cross-links | **#48** (partial) | **Done** (matrix, warnings, docker bastion, decision flow) |
 | PR2 | Graceful shutdown (signal → context cancel) | **#44** | **Required** — highest technical priority; bastion cron/systemd reliability |
 | PR3 | **`notify.require_delivery`** engine wiring + tests | **#43** | **Required** |
-| PR4 | E2E smoke job in CI | **#45** | Strongly recommended |
-| PR5 | Watchdog mid-wait tests | **#46** | Strongly recommended |
-| PR6 | SPEC contract vs deferred index | **#47** | Strongly recommended |
-| PR7 | Docs polish + **`VERSION` 0.9.0** tag | **#48** | Required |
+| PR4 | E2E smoke job in CI | **#45** | **Done** |
+| PR5 | Watchdog mid-wait tests | **#46** | **Done** |
+| PR6 | SPEC contract vs deferred index | **#47** | **Done** |
+| PR7 | Docs polish + **`VERSION` 0.9.0** tag | **#48** | **Done** (partial — README trim → 0.9.1) |
 
 Stretch after **v0.9.0**: **#49–#53** in **0.9.1** patches (suggested order: **#53** completion, **#52** plugin, then **#49** doctor).
 
@@ -91,4 +91,4 @@ Each PR: **`make lint`**, **`make test`**, **`make cover-check`**.
 - Replacing **1.0.0** default-native or exit-code taxonomy work
 - Breaking **`run.execution`** (`shell` / `native` / `auto`) or in-cluster auth behavior without documented migration
 
-**Last reviewed:** 2026-06-30
+**Last reviewed:** 2026-07-08

@@ -7,14 +7,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hrodrig/kzero/internal/cluster"
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/notify"
 	"github.com/hrodrig/kzero/internal/redact"
 	"github.com/hrodrig/kzero/internal/retry"
 	"github.com/hrodrig/kzero/internal/watchdog"
-	"k8s.io/client-go/rest"
 )
 
 // Engine runs phased pipelines using a Runner (dry-run or live).
@@ -57,50 +55,20 @@ func (e *Engine) startAPIObserver(ctx context.Context, cfg *config.Config) (cont
 		return ctx, nil
 	}
 
-	restCfg, err := cluster.LoadRESTConfig(cfg.Run.Kubeconfig)
+	client, healthzURL, err := newAPIWatchdogProbe(cfg.Run.Kubeconfig)
 	if err != nil {
-		// Non-fatal: warn via emitter and proceed without watchdog.
-		if e.Log != nil {
-			e.Log.Emit(log.Entry{
-				Kind:  log.KindLive,
-				Level: log.LevelWarn,
-				Msg:   "api_watchdog: cannot create Kubernetes client; watchdog disabled",
-				Err:   err.Error(),
-			})
-		}
+		e.warnAPIWatchdogDisabled("api_watchdog: watchdog disabled", err)
 		return ctx, nil
 	}
 
-	client, err := rest.RESTClientFor(restCfg)
-	if err != nil {
-		if e.Log != nil {
-			e.Log.Emit(log.Entry{
-				Kind:  log.KindLive,
-				Level: log.LevelWarn,
-				Msg:   "api_watchdog: cannot create REST client; watchdog disabled",
-				Err:   err.Error(),
-			})
-		}
-		return ctx, nil
-	}
-
-	interval := cfg.Run.APIWatchdog.Interval
-	if interval <= 0 {
-		interval = 60 * time.Second
-	}
-	failAfter := cfg.Run.APIWatchdog.FailAfter
-	if failAfter <= 0 {
-		failAfter = 5 * time.Minute
-	}
-
+	interval, failAfter := apiWatchdogTimings(cfg.Run.APIWatchdog)
 	stepCtx, stepCancel := context.WithCancel(ctx)
 
 	w := watchdog.New(stepCtx, watchdog.Config{
 		Interval:  interval,
 		FailAfter: failAfter,
 		Healthz: func(probeCtx context.Context) error {
-			_, err := client.Get().AbsPath("/healthz").DoRaw(probeCtx)
-			return err
+			return probeKubernetesHealthz(probeCtx, client, healthzURL)
 		},
 		OnTrip: func() {
 			e.stalled = true

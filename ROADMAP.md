@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-06-30 (**v0.8.1**; **bastion-first** deployment model in [docs/deployment-models.md](docs/deployment-models.md); **0.9.x** band **#43–#53** drafted; **1.0.0 #42** — exit code taxonomy)
+**Last reviewed:** 2026-07-08 (**v0.9.0** on `develop`; **0.9.x** **#43–#47** shipped; **#48** partial; **#49–#53** → **0.9.1**; **1.0.0 #42** exit codes)
 
 ### Versioning note
 
@@ -25,7 +25,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 
 **Log capture** before or after pipelines is **out of scope** for the engine—invoke external tools via phase hooks when operators need archives. **Local stdout/stderr** (and wrapper tee to disk on the **management host**) is the audit trail when notify and API are both unavailable; see [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md).
 
-**Completed bands:** **0.3.x** (operator honesty), **0.4.x** (native client + analyze validation + server-side dry-run on native). **0.5.x** retry, **`client.id`**, live audit logs, and sequential-only contract shipped through **v0.5.6**. **0.6.x** notify, slog, verify, infra probe, preflight, OS audit, Helm workspace SPEC through **v0.6.0**. **0.7.x** Helm SDK, PVC/exec/schedulable primitives through **v0.7.2** (secret redaction in **v0.7.1**, text log levels in **v0.7.3**, sample-config in **v0.7.4**). **0.8.x** API watchdog, notify delivery visibility, reset phase-boundary preflight, progress logs, stalled event through **v0.8.0**.
+**Completed bands:** **0.3.x** (operator honesty), **0.4.x** (native client + analyze validation + server-side dry-run on native). **0.5.x** retry, **`client.id`**, live audit logs, and sequential-only contract shipped through **v0.5.6**. **0.6.x** notify, slog, verify, infra probe, preflight, OS audit, Helm workspace SPEC through **v0.6.0**. **0.7.x** Helm SDK, PVC/exec/schedulable primitives through **v0.7.2** (secret redaction in **v0.7.1**, text log levels in **v0.7.3**, sample-config in **v0.7.4**). **0.8.x** API watchdog, notify delivery visibility, reset phase-boundary preflight, progress logs, stalled event through **v0.8.0**. **0.9.0** bastion-first hardening: graceful shutdown, **`require_delivery`**, E2E smoke CI, watchdog tests, SPEC contract index (**#43–#47**).
 
 **Current focus (planned work):**
 
@@ -35,7 +35,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.6.x** | **Closed** in **v0.6.0** |
 | **0.7.x** | **Closed** — **#23–#31** in **v0.7.2**; **#29** `job`/`cronjob` still open. **v0.7.3**: text log levels. **v0.7.4**: `--print-sample-config`. |
 | **0.8.x** | **Closed** — API watchdog, notify delivery, stalled event (**#35–#41**) in **v0.8.0**. |
-| **0.9.x** | Bastion-first hardening: **`require_delivery`**, graceful shutdown, selfhosted E2E smoke, SPEC contract vs deferred, docs (**#43–#51**), **`kubectl-kzero` plugin (#52)**, shell completion (**#53**) — see [docs/plan-0.9.x.md](docs/plan-0.9.x.md). |
+| **0.9.x** | **v0.9.0 shipped** (**#43–#47**); **#48** docs partial; stretch **#49–#53** in **0.9.1** — see [docs/plan-0.9.x.md](docs/plan-0.9.x.md). |
 | **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**); **#29** optional in band or pre-1.0; **#42** exit codes. |
 
 **Shell path:** **`run.execution: shell`** (default) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native/auto** uses the Helm SDK and API primitives above.
@@ -66,6 +66,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.7.3** | **Text log levels** (`--log-level`, timestamped `[DBG|INF|WRN|ERR]` lines); **Slack notify** rich attachments + **`KZERO_NOTIFY_*`** env; Helm SDK **OCI login** hardening (private registry pilot). |
 | **0.7.4** | **`kzero --print-sample-config`** (stdout sample YAML for Homebrew / binary-only installs); **0.8.x** planning docs; Docker build includes **`configs/`**. |
 | **0.8.0** | **0.8.x band close:** API watchdog (`run.api_watchdog`) with throttle and cumulative trip; `[ERR]` log on notify dispatch failure (#35); `notify.require_delivery` schema (#39); reset phase-boundary preflight (#37); throttled progress logs on long waits (#38); `pipeline.stalled` event + `notify test --event stalled` (#41). |
+| **0.9.0** | **0.9.x core:** graceful shutdown (#44); **`notify.require_delivery`** engine (#43); **`target --output slug`**; E2E smoke CI (#45); watchdog mid-wait tests (#46); SPEC contract index (#47); API watchdog `/healthz` HTTP probe fix; [deployment-models.md](docs/deployment-models.md). |
 
 ---
 
@@ -172,7 +173,7 @@ Motivation: live **`reset`** on a bastion lost API connectivity mid-run; process
 
 ---
 
-## 0.9.x — bastion-first hardening (planned)
+## 0.9.x — bastion-first hardening (v0.9.0 shipped; stretch in 0.9.1)
 
 **Implementation plan:** [docs/plan-0.9.x.md](docs/plan-0.9.x.md).
 
@@ -182,10 +183,10 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 |---|------|--------|
 | 43 | **`notify.require_delivery`** — engine fail-fast when error-notify POST fails (finish **#35** deferred) | Done (develop) |
 | 44 | **Graceful shutdown** — SIGTERM/SIGINT cancel pipeline context; log last step (bastion/cron) | Done (develop) |
-| 45 | **E2E smoke in CI** — kind or **kzero-selfhosted** minimal pipeline (not in-cluster production reset) | Pending |
-| 46 | **Watchdog tests** — API unreachable mid-wait scenarios | Pending |
-| 47 | **SPEC: contract vs experimental/deferred** — single operator-facing index | Pending |
-| 48 | **Docs** — [deployment-models.md](docs/deployment-models.md) kickoff **done**; [scope-and-alternatives.md](docs/scope-and-alternatives.md); What's new **0.8.x**, **`cosign verify`**, README trim | In progress |
+| 45 | **E2E smoke in CI** — kind or **kzero-selfhosted** minimal pipeline (not in-cluster production reset) | Done (v0.9.0) |
+| 46 | **Watchdog tests** — API unreachable mid-wait scenarios | Done (v0.9.0) |
+| 47 | **SPEC: contract vs experimental/deferred** — single operator-facing index | Done (v0.9.0) |
+| 48 | **Docs** — [deployment-models.md](docs/deployment-models.md) kickoff **done**; [scope-and-alternatives.md](docs/scope-and-alternatives.md) linked; What's new **0.9.x** in CHANGELOG/README; **`cosign verify`** in README (v0.7.0+); README trim deferred to **0.9.1** | Partial (**v0.9.0**) |
 | 49 | *(Stretch / 0.9.1)* **`kzero validate --strict`** / **`doctor`** — config + connectivity + RBAC hints | Pending |
 | 50 | *(Stretch)* **Retry jitter** on existing backoff | Pending |
 | 51 | *(Stretch)* **JSON Schema** for editor autocomplete | Pending |

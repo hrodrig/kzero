@@ -2,7 +2,7 @@
 
 <a id="top"></a>
 
-[![Version](https://img.shields.io/badge/version-0.8.1-blue.svg)](https://github.com/hrodrig/kzero/releases)
+[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/hrodrig/kzero/releases)
 [![GitHub release](https://img.shields.io/github/v/release/hrodrig/kzero)](https://github.com/hrodrig/kzero/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -36,7 +36,7 @@ Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (an
 
 **Releases** ([GitHub Releases](https://github.com/hrodrig/kzero/releases)) ship standalone **binaries** and archives (**`.tar.gz`** / **`.zip`**), Linux **`.deb`** / **`.rpm`**, **Docker** images on **`ghcr.io/hrodrig/kzero`**, and **Homebrew** ([`brew install hrodrig/kzero/kzero`](#homebrew-macos--linux)). **Supply chain (v0.7.0+):** each release attaches **SPDX** and **CycloneDX** SBOMs plus **Cosign** signatures for **`checksums.txt`** and GHCR images — verify with **`cosign verify-blob`** / **`cosign verify`** (see release assets). This repository does **not** ship Helm charts as a release artifact.
 
-Behavior, schema, and acceptance criteria are defined in **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:** **v0.8.1** (patch: correct **`api_watchdog`** deferred warning + post-**0.8.0** operator docs); **v0.8.0** added API watchdog, notify delivery visibility, reset phase-boundary preflight, **`pipeline.stalled`** — see [CHANGELOG.md](CHANGELOG.md). **Operator mitigations:** [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). **Diagrams** (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
+Behavior, schema, and acceptance criteria are defined in **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:** **v0.9.0** (bastion-first hardening: graceful shutdown, `require_delivery`, E2E smoke CI, watchdog tests, SPEC contract index); **v0.8.1** (patch: correct **`api_watchdog`** deferred warning + post-**0.8.0** operator docs); **v0.8.0** added API watchdog, notify delivery visibility, reset phase-boundary preflight, **`pipeline.stalled`** — see [CHANGELOG.md](CHANGELOG.md). **Operator mitigations:** [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). **Diagrams** (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
 
 ## Table of contents
 

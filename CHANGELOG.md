@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-07-08
+
 ### Added
 
+- **E2E smoke in CI (#45):** `testing/smoke/smoke.sh` — build, `analyze`, dry-run `down`, `--print-sample-config`; GitHub Actions job `e2e-smoke`.
+- **Watchdog mid-wait tests (#46):** engine integration tests with fake API server (`watchdog_midwait_test.go`, `live_progress_test.go`) — API unreachable during blocking step; throttled progress on context cancel.
+- **SPEC contract index (#47):** operator-facing implemented / out-of-scope / deferred table in [SPECIFICATIONS.md](SPECIFICATIONS.md) §2.1.
 - **Graceful shutdown (0.9.x #44):** **`SIGINT`** / **`SIGTERM`** cancel **`down`** / **`up`** / **`reset`** / **`probe`** pipeline context; engine logs last hook or step on user interrupt (distinct from API watchdog **`pipeline.stalled`**).
 - **`kzero target --output slug` (0.9.x):** print a filesystem-safe cluster slug for wrapper log filenames (`kzero-<cmd>-<slug>-<timestamp>.log`).
 - **`notify.require_delivery` engine wiring (0.9.x #43):** when **`true`**, failed **`pipeline.error`** or **`pipeline.stalled`** notify POST fails the pipeline (wraps the original error); removed from **`kzero analyze`** Deferred summary.
@@ -17,9 +22,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Man page:** `contrib/man/man1/kzero.1` `.TH` version synced to **v0.9.0**; `make release-check` fails on mismatch with **`VERSION`**.
 - **ROADMAP / SPEC / README:** cross-links to deployment models; **`run.execution: native`** framed for bastions and optional in-cluster packaging.
 - **docs/deployment-models.md:** quick decision matrix, stronger in-cluster warning, bastion **`docker run`** example, decision flowchart.
 - **docs/plan-0.9.x.md:** priority tiers (0.9.0 vs 0.9.1), no-regression criterion for in-cluster, PR order (**#44** before **#43**).
+- **Dependencies:** bump transitive `oras.land/oras-go/v2` to **v2.6.1** (Helm OCI); Grype ignore for **GHSA-fxhp-mv3v-67qp** until upstream **v2.6.2** (see `.grype.yaml`).
+- **`make security`:** govulncheck known false positives (containerd v2-only CRI checkpoint on v1 module) filter to **PASS** with pending-upstream note (`.govulncheck-ignore.yaml`).
+- **CI / release gates:** Grype uses `.grype.yaml`; `security.yml` passes `-c .grype.yaml`; job `e2e-smoke` in `ci.yml`.
+
+### Fixed
+
+- **API watchdog client:** probe `/healthz` via `rest.HTTPClientFor` and a direct GET (previously `rest.RESTClientFor` required `GroupVersion` / `NegotiatedSerializer` and disabled the watchdog silently with a normal kubeconfig).
 
 ## [0.8.1] - 2026-06-29
 
@@ -303,7 +316,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/hrodrig/kzero/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/hrodrig/kzero/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/hrodrig/kzero/compare/v0.7.4...v0.8.0
 [0.7.4]: https://github.com/hrodrig/kzero/compare/v0.7.3...v0.7.4

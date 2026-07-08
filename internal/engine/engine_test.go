@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -539,6 +540,9 @@ func TestStartAPIObserver_disabledDoesNotModifyCtx(t *testing.T) {
 }
 
 func TestStartAPIObserver_defaultsWhenZeroConfig(t *testing.T) {
+	t.Setenv("KUBECONFIG", filepath.Join(t.TempDir(), "missing.yaml"))
+	t.Setenv("HOME", t.TempDir())
+
 	cfg := &config.Config{
 		Run: config.RunConfig{
 			Mode:        "live",

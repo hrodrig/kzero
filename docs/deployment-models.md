@@ -118,7 +118,7 @@ docker run --rm \
   -v "${HOME}/.kube:/home/nonroot/.kube:ro" \
   -v "$(pwd)/kzero.yaml:/config/kzero.yaml:ro" \
   -e KUBECONFIG=/home/nonroot/.kube/config \
-  ghcr.io/hrodrig/kzero:v0.8.1 \
+  ghcr.io/hrodrig/kzero:v0.9.0 \
   down --config /config/kzero.yaml
 ```
 

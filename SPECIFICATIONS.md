@@ -28,6 +28,32 @@ Visual overviews (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
 - Cloud/provider orchestration (`az`, `aws`, `gcloud`, Talos/k3s reset flows).
 - Automatic nodepool scaling.
 
+### Contract index (operator-facing)
+
+Use this table with **`kzero analyze`** (stdout plan + optional **Deferred** summary) to see what the **v0.9.0** engine honors today.
+
+| Area | Status | Notes |
+|------|--------|-------|
+| **YAML schema `1.0`** (`schema_version`, `pipelines`, `run`) | **Implemented** | Required keys; unknown keys ignored with loader warnings. |
+| **Phases** `down` / `up` / `reset` | **Implemented** | `reset` = `down` then phase-boundary preflight then `up`. |
+| **Phase hooks** `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error` | **Implemented** | Shell scripts; env passthrough rules in §3. |
+| **Per-step hooks** `pre` / `post` on map steps | **Implemented** | Scoped to one pipeline step. |
+| **Step types** `deployment`, `statefulset`, `release`, `pvc`, `exec`, `custom` | **Implemented** | Compact refs + Helm workspace scripts / Helm SDK (`run.execution`). |
+| **`run.mode`** `dry-run` / `live` | **Implemented** | Dry-run skips cluster mutations and notify POSTs. |
+| **`run.execution`** `shell` / `native` / `auto` | **Implemented** | Workloads + Helm; `pvc` / `exec` always native. |
+| **`retry`** block | **Implemented** | Live mode only; exponential backoff; transient errors only. |
+| **`notify.*`** channels + **`require_delivery`** | **Implemented** | Events: `pipeline.start`, `success`, `error`, `stalled`; `kzero notify test`. |
+| **`run.api_watchdog`** | **Implemented** | `/healthz` probes; trips → `pipeline.stalled` (not user interrupt). |
+| **`verify`**, **`infra_probe`**, **`kzero probe`** | **Implemented** | Post-up readiness and pre-destructive probe cache. |
+| **`kzero target --output slug`** | **Implemented** | Filesystem-safe cluster slug for wrapper logs. |
+| **Graceful shutdown** (SIGINT/SIGTERM) | **Implemented** | Cancels pipeline context; distinct from watchdog stall. |
+| **Pipeline parallelism** (`run.worker_concurrency`) | **Out of scope** | Removed from contract **0.5.3**; use step order + `custom:`. |
+| **Node / cloud lifecycle** | **Out of scope** | See §2 Out of scope. |
+| **Deferred schema keys** | **None (v0.9.0)** | `config.DeferredFeatureWarnings` returns empty; analyze **Deferred** section omitted when empty. |
+| **Experimental** | **None declared** | No feature flags; stretch items live on [ROADMAP.md](ROADMAP.md) until promoted. |
+
+**CI contract checks:** fast binary smoke (`testing/smoke/smoke.sh` in GitHub Actions) plus unit/integration tests for API watchdog mid-wait (`internal/engine/watchdog_midwait_test.go`). Full **kind** e2e remains in [kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted/tree/main/testing/kind).
+
 ### Engine design principles
 
 kzero stays **generic** and **configuration-driven**: the engine interprets validated YAML; it does not embed environment-specific playbooks.
