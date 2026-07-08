@@ -147,9 +147,12 @@ release-check:
 	$(check-docker)
 	@set -e; \
 	test -f VERSION || { echo "Error: VERSION file is required"; exit 1; }; \
-	ver_raw=$$(cat VERSION | tr -d '\n\r'); ver=$${ver_raw#v}; \
+	ver_raw=$$(cat VERSION | tr -d '\n\r'); 	ver=$${ver_raw#v}; \
 	echo "$$ver" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$' || { echo "Error: VERSION must be semantic MAJOR.MINOR.PATCH (got: $$ver_raw)"; exit 1; }; \
-	echo "Release version: $$ver (tag v$$ver)";
+	echo "Release version: $$ver (tag v$$ver)"; \
+	man_ver=$$(sed -n 's/^\.TH KZERO 1 "[^"]*" "\([^"]*\)".*/\1/p' contrib/man/man1/kzero.1 | head -1); \
+	expect_ver="kzero v$$ver"; \
+	test "$$man_ver" = "$$expect_ver" || { echo "Error: contrib/man/man1/kzero.1 .TH version ($$man_ver) must match VERSION ($$expect_ver)"; exit 1; };
 	@$(MAKE) lint
 	@$(MAKE) test
 	@$(MAKE) cover-check

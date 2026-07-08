@@ -1,6 +1,6 @@
 .\" kzero(1) - declarative Kubernetes workload pipelines
 .\" Manual page for kzero
-.TH KZERO 1 "2026-06-07" "kzero v0.6.1" "User Commands"
+.TH KZERO 1 "2026-06-29" "kzero v0.8.1" "User Commands"
 .SH NAME
 kzero \- declarative Kubernetes workload shutdown and startup pipelines
 .SH SYNOPSIS
@@ -16,31 +16,47 @@ is a Go CLI that runs ordered
 , and
 .B reset
 pipelines from a YAML profile. Operators scale Deployments and StatefulSets,
-run Helm release helper scripts, and invoke custom shell steps with phase and
-per-step hooks. Configuration is validated before cluster mutations; use
+run Helm release helper scripts or the in-process Helm SDK, and invoke custom
+shell steps with phase and per-step hooks. Configuration is validated before
+cluster mutations; use
 .B analyze
 and
 .B run.mode: dry-run
 to review plans first.
 .PP
-kzero is not self-contained: workload steps may call
-.BR kubectl ,
-use client-go (
+With
 .BR run.execution:
-.BR native ),
-or run
-.BR /bin/sh
-for hooks,
-.B custom:
-steps, and
+.BR native
+or
+.BR auto ,
+workload and
 .B release.*
-scripts (which typically invoke
-.BR helm ).
-Install
+steps use the Kubernetes and Helm Go clients when possible; host
 .BR kubectl
 and
 .BR helm
-on the host when your profile requires them.
+are optional on that path.
+.PP
+During live
+.BR down ,
+.BR up ,
+and
+.B reset ,
+optional
+.B run.api_watchdog
+monitors API reachability and can cancel a stalled step after
+.BR fail_after .
+.PP
+kzero is not self-contained: hooks and
+.B custom:
+steps run
+.BR /bin/sh ;
+some profiles still require host
+.BR kubectl
+and
+.BR helm .
+Install them when your YAML expects shell-based release scripts or kubectl
+subprocesses.
 .PP
 Operator deployment patterns (bastion, cron, kind e2e): see
 .IR https://github.com/hrodrig/kzero-selfhosted .
@@ -61,12 +77,22 @@ for a sanitized cluster name only (wrapper log filenames).
 POST to enabled
 .B notify.*
 channels without running a pipeline.
+Use
+.B --event
+to preview
+.BR pipeline.start ,
+.BR pipeline.success ,
+.BR pipeline.error ,
+.BR pipeline.stalled ,
+or
+.BR notify.test .
 .TP
 .B verify
 Run post-up readiness checks (
 .B workloads_ready
 ,
-.BR nodes_ready ).
+.BR nodes_ready ,
+.BR pods_schedulable ).
 .TP
 .B probe
 Run the optional
@@ -100,7 +126,7 @@ then
 .B down
 fails,
 .B up
-does not run.
+does not run. Re-runs API preflight between phases.
 .TP
 .B version
 Print version, commit, build date, and branch.
@@ -114,9 +140,23 @@ After a Linux package install, use
 .IR /etc/kzero/kzero.yaml
 or copy the sample to the working directory.
 .TP
+.BR \-\-print\-sample\-config
+Write the sample profile to stdout and exit (same as
+.IR configs/kzero.sample.yml ).
+.TP
 .BR \-\-log\-format " \fItext|json\fR"
 Structured logging for pipeline commands (default
 .BR text ).
+.TP
+.BR \-\-log\-level " \fIdebug|info|warn|error\fR"
+Minimum log level for text output (default
+.BR info ).
+.TP
+.BR \-\-no\-env\-passthrough
+Omit host environment from hook and subprocess env (only
+.BR KZERO_*
+and
+.BR KUBECONFIG ).
 .SH ENVIRONMENT
 Variables with prefix
 .B KZERO_
@@ -141,6 +181,11 @@ on upgrade).
 .I share/examples/kzero/kzero.sample.yml
 Sample profile inside release tarballs.
 .SH EXAMPLES
+.TP
+Print sample config:
+.RS
+kzero \-\-print\-sample\-config > ./kzero.yaml
+.RE
 .TP
 Validate and print plan:
 .RS
