@@ -91,4 +91,4 @@ Each PR: **`make lint`**, **`make test`**, **`make cover-check`**.
 - Replacing **1.0.0** default-native or exit-code taxonomy work
 - Breaking **`run.execution`** (`shell` / `native` / `auto`) or in-cluster auth behavior without documented migration
 
-**Last reviewed:** 2026-07-11 (**v0.9.1** shipped; stretch **#48**–**#53** done on develop)
+**Last reviewed:** 2026-07-11 (**v0.9.2** ships stretch **#48**–**#53**)

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-07-11
+
 ### Added
 
 - **JSON Schema (#51):** **[configs/kzero.schema.json](configs/kzero.schema.json)** for editor autocomplete (`schema_version` **1.0**); sample YAML Language Server hint; SPEC/README notes (runtime validation remains the Go loader).
@@ -17,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Retry backoff (#50):** live per-step retry waits use **full jitter** uniformly in **`[0, exponential]`** (still capped at **2m**) so concurrent runs do not align on the same delay.
-- **Docs (#48):** README trim + Cosign verify examples; retry table documents full jitter; What's new points at stretch on **`develop`**.
+- **Docs (#48):** README trim + Cosign verify examples; retry table documents full jitter.
 
 ## [0.9.1] - 2026-07-11
 
@@ -345,7 +347,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.9.2...HEAD
+[0.9.2]: https://github.com/hrodrig/kzero/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/hrodrig/kzero/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/hrodrig/kzero/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/hrodrig/kzero/compare/v0.8.0...v0.8.1
