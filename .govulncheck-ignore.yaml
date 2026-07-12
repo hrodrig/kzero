@@ -1,14 +1,13 @@
-# govulncheck known false positives
+# govulncheck known false positives / accepted transitive risk
 #
-# These advisories only affect containerd v2.x CRI checkpoint features.
-# kzero uses containerd v1.x (github.com/containerd/containerd, not
-# /v2). The Go vulndb incorrectly flags them against the v1 module;
-# they will never have a "Fixed in: v1.x.Y" because v1 is not affected.
-#
-# Tracked upstream:
+# containerd v2-only CRI checkpoint (vulndb flags v1 module incorrectly):
 #   GHSA-cvxm-645q-p574 (GO-2026-5338)
 #   GHSA-rgh6-rfwx-v388 (GO-2026-5622)
-#   GHSA-* (GO-2026-5064) - CDI annotation smuggling, also v2-only
+#   GO-2026-5064 (CDI annotation smuggling, v2-only)
+#
+# golang.org/x/crypto/openpgp (GO-2026-5932): unmaintained package pulled by
+# helm.sh/helm/v3 for chart provenance verification. kzero does not call
+# openpgp directly; no upstream Helm fix yet.
 ignored:
   - id: "GO-2026-5622"
     reason: "containerd v2-only CRI checkpoint symlink — does not affect containerd v1"
@@ -19,3 +18,6 @@ ignored:
   - id: "GO-2026-5064"
     reason: "containerd v2-only CRI checkpoint CDI smuggling — does not affect containerd v1"
     reference: "https://pkg.go.dev/vuln/GO-2026-5064"
+  - id: "GO-2026-5932"
+    reason: "Helm SDK transitive golang.org/x/crypto/openpgp (chart provenance) — unmaintained per Go vulndb; await helm.sh/helm/v3 upstream"
+    reference: "https://pkg.go.dev/vuln/GO-2026-5932"

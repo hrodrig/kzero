@@ -7,10 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-07-11
+
+### Security
+
+- **Dependencies:** bump transitive `oras.land/oras-go/v2` to **v2.6.2** (Helm OCI) — closes Dependabot **#6** / [GHSA-fxhp-mv3v-67qp](https://github.com/advisories/GHSA-fxhp-mv3v-67qp) ([CVE-2026-50163](https://www.cve.org/CVERecord?id=CVE-2026-50163)); Grype oras ignore removed (patched).
+- **`make security`:** document **GO-2026-5932** (Helm transitive `openpgp`) in `.govulncheck-ignore.yaml`; containerd v2-only entries unchanged.
+
 ### Changed
 
 - **Go toolchain:** bump minimum Go to **1.26.5** (`go.mod`, `Dockerfile`) — addresses [GO-2026-4970](https://pkg.go.dev/vuln/GO-2026-4970) and [GO-2026-5856](https://pkg.go.dev/vuln/GO-2026-5856) (stdlib) reported by Grype on `golang:1.26.4` images.
-- **Dependencies:** bump transitive `oras.land/oras-go/v2` to **v2.6.2** (Helm OCI) — closes Dependabot **#6** / [GHSA-fxhp-mv3v-67qp](https://github.com/advisories/GHSA-fxhp-mv3v-67qp) ([CVE-2026-50163](https://www.cve.org/CVERecord?id=CVE-2026-50163)); remove `.grype.yaml` ignore.
 - **Docker:** final stage `gcr.io/distroless/static-debian13:nonroot` (`Dockerfile`, `Dockerfile.release`) — Debian 12 base EOL.
 
 ## [0.9.0] - 2026-07-08
@@ -322,7 +328,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/hrodrig/kzero/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/hrodrig/kzero/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/hrodrig/kzero/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/hrodrig/kzero/compare/v0.7.4...v0.8.0

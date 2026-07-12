@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-07-08 (**v0.9.0** on `develop`; **0.9.x** **#43–#47** shipped; **#48** partial; **#49–#53** → **0.9.1**; **1.0.0 #42** exit codes)
+**Last reviewed:** 2026-07-11 (**v0.9.1** security patch on `develop`; **0.9.x** stretch **#48–#53** remains for follow-up patches)
 
 ### Versioning note
 
@@ -35,7 +35,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.6.x** | **Closed** in **v0.6.0** |
 | **0.7.x** | **Closed** — **#23–#31** in **v0.7.2**; **#29** `job`/`cronjob` still open. **v0.7.3**: text log levels. **v0.7.4**: `--print-sample-config`. |
 | **0.8.x** | **Closed** — API watchdog, notify delivery, stalled event (**#35–#41**) in **v0.8.0**. |
-| **0.9.x** | **v0.9.0 shipped** (**#43–#47**); **#48** docs partial; stretch **#49–#53** in **0.9.1** — see [docs/plan-0.9.x.md](docs/plan-0.9.x.md). |
+| **0.9.x** | **v0.9.0** core shipped (**#43–#47**); **v0.9.1** security patch (Go 1.26.5, oras-go v2.6.2, distroless debian13); stretch **#48–#53** open — see [docs/plan-0.9.x.md](docs/plan-0.9.x.md). |
 | **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**); **#29** optional in band or pre-1.0; **#42** exit codes. |
 
 **Shell path:** **`run.execution: shell`** (default) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native/auto** uses the Helm SDK and API primitives above.
@@ -67,6 +67,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.7.4** | **`kzero --print-sample-config`** (stdout sample YAML for Homebrew / binary-only installs); **0.8.x** planning docs; Docker build includes **`configs/`**. |
 | **0.8.0** | **0.8.x band close:** API watchdog (`run.api_watchdog`) with throttle and cumulative trip; `[ERR]` log on notify dispatch failure (#35); `notify.require_delivery` schema (#39); reset phase-boundary preflight (#37); throttled progress logs on long waits (#38); `pipeline.stalled` event + `notify test --event stalled` (#41). |
 | **0.9.0** | **0.9.x core:** graceful shutdown (#44); **`notify.require_delivery`** engine (#43); **`target --output slug`**; E2E smoke CI (#45); watchdog mid-wait tests (#46); SPEC contract index (#47); API watchdog `/healthz` HTTP probe fix; [deployment-models.md](docs/deployment-models.md). |
+| **0.9.1** | **Security patch:** Go **1.26.5** (stdlib GO-2026-4970, GO-2026-5856); **`oras.land/oras-go/v2` v2.6.2** (CVE-2026-50163 / Dependabot #6); distroless **`static-debian13:nonroot`**; Grype ignore removed. |
 
 ---
 

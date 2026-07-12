@@ -1,2 +1,5 @@
 # Grype policy for `make docker-scan` / CI (default --fail-on high).
-# Add `ignore:` entries only for documented false positives or pending upstream fixes.
+#
+# oras-go GHSA-fxhp-mv3v-67qp: fixed in v2.6.2 (0.9.1) — no ignore needed.
+# govulncheck transitive findings (containerd v2-only, Helm openpgp): .govulncheck-ignore.yaml
+# Add `ignore:` entries here only for image-scan false positives Grype cannot resolve upstream.
