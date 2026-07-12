@@ -45,7 +45,6 @@ users:
 
 func TestRunDown_apiWatchdogTripsDuringBlockingStep(t *testing.T) {
 	t.Parallel()
-	stubLivePreflightOK(t)
 
 	var failHealthz atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -81,9 +80,10 @@ func TestRunDown_apiWatchdogTripsDuringBlockingStep(t *testing.T) {
 
 	runner := &blockingRunner{started: make(chan struct{})}
 	eng := &Engine{
-		Runner:  runner,
-		Log:     log.New(io.Discard, log.FormatText),
-		Command: "down",
+		Runner:           runner,
+		Log:              log.New(io.Discard, log.FormatText),
+		Command:          "down",
+		PreflightFactory: livePreflightOKFactory(),
 	}
 
 	errCh := make(chan error, 1)

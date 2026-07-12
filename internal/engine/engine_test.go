@@ -416,23 +416,19 @@ func assertStep(t *testing.T, c RecordedCall, phase Phase, index int) {
 	}
 }
 
-func stubLivePreflightOK(t *testing.T) {
-	t.Helper()
-	old := validate.SwapDefaultClientFactory(func(string) (kubernetes.Interface, error) {
+func livePreflightOKFactory() validate.ClientFactory {
+	return func(string) (kubernetes.Interface, error) {
 		return fake.NewSimpleClientset(), nil
-	})
-	t.Cleanup(func() { validate.SwapDefaultClientFactory(old) })
+	}
 }
 
 func TestRunDown_retriesTransientPipelineStep(t *testing.T) {
-	stubLivePreflightOK(t)
-
 	rec := &RecordingRunner{
 		StepFailRemaining: map[string]int{stepKey(PhaseDown, 0): 1},
 		StepFailErr:       executor.ErrConflict,
 	}
 	var logBuf strings.Builder
-	eng := &Engine{Runner: rec, Log: testEmitter(&logBuf)}
+	eng := &Engine{Runner: rec, Log: testEmitter(&logBuf), PreflightFactory: livePreflightOKFactory()}
 	cfg := &config.Config{
 		Run:   config.RunConfig{Mode: "live"},
 		Retry: config.RetryConfig{Attempts: 3, Delay: time.Millisecond},
@@ -460,13 +456,11 @@ func TestRunDown_retriesTransientPipelineStep(t *testing.T) {
 }
 
 func TestRunDown_doesNotRetryNotFound(t *testing.T) {
-	stubLivePreflightOK(t)
-
 	rec := &RecordingRunner{
 		StepFailRemaining: map[string]int{stepKey(PhaseDown, 0): 2},
 		StepFailErr:       executor.ErrNotFound,
 	}
-	eng := &Engine{Runner: rec}
+	eng := &Engine{Runner: rec, PreflightFactory: livePreflightOKFactory()}
 	cfg := &config.Config{
 		Run:   config.RunConfig{Mode: "live"},
 		Retry: config.RetryConfig{Attempts: 3, Delay: time.Millisecond},

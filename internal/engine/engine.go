@@ -12,6 +12,7 @@ import (
 	"github.com/hrodrig/kzero/internal/notify"
 	"github.com/hrodrig/kzero/internal/redact"
 	"github.com/hrodrig/kzero/internal/retry"
+	"github.com/hrodrig/kzero/internal/validate"
 	"github.com/hrodrig/kzero/internal/watchdog"
 )
 
@@ -21,6 +22,10 @@ type Engine struct {
 	Log     *log.Emitter
 	Command string    // CLI command name: down, up, reset (for notify metadata)
 	Started time.Time // pipeline start time (for notify metadata)
+
+	// PreflightFactory overrides live preflight client construction when set.
+	// Production callers leave it nil (uses validate.ClientFactoryDefault).
+	PreflightFactory validate.ClientFactory
 
 	// stalled is set when the API watchdog trips, causing the pipeline
 	// to be aborted due to sustained API unreachability. dispatchPipelineError

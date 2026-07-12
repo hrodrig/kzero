@@ -9,9 +9,7 @@ import (
 
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/log"
-	"github.com/hrodrig/kzero/internal/validate"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/fake"
 )
 
 func TestRunDown_dryRunPreflightBeforeHooks(t *testing.T) {
@@ -39,13 +37,14 @@ func TestRunDown_dryRunPreflightBeforeHooks(t *testing.T) {
 }
 
 func TestRunDown_livePreflightBlocksPipeline(t *testing.T) {
-	old := validate.SwapDefaultClientFactory(func(string) (kubernetes.Interface, error) {
-		return nil, errors.New("api down")
-	})
-	t.Cleanup(func() { validate.SwapDefaultClientFactory(old) })
-
 	rec := &RecordingRunner{}
-	eng := &Engine{Runner: rec, Log: log.New(io.Discard, log.FormatText)}
+	eng := &Engine{
+		Runner: rec,
+		Log:    log.New(io.Discard, log.FormatText),
+		PreflightFactory: func(string) (kubernetes.Interface, error) {
+			return nil, errors.New("api down")
+		},
+	}
 	cfg := &config.Config{
 		Run:   config.RunConfig{Mode: "live"},
 		Hooks: config.HooksConfig{PreDown: "./pre.sh"},
@@ -63,13 +62,8 @@ func TestRunDown_livePreflightBlocksPipeline(t *testing.T) {
 }
 
 func TestRunDown_livePreflightOk(t *testing.T) {
-	old := validate.SwapDefaultClientFactory(func(string) (kubernetes.Interface, error) {
-		return fake.NewSimpleClientset(), nil
-	})
-	t.Cleanup(func() { validate.SwapDefaultClientFactory(old) })
-
 	rec := &RecordingRunner{}
-	eng := &Engine{Runner: rec}
+	eng := &Engine{Runner: rec, PreflightFactory: livePreflightOKFactory()}
 	cfg := &config.Config{
 		Run: config.RunConfig{Mode: "live"},
 		Pipelines: config.PipelinesConfig{

@@ -18,7 +18,7 @@ func (e *Engine) runPreflight(ctx context.Context, cfg *config.Config) error {
 		}
 		return nil
 	case "live":
-		if err := preflight.Check(ctx, cfg, nil); err != nil {
+		if err := preflight.Check(ctx, cfg, e.PreflightFactory); err != nil {
 			return err
 		}
 		return nil
