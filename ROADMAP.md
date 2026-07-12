@@ -33,10 +33,11 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 |------|------------|
 | **0.5.x** | **Closed** (last item **#15** in **v0.5.7**) |
 | **0.6.x** | **Closed** in **v0.6.0** |
-| **0.7.x** | **Closed** — **#23–#31** in **v0.7.2**; **#29** `job`/`cronjob` still open. **v0.7.3**: text log levels. **v0.7.4**: `--print-sample-config`. |
+| **0.7.x** | **Closed** — **#23–#28**, **#30–#31** in **v0.7.2** (+ **v0.7.3**/**v0.7.4** patches). **#29** deferred **post-1.x**. |
 | **0.8.x** | **Closed** — API watchdog, notify delivery, stalled event (**#35–#41**) in **v0.8.0**. |
 | **0.9.x** | **Closed** stretch — **v0.9.0** core (**#43–#47**); **v0.9.1** security; **v0.9.2** doctor/completion/plugin/jitter/JSON Schema/docs (**#48–#53**). Next: **1.0.0** (**#32–#34**, **#42**). |
-| **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**); **#29** optional in band or pre-1.0; **#42** exit codes. |
+| **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**); **#42** exit codes. |
+| **post-1.x** | **#29** `job`/`cronjob`/CRD patch steps (until then: **`custom:`**). |
 
 **Shell path:** **`run.execution: shell`** (default) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native/auto** uses the Helm SDK and API primitives above.
 
@@ -149,7 +150,7 @@ Broader pipeline primitives via **client-go** and **helm.sh/helm/v3**, keeping a
 | 26 | **Infra probe (native checks)**: PVC **Bound** wait, optional in-volume write/read, and probe teardown using built-in step types (extends **0.6.x #22** for distroless/single-binary runs). | **Done** (develop, PR6 — native Redis sample + docs) |
 | 27 | **Scheduling / affinity sanity** (optional probe or **`verify`** check): detect pods **Pending** due to node selectors, affinity, or taints after maintenance—separate from storage probe. | **Done** (**0.7.2** — **`pods_schedulable`**) |
 | 28 | **Cosign signing** and **SBOM** (e.g. Syft) in the GoReleaser pipeline. | **Done** (**v0.7.0**) |
-| 29 | **Additional step types**: `job`, `cronjob` (suspend), safe generic **patch** / scale patterns for CRDs. Prefer native executor; shell fallback where needed. | Pending |
+| 29 | **Additional step types**: `job`, `cronjob` (suspend), safe generic **patch** / scale patterns for CRDs. Prefer native executor; shell fallback where needed. Until then use **`custom:`**. | Deferred (**post-1.x**) |
 | 30 | **`custom:` parity**: pass `KZERO_PHASE` and step metadata to the main custom script (same as per-step hooks / release scripts). | **Done** (**0.7.2**) |
 | 31 | **Release script ergonomics**: optional non-flat paths under `helm.workspace` (e.g. `monitoring/kube-prometheus-stack.sh`) without breaking flat `name.sh` convention. | **Done** (**0.7.2** — step **`script:`**) |
 
@@ -195,7 +196,7 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 | 52 | *(Stretch / 0.9.1)* **`kubectl-kzero` plugin** — `kubectl kzero …` via **`kubectl-kzero`** on PATH (same CLI as **`kzero`**; bastion DX; GoReleaser) | Done (**v0.9.2**) |
 | 53 | *(Stretch / 0.9.1)* **Shell completion** — `kzero completion <bash\|zsh\|fish\|powershell>` with strict validation, tests, README ([groot #80](https://github.com/hrodrig/groot/blob/main/pkg/cmd/completion.go) pattern); **`kubectl kzero completion`** when **#52** ships | Done (**v0.9.2**) |
 
-**Merge order (see plan):** PR1 docs → **#44** graceful shutdown → **#43** `require_delivery` → E2E/watchdog/SPEC → **v0.9.0** → **#53** / **#52** / **#49** in **0.9.1**.
+**Merge order (historical):** PR1 docs kickoff → **#44** graceful shutdown → **#43** `require_delivery` → E2E/watchdog/SPEC → **v0.9.0** → stretch **#53** / **#52** / **#49** / **#50** / **#51** + **#48** close → **v0.9.2**.
 
 **Non-goals for 0.9.x:** promoting in-cluster Job as the primary **`reset`** path; Prometheus/OTel; chaos-mesh; breaking in-cluster auth without migration note.
 
@@ -212,6 +213,16 @@ Major when YAML **`schema_version`**, executor behavior, and step types are stab
 | 34 | **Integration tests** with **kind** or envtest in CI, with documented flake policy and runtime budget. | Pending |
 | 42 | **Documented exit code taxonomy** for CLI scripts/wrappers: today all non-zero returns collapse to `1` (`cmd/kzero/main.go:14`); map subsystem failures to stable codes (config, Kubernetes client/API, executor aborted, notify delivery, partial failures) following the same pattern adopted for [groot 0.9.x #82](https://github.com/hrodrig/groot/blob/main/pkg/cmd/exitcode.go). Implementation note: not breaking for existing wrappers — codes beyond config error are only emitted where the underlying failure category is unambiguous. | Pending |
 | 55 | *(Optional)* **Post-pipeline log upload** — after a run, push **`run.log_file`** (or wrapper tee output) to S3/GCS/SFTP (env creds, `continue_on_error`, `--no-upload`); hooks/selfhosted patterns remain the default; not a groot-style archive bundle. | Pending |
+
+---
+
+## post-1.x (future) — extra step kinds
+
+Not required for **1.0.0** contract stability. Operators use **`custom:`** until these land.
+
+| # | Item | Status |
+|---|------|--------|
+| 29 | **`job` / `cronjob`** (suspend) and safe generic **patch** / scale for CRDs — see **0.7.x** row. | Deferred (**post-1.x**) |
 
 ---
 

@@ -14,7 +14,7 @@ This document captures **0.9.x** requirements. For shipped behavior see [CHANGEL
 
 | Tier | Items | Target tag |
 |------|-------|------------|
-| **Required for 0.9.0** | **#43**, **#44**, **#48** (docs remainder) | **v0.9.0** |
+| **Required for 0.9.0** | **#43**, **#44**, **#48** kickoff (docs remainder closed **v0.9.2**) | **v0.9.0** |
 | **Strongly recommended** | **#45** (E2E smoke), **#46** (watchdog tests), **#47** (SPEC contract index) | **v0.9.0** if schedule allows; else early **0.9.1** |
 | **Stretch / patch** | **#49** (`doctor` / `validate --strict`), **#50** (retry jitter), **#51** (JSON Schema), **#52** (`kubectl-kzero` plugin), **#53** (shell completion) | **0.9.1+** |
 
@@ -37,12 +37,12 @@ This document captures **0.9.x** requirements. For shipped behavior see [CHANGEL
 | **45** | **E2E smoke in CI** | Minimal pipeline via **kind** or **kzero-selfhosted** fixture; validates binary + config on PR — not “kzero saves cluster from inside”. |
 | **46** | **Watchdog test coverage** | API unreachable during long wait (extends **0.8.0** criterion #1). |
 | **47** | **SPEC contract index** | Table: implemented vs deferred vs experimental; aligns with **`analyze`** Deferred warnings. |
-| **48** | **Docs polish** | deployment-models, scope-and-alternatives, Cosign verify, README trim (**done** on develop). |
-| **49** | *(Stretch)* **`kzero doctor`** | Config + API ping + binary presence + workload existence + RBAC hints (**done** on develop). |
-| **50** | *(Stretch)* **Retry jitter** | Full jitter on exponential backoff (**done** on develop). |
-| **51** | *(Stretch)* **JSON Schema** | Editor autocomplete — **`configs/kzero.schema.json`** (**done** on develop). |
-| **52** | *(Stretch)* **`kubectl-kzero` plugin** | Ship **`kubectl-kzero`** binary (thin wrapper → same **`internal/cli`**); **`kubectl kzero …`** on bastion; GoReleaser + README; discoverable via **`kubectl plugin list`**. |
-| **53** | *(Stretch)* **Shell completion** | **`kzero completion <bash\|zsh\|fish\|powershell>`** — strict shell arg validation, tests, README (port [groot #80](https://github.com/hrodrig/groot/blob/main/pkg/cmd/completion.go)); replaces Cobra default nested completion; **`kubectl kzero completion`** when **#52** lands. |
+| **48** | **Docs polish** | deployment-models, scope-and-alternatives, Cosign verify, README trim — **Done (v0.9.2)**. |
+| **49** | *(Stretch)* **`kzero doctor`** | Config + API ping + binary presence + workload existence + RBAC hints — **Done (v0.9.2)**. |
+| **50** | *(Stretch)* **Retry jitter** | Full jitter on exponential backoff — **Done (v0.9.2)**. |
+| **51** | *(Stretch)* **JSON Schema** | Editor autocomplete — **`configs/kzero.schema.json`** — **Done (v0.9.2)**. |
+| **52** | *(Stretch)* **`kubectl-kzero` plugin** | Ship **`kubectl-kzero`** binary (thin wrapper → same **`internal/cli`**); GoReleaser + README — **Done (v0.9.2)**. |
+| **53** | *(Stretch)* **Shell completion** | **`kzero completion <bash\|zsh\|fish\|powershell>`** — **Done (v0.9.2)**. |
 
 ---
 
@@ -65,20 +65,23 @@ Merge to **`develop`** in order:
 
 | PR | Item | Roadmap | Priority |
 |----|------|---------|----------|
-| PR1 | [deployment-models.md](deployment-models.md) + ROADMAP/SPEC/README cross-links | **#48** (partial) | **Done** (matrix, warnings, docker bastion, decision flow) |
+| PR1 | [deployment-models.md](deployment-models.md) + ROADMAP/SPEC/README cross-links | **#48** (kickoff) | **Done** (matrix, warnings, docker bastion, decision flow) |
 | PR2 | Graceful shutdown (signal → context cancel) | **#44** | **Required** — highest technical priority; bastion cron/systemd reliability |
 | PR3 | **`notify.require_delivery`** engine wiring + tests | **#43** | **Required** |
 | PR4 | E2E smoke job in CI | **#45** | **Done** |
 | PR5 | Watchdog mid-wait tests | **#46** | **Done** |
 | PR6 | SPEC contract vs deferred index | **#47** | **Done** |
-| PR7 | Docs polish + **`VERSION` 0.9.0** tag | **#48** | **Done** (partial — README trim → 0.9.1) |
+| PR7 | Docs polish kickoff + **`VERSION` 0.9.0** tag | **#48** (remainder → **v0.9.2**) | **Done** (v0.9.0 kickoff; Cosign/README trim closed in **v0.9.2**) |
 
-Stretch after **v0.9.0**: **#49–#53** in **0.9.1** patches (suggested order: **#53** completion, **#52** plugin, then **#49** doctor).
+Stretch after **v0.9.0**: **#48** remainder + **#49–#53** shipped in **v0.9.2** (order: **#53** → **#52** → **#49** → **#50** → **#51** + docs).
 
 | PR | Item | Roadmap | Priority |
 |----|------|---------|----------|
-| PR8 | *(Optional 0.9.1)* **`kubectl-kzero`** binary + packaging + docs | **#52** | **Done** (develop) |
-| PR9 | *(Optional 0.9.1)* Shell completion (`completion.go` + tests + README) | **#53** | **Done** (develop) |
+| PR8 | **`kubectl-kzero`** binary + packaging + docs | **#52** | **Done (v0.9.2)** |
+| PR9 | Shell completion (`completion.go` + tests + README) | **#53** | **Done (v0.9.2)** |
+| PR10 | **`kzero doctor`** | **#49** | **Done (v0.9.2)** |
+| PR11 | Retry full jitter | **#50** | **Done (v0.9.2)** |
+| PR12 | JSON Schema + docs Cosign/README (#48 close) | **#51**, **#48** | **Done (v0.9.2)** |
 
 Each PR: **`make lint`**, **`make test`**, **`make cover-check`**.
 

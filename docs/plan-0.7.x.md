@@ -2,7 +2,7 @@
 
 **Status:** **Band closed** — **`v0.7.2`** on **`main`** (core **0.7.x** deliverables). **`v0.7.3`** patch: text log levels, Slack notify attachments, **`KZERO_NOTIFY_*`**, Helm SDK OCI login hardening.
 
-This document is **historical planning context** for the **0.7.x** semver band. For current shipped behavior, see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMAP.md), and [SPECIFICATIONS.md](../SPECIFICATIONS.md). Open work lives under **1.0.0** (**#29** `job`/`cronjob`, **#32–#34**).
+This document is **historical planning context** for the **0.7.x** semver band. For current shipped behavior, see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMAP.md), and [SPECIFICATIONS.md](../SPECIFICATIONS.md). Open work: **1.0.0** (**#32–#34**, **#42**); **#29** (`job`/`cronjob`) deferred **post-1.x**.
 
 ### Internal merge order (2026-06-11) — completed
 
@@ -205,7 +205,7 @@ pipelines:
 |-----|----------|
 | **`v0.7.0`** | **Done** — Cosign + SBOM (**#28**) |
 | **`v0.7.1`** | **Done** — **#17** + InClusterConfig (PO / in-cluster smoke track) |
-| **`v0.7.2`** | **Done** — band close: **#25–#27**, **#30–#31** (OCI registry login, **`pods_schedulable`**, **`custom:`** parity, **`script:`** paths); **#29** deferred |
+| **`v0.7.2`** | **Done** — band close: **#25–#27**, **#30–#31** (OCI registry login, **`pods_schedulable`**, **`custom:`** parity, **`script:`** paths); **#29** deferred **post-1.x** |
 | **`v0.7.3`** | **Done** — text log levels (`--log-level`), Slack rich attachments + **`KZERO_NOTIFY_*`**, Helm SDK private OCI login hardening |
 | **`v0.8.0` or `1.0.0`** | **1.0.0** contract items if band splits |
 
