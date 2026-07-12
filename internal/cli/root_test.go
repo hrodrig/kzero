@@ -132,8 +132,11 @@ func TestVersionCommand_PrintsMetadata(t *testing.T) {
 		t.Fatalf("Execute: %v", err)
 	}
 	out := stdout.String()
-	if !strings.Contains(out, "kzero") || !strings.Contains(out, Version) {
+	if !strings.Contains(out, Version) || !strings.Contains(out, "commit") {
 		t.Fatalf("unexpected stdout: %q", out)
+	}
+	if !strings.Contains(out, InvocationLabel()) {
+		t.Fatalf("expected invocation label %q in stdout: %q", InvocationLabel(), out)
 	}
 }
 

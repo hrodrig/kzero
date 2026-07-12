@@ -155,6 +155,14 @@ Print version, commit, build date, and branch.
 .TP
 .B completion \fIbash|zsh|fish|powershell\fR
 Write a shell completion script to stdout. Invalid or missing shell names exit non-zero.
+.PP
+Release packages also ship
+.B kubectl\-kzero
+(same CLI). With that binary on
+.BR PATH ,
+invoke as
+.B kubectl kzero \fIsubcommand\fR
+\&.
 .SH OPTIONS
 Global flags apply to all commands:
 .TP

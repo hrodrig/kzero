@@ -27,6 +27,7 @@ PKG_ARCH =	*
 
 do-install:
 	${INSTALL_PROGRAM} ${WRKDIR}/kzero ${PREFIX}/bin/kzero
+	${INSTALL_PROGRAM} ${WRKDIR}/kubectl-kzero ${PREFIX}/bin/kubectl-kzero
 	${INSTALL_MAN} ${WRKDIR}/share/man/man1/kzero.1 ${PREFIX}/man/man1/kzero.1
 	${INSTALL_DATA_DIR} ${PREFIX}/share/doc/kzero
 	${INSTALL_DATA} ${WRKDIR}/share/doc/kzero/LICENSE ${PREFIX}/share/doc/kzero/

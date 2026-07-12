@@ -2,7 +2,10 @@
 # GNU Make prefers GNUmakefile over Makefile; the Makefile stub forwards to gmake.
 
 BINARY   := kzero
+PLUGIN   := kubectl-kzero
 DIST     := dist
+PREFIX   ?= /usr/local
+BINDIR   ?= $(PREFIX)/bin
 # BSD dist tarball arch (cross-compile). Examples: make dist-freebsd FREEBSD_ARCH=arm64
 FREEBSD_ARCH ?= amd64
 OPENBSD_ARCH ?= amd64
@@ -24,10 +27,11 @@ help:
 	@echo "kzero — Kubernetes pipeline CLI"
 	@echo ""
 	@echo "  build           Build ./bin/kzero for current platform"
+	@echo "  install-kubectl-plugin  Install kubectl-kzero into \$$BINDIR (must be on PATH)"
 	@echo "  build-all       Cross-compile to $(DIST)/ (linux, darwin, windows, freebsd, openbsd)"
 	@echo "  install         go install to \$$GOBIN"
 	@echo "  install-man     Install man page to \$$MANDIR/man1 (default /usr/local/share/man)"
-	@echo "  clean           Remove ./bin/kzero, coverage.out, and $(DIST)/"
+	@echo "  clean           Remove ./bin/kzero, ./bin/kubectl-kzero, coverage.out, and $(DIST)/"
 	@echo "  test            Unit tests (go test ./...)"
 	@echo "  cover           Unit tests with coverage.out"
 	@echo "  cover-check     Fail if total statement coverage < $(COVERAGE_MIN)% (override: COVERAGE_MIN=70)"
@@ -47,11 +51,27 @@ help:
 	@echo ""
 	@echo "Current VERSION file: $$(cat VERSION 2>/dev/null | tr -d '\n\r' || echo '?')  (ldflags $(VERSION))"
 
-.PHONY: build build-all install install-man clean test cover cover-check lint lint-fix tools security docker-build docker-scan release-check release snapshot dist-freebsd dist-openbsd port-freebsd-sync port-openbsd-sync
+.PHONY: build build-all install install-kubectl-plugin install-man clean test cover cover-check lint lint-fix tools security docker-build docker-scan release-check release snapshot dist-freebsd dist-openbsd port-freebsd-sync port-openbsd-sync
 
 build:
 	@mkdir -p bin
 	go build -trimpath $(LDFLAGS) -o bin/$(BINARY) ./cmd/kzero
+
+install-kubectl-plugin: build
+	@case ":$$PATH:" in \
+		*":$(BINDIR):"*) \
+			;; \
+		*) \
+			echo "Error: $(BINDIR) is not in PATH."; \
+			echo "kubectl plugin discovery walks every directory in PATH and looks for executables starting with 'kubectl-'."; \
+			echo "Set PREFIX/BINDIR to a directory that IS in PATH (default PREFIX=$(PREFIX))."; \
+			exit 1; \
+			;; \
+	esac
+	install -d "$(BINDIR)"
+	install -m 755 bin/$(BINARY) "$(BINDIR)/$(PLUGIN)"
+	@echo "Installed $(PLUGIN) to $(BINDIR)."
+	@echo "Verify with: kubectl plugin list | grep kzero"
 
 build-all:
 	@mkdir -p $(DIST)
@@ -76,7 +96,7 @@ install-man:
 	@echo "Installed man page to $(MANDIR)/man1/kzero.1"
 
 clean:
-	rm -f bin/$(BINARY) coverage.out
+	rm -f bin/$(BINARY) bin/$(PLUGIN) coverage.out
 	rm -rf $(DIST)
 
 test:
@@ -227,6 +247,7 @@ dist-freebsd:
 	rm -rf "$$stage"; \
 	mkdir -p "$$stage/share/man/man1" "$$stage/share/doc/kzero" "$$stage/share/examples/kzero"; \
 	cp "$$tmpbin" "$$stage/kzero"; \
+	cp "$$tmpbin" "$$stage/kubectl-kzero"; \
 	rm -f "$$tmpbin"; \
 	cp LICENSE "$$stage/share/doc/kzero/LICENSE"; \
 	cp configs/kzero.sample.yml "$$stage/share/examples/kzero/kzero.sample.yml"; \
@@ -253,6 +274,7 @@ dist-openbsd:
 	rm -rf "$$stage"; \
 	mkdir -p "$$stage/share/man/man1" "$$stage/share/doc/kzero" "$$stage/share/examples/kzero"; \
 	cp "$$tmpbin" "$$stage/kzero"; \
+	cp "$$tmpbin" "$$stage/kubectl-kzero"; \
 	rm -f "$$tmpbin"; \
 	cp LICENSE "$$stage/share/doc/kzero/LICENSE"; \
 	cp configs/kzero.sample.yml "$$stage/share/examples/kzero/kzero.sample.yml"; \

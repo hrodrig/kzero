@@ -1,4 +1,5 @@
 bin/kzero
+bin/kubectl-kzero
 share/man/man1/kzero.1.gz
 share/doc/kzero/LICENSE
 share/examples/kzero/kzero.sample.yml

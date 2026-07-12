@@ -20,6 +20,7 @@ NO_ARCH=	yes
 
 do-install:
 	${INSTALL_PROGRAM} ${WRKDIR}/kzero ${STAGEDIR}${PREFIX}/bin/kzero
+	${INSTALL_PROGRAM} ${WRKDIR}/kubectl-kzero ${STAGEDIR}${PREFIX}/bin/kubectl-kzero
 	${MKDIR} ${STAGEDIR}${PREFIX}/share/man/man1
 	${INSTALL_MAN} ${WRKDIR}/share/man/man1/kzero.1 ${STAGEDIR}${PREFIX}/share/man/man1/
 	${MKDIR} ${STAGEDIR}${PREFIX}/share/doc/kzero

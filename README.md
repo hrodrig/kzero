@@ -171,6 +171,21 @@ kzero completion fish > ~/.config/fish/completions/kzero.fish
 kzero completion powershell | Out-String | Invoke-Expression
 ```
 
+### Install as a kubectl plugin (#52)
+
+Release archives ship **two** binaries from the same `cmd/kzero`: **`kzero`** and **`kubectl-kzero`**. With **`kubectl-kzero`** on `$PATH`, kubectl plugin discovery enables **`kubectl kzero …`**.
+
+```bash
+# Homebrew / release tarball already installs both
+kubectl plugin list | grep kzero
+
+# Or from a local build
+PREFIX=/usr/local make install-kubectl-plugin
+kubectl kzero analyze --config ./kzero.yaml
+```
+
+`kzero version` / `kubectl kzero version` print the binary label (`kzero` vs `kubectl-kzero`) so logs show which entry point fired.
+
 [↑ Back to top](#top)
 
 ## Quick start

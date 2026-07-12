@@ -36,9 +36,39 @@ builds:
       - -X github.com/hrodrig/kzero/internal/cli.Commit={{ .ShortCommit }}
       - -X github.com/hrodrig/kzero/internal/cli.BuildDate={{ .Date }}
       - -X github.com/hrodrig/kzero/internal/cli.Branch={{ .Branch }}
+  # kubectl-kzero: same main, second basename (groot #64 pattern). kubectl
+  # plugin discovery picks kubectl-<name> on PATH for `kubectl kzero …`.
+  - id: kubectl-kzero
+    main: ./cmd/kzero
+    binary: kubectl-kzero
+    goos:
+      - linux
+      - darwin
+      - windows
+      - freebsd
+      - openbsd
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s
+      - -w
+      - -X github.com/hrodrig/kzero/internal/cli.Version=v{{ .Version }}
+      - -X github.com/hrodrig/kzero/internal/notify.AppVersion=v{{ .Version }}
+      - -X github.com/hrodrig/kzero/internal/cli.Commit={{ .ShortCommit }}
+      - -X github.com/hrodrig/kzero/internal/cli.BuildDate={{ .Date }}
+      - -X github.com/hrodrig/kzero/internal/cli.Branch={{ .Branch }}
 
 archives:
   - id: default
+    ids:
+      - kzero
+      - kubectl-kzero
     format: tar.gz
     format_overrides:
       - goos: windows
@@ -94,7 +124,7 @@ nfpms:
       preremove: contrib/deb/prerm.sh
       postremove: contrib/deb/postrm.sh
     file_name_template: "{{ .ProjectName }}_{{ if .IsSnapshot }}v{{ .Version }}{{ else }}{{ .Tag }}{{ end }}_{{ .Os }}_{{ .Arch }}"
-    description: Declarative Kubernetes workload shutdown and startup pipelines
+    description: Declarative Kubernetes workload shutdown and startup pipelines (also ships the kubectl-kzero plugin)
     vendor: "Hermes Rodríguez"
     homepage: https://github.com/hrodrig/kzero
     license: MIT
@@ -103,6 +133,7 @@ nfpms:
       - rpm
     builds:
       - kzero
+      - kubectl-kzero
     contents:
       - src: contrib/man/man1/kzero.1.gz
         dst: /usr/share/man/man1/
@@ -164,9 +195,12 @@ homebrew_casks:
   - name: kzero
     ids:
       - default
+    binaries:
+      - kzero
+      - kubectl-kzero
     directory: Casks
     homepage: "https://github.com/hrodrig/kzero"
-    description: "Declarative Kubernetes workload down/up/reset pipelines from YAML"
+    description: "Declarative Kubernetes workload down/up/reset pipelines from YAML (also ships kubectl-kzero)"
     commit_msg_template: "Brew cask update for {{ .ProjectName }} version {{ .Tag }}"
     commit_author:
       name: Hermes Rodríguez
@@ -183,9 +217,11 @@ homebrew_casks:
     caveats: |
       Sample configuration is not bundled with the Homebrew cask.
       Generate it with `kzero --print-sample-config > kzero.yaml`.
+      kubectl plugin: `kubectl plugin list | grep kzero` after install.
     hooks:
       post:
         install: |
           if OS.mac?
             system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/kzero"]
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/kubectl-kzero"]
           end

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Shell completion (#53):** **`kzero completion <bash|zsh|fish|powershell>`** — strict shell arg validation (invalid/missing → non-zero), script on stdout; README one-liners and man page entry.
+- **`kubectl-kzero` plugin (#52):** second release binary (same `cmd/kzero`) for **`kubectl kzero …`**; GoReleaser archives/packages/Homebrew; **`make install-kubectl-plugin`**; version line shows entry-point label.
 
 ## [0.9.1] - 2026-07-11
 
