@@ -39,11 +39,10 @@ func TestRunDown_dryRunPreflightBeforeHooks(t *testing.T) {
 }
 
 func TestRunDown_livePreflightBlocksPipeline(t *testing.T) {
-	old := validate.DefaultClientFactory
-	validate.DefaultClientFactory = func(string) (kubernetes.Interface, error) {
+	old := validate.SwapDefaultClientFactory(func(string) (kubernetes.Interface, error) {
 		return nil, errors.New("api down")
-	}
-	t.Cleanup(func() { validate.DefaultClientFactory = old })
+	})
+	t.Cleanup(func() { validate.SwapDefaultClientFactory(old) })
 
 	rec := &RecordingRunner{}
 	eng := &Engine{Runner: rec, Log: log.New(io.Discard, log.FormatText)}
@@ -64,11 +63,10 @@ func TestRunDown_livePreflightBlocksPipeline(t *testing.T) {
 }
 
 func TestRunDown_livePreflightOk(t *testing.T) {
-	old := validate.DefaultClientFactory
-	validate.DefaultClientFactory = func(string) (kubernetes.Interface, error) {
+	old := validate.SwapDefaultClientFactory(func(string) (kubernetes.Interface, error) {
 		return fake.NewSimpleClientset(), nil
-	}
-	t.Cleanup(func() { validate.DefaultClientFactory = old })
+	})
+	t.Cleanup(func() { validate.SwapDefaultClientFactory(old) })
 
 	rec := &RecordingRunner{}
 	eng := &Engine{Runner: rec}

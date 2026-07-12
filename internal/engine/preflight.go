@@ -5,7 +5,6 @@ import (
 
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/preflight"
-	"github.com/hrodrig/kzero/internal/validate"
 )
 
 func (e *Engine) runPreflight(ctx context.Context, cfg *config.Config) error {
@@ -19,7 +18,7 @@ func (e *Engine) runPreflight(ctx context.Context, cfg *config.Config) error {
 		}
 		return nil
 	case "live":
-		if err := preflight.Check(ctx, cfg, validate.DefaultClientFactory); err != nil {
+		if err := preflight.Check(ctx, cfg, nil); err != nil {
 			return err
 		}
 		return nil

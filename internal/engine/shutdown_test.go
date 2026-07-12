@@ -40,6 +40,8 @@ func (b *blockingRunner) RunPipelineStep(ctx context.Context, _ *config.Config, 
 func TestRunDown_cancelsDuringStepWithinBoundedTime(t *testing.T) {
 	t.Parallel()
 
+	stubLivePreflightOK(t)
+
 	cfg := &config.Config{
 		Run: config.RunConfig{Mode: "live"},
 		Pipelines: config.PipelinesConfig{

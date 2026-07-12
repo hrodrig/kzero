@@ -49,7 +49,7 @@ type Report struct {
 	Checks   []CheckResult `json:"checks"`
 }
 
-// Run executes configured checks. factory may be nil (uses validate.DefaultClientFactory).
+// Run executes configured checks. factory may be nil (uses validate.ClientFactoryDefault).
 func Run(ctx context.Context, cfg *config.Config, factory validate.ClientFactory) (Report, error) {
 	report := Report{Outcome: OutcomeReady}
 	if cfg == nil {
@@ -59,7 +59,7 @@ func Run(ctx context.Context, cfg *config.Config, factory validate.ClientFactory
 	report.ClientID = correlation.ClientID(cfg)
 
 	if factory == nil {
-		factory = validate.DefaultClientFactory
+		factory = validate.ClientFactoryDefault()
 	}
 	client, err := factory(cfg.Run.Kubeconfig)
 	if err != nil {

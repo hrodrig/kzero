@@ -16,7 +16,7 @@ func Check(ctx context.Context, cfg *config.Config, factory validate.ClientFacto
 		return fmt.Errorf("preflight: no config")
 	}
 	if factory == nil {
-		factory = validate.DefaultClientFactory
+		factory = validate.ClientFactoryDefault()
 	}
 	client, err := factory(cfg.Run.Kubeconfig)
 	if err != nil {

@@ -418,11 +418,10 @@ func assertStep(t *testing.T, c RecordedCall, phase Phase, index int) {
 
 func stubLivePreflightOK(t *testing.T) {
 	t.Helper()
-	old := validate.DefaultClientFactory
-	validate.DefaultClientFactory = func(string) (kubernetes.Interface, error) {
+	old := validate.SwapDefaultClientFactory(func(string) (kubernetes.Interface, error) {
 		return fake.NewSimpleClientset(), nil
-	}
-	t.Cleanup(func() { validate.DefaultClientFactory = old })
+	})
+	t.Cleanup(func() { validate.SwapDefaultClientFactory(old) })
 }
 
 func TestRunDown_retriesTransientPipelineStep(t *testing.T) {

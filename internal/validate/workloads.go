@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/hrodrig/kzero/internal/config"
-	"github.com/hrodrig/kzero/internal/executor"
 	"github.com/hrodrig/kzero/internal/log"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -17,9 +16,6 @@ import (
 
 // ClientFactory builds a Kubernetes clientset from run.kubeconfig (empty = default rules).
 type ClientFactory func(kubeconfig string) (kubernetes.Interface, error)
-
-// DefaultClientFactory is used by analyze; tests may replace it.
-var DefaultClientFactory ClientFactory = executor.NewKubernetesClient
 
 // Line is one workload check result for analyze output.
 type Line struct {
@@ -35,7 +31,7 @@ func CheckPipelineWorkloads(ctx context.Context, cfg *config.Config, factory Cli
 		return nil, "no config", nil
 	}
 	if factory == nil {
-		factory = DefaultClientFactory
+		factory = ClientFactoryDefault()
 	}
 	client, clientErr := factory(cfg.Run.Kubeconfig)
 	if clientErr != nil {

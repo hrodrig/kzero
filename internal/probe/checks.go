@@ -20,7 +20,7 @@ func RunChecks(ctx context.Context, cfg *config.Config, factory validate.ClientF
 		return nil
 	}
 	if factory == nil {
-		factory = validate.DefaultClientFactory
+		factory = validate.ClientFactoryDefault()
 	}
 	var client kubernetes.Interface
 	if !dryRun {

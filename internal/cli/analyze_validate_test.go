@@ -24,9 +24,8 @@ func TestAnalyze_clusterValidationOK(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "ns"},
 		Spec:       appsv1.DeploymentSpec{Replicas: &rep},
 	})
-	old := validate.DefaultClientFactory
-	validate.DefaultClientFactory = func(string) (kubernetes.Interface, error) { return client, nil }
-	t.Cleanup(func() { validate.DefaultClientFactory = old })
+	old := validate.SwapDefaultClientFactory(func(string) (kubernetes.Interface, error) { return client, nil })
+	t.Cleanup(func() { validate.SwapDefaultClientFactory(old) })
 
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`
@@ -59,9 +58,8 @@ run:
 func TestAnalyze_clusterValidationFailsExit(t *testing.T) {
 	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
 	client := fake.NewSimpleClientset()
-	old := validate.DefaultClientFactory
-	validate.DefaultClientFactory = func(string) (kubernetes.Interface, error) { return client, nil }
-	t.Cleanup(func() { validate.DefaultClientFactory = old })
+	old := validate.SwapDefaultClientFactory(func(string) (kubernetes.Interface, error) { return client, nil })
+	t.Cleanup(func() { validate.SwapDefaultClientFactory(old) })
 
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`
@@ -131,9 +129,8 @@ func TestAnalyze_pvcPlanAndValidation(t *testing.T) {
 	client := fake.NewSimpleClientset(&corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{Name: "data-0", Namespace: "db"},
 	})
-	old := validate.DefaultClientFactory
-	validate.DefaultClientFactory = func(string) (kubernetes.Interface, error) { return client, nil }
-	t.Cleanup(func() { validate.DefaultClientFactory = old })
+	old := validate.SwapDefaultClientFactory(func(string) (kubernetes.Interface, error) { return client, nil })
+	t.Cleanup(func() { validate.SwapDefaultClientFactory(old) })
 
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`
@@ -170,9 +167,8 @@ func TestAnalyze_execPlanAndValidation(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "postgresql-0", Namespace: "database"},
 		Spec:       corev1.PodSpec{Containers: []corev1.Container{{Name: "postgres"}}},
 	})
-	old := validate.DefaultClientFactory
-	validate.DefaultClientFactory = func(string) (kubernetes.Interface, error) { return client, nil }
-	t.Cleanup(func() { validate.DefaultClientFactory = old })
+	old := validate.SwapDefaultClientFactory(func(string) (kubernetes.Interface, error) { return client, nil })
+	t.Cleanup(func() { validate.SwapDefaultClientFactory(old) })
 
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`

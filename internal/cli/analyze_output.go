@@ -34,10 +34,10 @@ func printAnalyzePlan(w, errW io.Writer, cfg *config.Config, configPath string) 
 	if err := printDeferredSummary(w, cfg); err != nil {
 		return err
 	}
-	if err := validate.PrintClusterValidation(w, errW, cfg, validate.DefaultClientFactory); err != nil {
+	if err := validate.PrintClusterValidation(w, errW, cfg, validate.ClientFactoryDefault()); err != nil {
 		return err
 	}
-	if w := preflight.AnalyzeWarning(context.Background(), cfg, validate.DefaultClientFactory); w != "" {
+	if w := preflight.AnalyzeWarning(context.Background(), cfg, validate.ClientFactoryDefault()); w != "" {
 		_ = log.WriteLine(errW, log.LevelWarn, "warning: "+w)
 	}
 	return nil

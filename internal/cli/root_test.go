@@ -18,11 +18,10 @@ import (
 func stubClusterValidationSkipped(t *testing.T) {
 	t.Helper()
 	t.Setenv("KUBECONFIG", cluster.TestKubeconfigPath(t))
-	old := validate.DefaultClientFactory
-	validate.DefaultClientFactory = func(string) (kubernetes.Interface, error) {
+	old := validate.SwapDefaultClientFactory(func(string) (kubernetes.Interface, error) {
 		return nil, errors.New("test: skip cluster validation")
-	}
-	t.Cleanup(func() { validate.DefaultClientFactory = old })
+	})
+	t.Cleanup(func() { validate.SwapDefaultClientFactory(old) })
 }
 
 func TestExecute_printSampleConfig(t *testing.T) {

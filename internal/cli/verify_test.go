@@ -54,9 +54,8 @@ func TestVerify_readyDeployment(t *testing.T) {
 			},
 		},
 	)
-	old := validate.DefaultClientFactory
-	validate.DefaultClientFactory = func(string) (kubernetes.Interface, error) { return client, nil }
-	t.Cleanup(func() { validate.DefaultClientFactory = old })
+	old := validate.SwapDefaultClientFactory(func(string) (kubernetes.Interface, error) { return client, nil })
+	t.Cleanup(func() { validate.SwapDefaultClientFactory(old) })
 
 	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`
