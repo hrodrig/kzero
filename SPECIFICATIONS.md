@@ -79,6 +79,16 @@ kzero stays **generic** and **configuration-driven**: the engine interprets vali
 - `pipelines`
 - `run`
 
+## JSON Schema (editor aid)
+
+Optional **[configs/kzero.schema.json](configs/kzero.schema.json)** for editor autocomplete (YAML Language Server `$schema`). Point a profile at it with:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/hrodrig/kzero/main/configs/kzero.schema.json
+```
+
+or a relative path when editing beside the file (see [configs/kzero.sample.yml](configs/kzero.sample.yml)). **Runtime validation is the Go loader** (`internal/config`); the JSON Schema is not consulted by `kzero` at run time.
+
 ## Supported sections
 - `cluster` (metadata only)
 - `helm.workspace`

@@ -1,0 +1,398 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/hrodrig/kzero/main/configs/kzero.schema.json",
+  "title": "kzero configuration",
+  "description": "YAML schema_version 1.0 for kzero pipelines. Authoritative behavior: SPECIFICATIONS.md. This schema aids editor autocomplete; the Go loader remains the runtime validator.",
+  "type": "object",
+  "required": ["schema_version", "pipelines", "run"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Config contract version (must be \"1.0\")."
+    },
+    "cluster": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "name": { "type": "string", "description": "Cluster label for logs and notifications." },
+        "environment": { "type": "string", "description": "Environment label (e.g. dev, staging, prod)." },
+        "description": { "type": "string" }
+      }
+    },
+    "helm": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "workspace": {
+          "type": "string",
+          "description": "Directory of <release>.yaml (Helm SDK) and/or <release>.sh scripts."
+        },
+        "registries": {
+          "type": "array",
+          "description": "OCI registry credentials for Helm SDK chart pulls.",
+          "items": { "$ref": "#/$defs/helmRegistry" }
+        }
+      }
+    },
+    "client": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Optional operator audit label (logs + KZERO_CLIENT_ID for hooks)."
+        }
+      }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "helm": { "type": "string", "description": "Absolute path to helm (empty → PATH)." },
+        "kubectl": { "type": "string", "description": "Absolute path to kubectl (empty → PATH)." }
+      }
+    },
+    "hooks": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "pre-down": { "type": "string", "description": "Shell script before down phase." },
+        "post-down": { "type": "string", "description": "Shell script after successful down." },
+        "pre-up": { "type": "string", "description": "Shell script before up phase." },
+        "post-up": { "type": "string", "description": "Shell script after successful up." },
+        "on-error": { "type": "string", "description": "Shell script after fail-fast pipeline error." }
+      }
+    },
+    "notify": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Outbound alerts in live mode (pipeline.start / success / error / stalled).",
+      "properties": {
+        "on_error": {
+          "type": "boolean",
+          "description": "Send pipeline.error when a channel is enabled (default true if any channel enabled)."
+        },
+        "require_delivery": {
+          "type": "boolean",
+          "description": "When true, failed pipeline.error / pipeline.stalled POST fails the pipeline."
+        },
+        "slack": { "$ref": "#/$defs/channelWebhook" },
+        "discord": { "$ref": "#/$defs/channelWebhook" },
+        "teams": { "$ref": "#/$defs/channelWebhook" },
+        "pagerduty": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "routing_key": { "type": "string", "description": "Events API v2 routing key." }
+          }
+        },
+        "webhook": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "url": { "type": "string", "format": "uri" },
+            "headers": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "verify": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Post-up readiness (kzero verify).",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["workloads_ready", "nodes_ready"]
+          }
+        },
+        "format": {
+          "type": "string",
+          "enum": ["text", "json"]
+        }
+      }
+    },
+    "infra_probe": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Optional gate before destructive down/reset (live).",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "before": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["down", "reset"] },
+          "description": "Commands that must pass the probe first."
+        },
+        "fail_fast": { "type": "boolean" },
+        "cache_ttl": {
+          "type": "string",
+          "description": "Go duration (e.g. 30m); 0 disables cache.",
+          "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$|^0$"
+        },
+        "pipeline": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "up": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/pipelineStep" }
+            },
+            "down": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/pipelineStep" }
+            }
+          }
+        },
+        "checks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/probeCheck" }
+        }
+      }
+    },
+    "pipelines": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Ordered down/up step lists.",
+      "properties": {
+        "down": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/pipelineStep" }
+        },
+        "up": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/pipelineStep" }
+        }
+      }
+    },
+    "retry": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Live per-step retry (full-jitter exponential backoff).",
+      "properties": {
+        "attempts": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total tries per step (minimum effective 1)."
+        },
+        "delay": {
+          "type": "string",
+          "description": "Base wait before first retry (Go duration, e.g. 8s).",
+          "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+        }
+      }
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Execution mode, kubeconfig, timeouts, watchdog.",
+      "required": ["mode"],
+      "properties": {
+        "kubeconfig": {
+          "type": "string",
+          "description": "Path to kubeconfig; empty uses default discovery / in-cluster."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["dry-run", "live"],
+          "description": "dry-run = plan only; live = mutate cluster."
+        },
+        "color": {
+          "type": "string",
+          "enum": ["auto", "always", "never"],
+          "description": "ANSI styling on timing line."
+        },
+        "execution": {
+          "type": "string",
+          "enum": ["shell", "native", "auto"],
+          "description": "shell = kubectl/helm; native = client-go + Helm SDK; auto = native with shell fallback."
+        },
+        "timeout": {
+          "type": "string",
+          "description": "Wall-clock budget for down/up/reset (Go duration).",
+          "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+        },
+        "operation_timeout": {
+          "type": "string",
+          "description": "Per-operation ceiling inside a step (Go duration).",
+          "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+        },
+        "verify": {
+          "type": "boolean",
+          "description": "Run kzero verify after successful up/reset."
+        },
+        "probe_cache_dir": {
+          "type": "string",
+          "description": "Directory for infra probe cache files."
+        },
+        "no_env_passthrough": {
+          "type": "boolean",
+          "description": "When true, omit os.Environ from hook/release/kubectl subprocesses."
+        },
+        "api_watchdog": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Periodic /healthz probes during live down/up/reset.",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "interval": {
+              "type": "string",
+              "description": "Period between API checks (Go duration, e.g. 60s).",
+              "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+            },
+            "fail_after": {
+              "type": "string",
+              "description": "Abort run after cumulative unreachability (Go duration).",
+              "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "goDuration": {
+      "type": "string",
+      "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+    },
+    "stepRef": {
+      "type": "string",
+      "description": "Compact step ref: kind.namespace/name",
+      "pattern": "^(deployment|statefulset|release|pvc|exec)\\.[a-z0-9-]+/[a-zA-Z0-9._-]+$"
+    },
+    "channelWebhook": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "webhook_url": { "type": "string" }
+      }
+    },
+    "helmRegistry": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["host"],
+      "properties": {
+        "host": { "type": "string", "description": "Registry host (e.g. ghcr.io)." },
+        "username": { "type": "string" },
+        "password": { "type": "string", "description": "Prefer password_env in committed configs." },
+        "password_env": { "type": "string", "description": "Env var name holding the registry password." }
+      }
+    },
+    "stepOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pre": { "type": "string", "description": "Shell script immediately before main action." },
+        "post": { "type": "string", "description": "Shell script after successful main action." },
+        "replicas": { "type": "integer", "minimum": 0 },
+        "wait_for_ready": {
+          "type": "boolean",
+          "description": "On up: wait for rollout after scale (not for down drain)."
+        },
+        "timeout": {
+          "type": "string",
+          "description": "Step-level Go duration override.",
+          "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$"
+        },
+        "script": {
+          "type": "string",
+          "description": "release.* only: shell path relative to helm.workspace."
+        },
+        "chart": {
+          "type": "string",
+          "description": "release.* only: chart override for Helm SDK."
+        },
+        "version": {
+          "type": "string",
+          "description": "release.* only: chart version."
+        },
+        "values_files": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "release.* only: values file paths."
+        },
+        "create_namespace": {
+          "type": "boolean",
+          "description": "release.* only: create namespace if missing."
+        },
+        "container": {
+          "type": "string",
+          "description": "exec.* only: container name."
+        },
+        "command": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "exec.* only: command argv."
+        },
+        "stdin": {
+          "type": "string",
+          "description": "exec.* only: stdin payload."
+        }
+      }
+    },
+    "customStep": {
+      "type": "object",
+      "required": ["custom"],
+      "additionalProperties": false,
+      "properties": {
+        "custom": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Path to custom shell script."
+        },
+        "pre": { "type": "string" },
+        "post": { "type": "string" }
+      }
+    },
+    "refMapStep": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(deployment|statefulset|release|pvc|exec)\\.[a-z0-9-]+/[a-zA-Z0-9._-]+$": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/stepOptions" }
+          ]
+        }
+      }
+    },
+    "pipelineStep": {
+      "description": "String compact ref, map with one compact-ref key + options, or custom step.",
+      "oneOf": [
+        { "$ref": "#/$defs/stepRef" },
+        { "$ref": "#/$defs/customStep" },
+        { "$ref": "#/$defs/refMapStep" }
+      ]
+    },
+    "probeCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pvc_bound": {
+          "type": "string",
+          "description": "namespace/pvc-name that must be Bound."
+        },
+        "release_ready": {
+          "type": "boolean",
+          "description": "When true, require Helm release ready."
+        },
+        "pods_schedulable": {
+          "type": "boolean",
+          "description": "When true, require probe pods schedulable."
+        }
+      }
+    }
+  }
+}

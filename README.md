@@ -34,9 +34,9 @@ Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (an
 
 **Operator deployment (bastion-first, out-of-band):** see **[docs/deployment-models.md](docs/deployment-models.md)**. **Scope vs alternatives:** [docs/scope-and-alternatives.md](docs/scope-and-alternatives.md). Playbooks and annotated profiles: **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)** — this repo ships the CLI binary, packages, container image, and Homebrew cask only (same split as [pgwd](https://github.com/hrodrig/pgwd) / [pgwd-selfhosted](https://github.com/hrodrig/pgwd-selfhosted)).
 
-**Releases** ([GitHub Releases](https://github.com/hrodrig/kzero/releases)) ship standalone **binaries** and archives (**`.tar.gz`** / **`.zip`**), Linux **`.deb`** / **`.rpm`**, **Docker** images on **`ghcr.io/hrodrig/kzero`**, and **Homebrew** ([`brew install hrodrig/kzero/kzero`](#homebrew-macos--linux)). **Supply chain (v0.7.0+):** each release attaches **SPDX** and **CycloneDX** SBOMs plus **Cosign** signatures for **`checksums.txt`** and GHCR images — verify with **`cosign verify-blob`** / **`cosign verify`** (see release assets). This repository does **not** ship Helm charts as a release artifact.
+**Releases** ([GitHub Releases](https://github.com/hrodrig/kzero/releases)) ship **binaries**, **`.deb`** / **`.rpm`**, **`ghcr.io/hrodrig/kzero`**, and **Homebrew**. **Supply chain (v0.7.0+):** SPDX / CycloneDX SBOMs + Cosign on **`checksums.txt`** and GHCR — see [verify Cosign](#verify-cosign-v070). No Helm charts as release artifacts.
 
-Behavior, schema, and acceptance criteria are defined in **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:** **v0.9.0** (bastion-first hardening: graceful shutdown, `require_delivery`, E2E smoke CI, watchdog tests, SPEC contract index); **v0.8.1** (patch: correct **`api_watchdog`** deferred warning + post-**0.8.0** operator docs); **v0.8.0** added API watchdog, notify delivery visibility, reset phase-boundary preflight, **`pipeline.stalled`** — see [CHANGELOG.md](CHANGELOG.md). **Operator mitigations:** [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). **Diagrams** (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
+Behavior and acceptance: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:** **v0.9.1** (security patch); **v0.9.0** (graceful shutdown, `require_delivery`, E2E smoke, watchdog tests, SPEC index); stretch on **`develop`**: completion, **`kubectl-kzero`**, **`doctor`**, retry jitter, JSON Schema — [CHANGELOG.md](CHANGELOG.md). Mitigations: [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). Diagrams: **[docs/diagrams.md](docs/diagrams.md)**.
 
 ## Table of contents
 
@@ -53,6 +53,7 @@ Behavior, schema, and acceptance criteria are defined in **[SPECIFICATIONS.md](S
 - [Troubleshooting](#troubleshooting)
 - [Security note](#security-note)
 - [Releases and CI](#releases-and-ci)
+- [Verify Cosign (v0.7.0+)](#verify-cosign-v070)
 - [Development](#development)
 - [Per-step `pre` / `post` (example)](#per-step-pre-post-example)
 - [Pipeline order and integrity on `down`](#pipeline-order-and-integrity-on-down)
@@ -331,7 +332,7 @@ kzero version
 
 ## Configuration reference
 
-Full schema, validation, and acceptance criteria: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. Annotated sample: **[configs/kzero.sample.yml](configs/kzero.sample.yml)**.
+Full schema, validation, and acceptance criteria: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. Annotated sample: **[configs/kzero.sample.yml](configs/kzero.sample.yml)**. **Editor autocomplete:** [configs/kzero.schema.json](configs/kzero.schema.json) (YAML Language Server `$schema` — see sample header). Runtime validation remains the Go loader.
 
 | Block / key | Purpose |
 |-------------|---------|
@@ -362,7 +363,7 @@ Pipeline steps always run **sequentially** in YAML order (no parallel execution)
 | Key | Purpose |
 |-----|---------|
 | **`attempts`** | Total tries per pipeline step in **`live`** mode (**integer**, minimum effective **1**). |
-| **`delay`** | Base wait before the first retry (**Go duration**, e.g. **`8s`**); after failure *n*, wait **`delay × 2^(n−1)`** (capped at **2m**; default base **5s** if `delay` is zero). |
+| **`delay`** | Base wait before the first retry (**Go duration**, e.g. **`8s`**); wait is **full jitter** in **`[0, delay × 2^(n−1)]`** (capped at **2m**; default base **5s** if `delay` is zero). |
 
 Retries rerun the whole step (per-step **pre**, main, **post**). Only **transient** failures retry (API timeouts, conflicts, 429/503, connection errors). **`NotFound`** / **`Forbidden`** fail immediately. **`dry-run`** never retries. See [SPEC — Current engine](SPECIFICATIONS.md#current-engine-sequencing-retry-and-concurrency).
 
@@ -424,13 +425,25 @@ See **`SECURITY.md`** for reporting vulnerabilities.
 ## Releases and CI
 
 1. Work on **`develop`**; merge to **`main`** when ready.
-2. Before tagging: run **`make release-check`** (requires **Docker**): semver **`VERSION`**, **`make lint`** (gofmt, go vet, **gocyclo** ≤14), **`make test`**, **`make cover-check`** (≥80% statements by default), **`make security`** (govulncheck), **`make docker-scan`** (Grype on the image; use **`GRYPE_FAIL_ON`** to tune the gate, default **high**).
-3. On **`main`**: create an annotated tag (e.g. `git tag -a v0.7.0 -m "Release 0.7.0"`) and **`git push origin v0.7.0`**. The **Release** workflow runs **`make release-check`** then **GoReleaser** (binaries, **`ghcr.io/hrodrig/kzero`**, Cosign signatures, SBOMs, and Homebrew cask to **[homebrew-kzero](https://github.com/hrodrig/homebrew-kzero)**).
-4. Local release after checks: **`make release`** (same as CI tail; **main** branch only).
+2. Before tagging: **`make release-check`** (Docker): lint, test, cover ≥80%, govulncheck, Grype.
+3. On **`main`**: annotated tag + push → **Release** workflow (GoReleaser, GHCR, Cosign, SBOMs, [homebrew-kzero](https://github.com/hrodrig/homebrew-kzero)).
+4. Local: **`make release`** (**main** only). Snapshot: **`make snapshot`** → **`dist/`**.
 
-**GitHub Actions secret:** set **`HOMEBREW_TAP_TOKEN`** on **`hrodrig/kzero`** — a PAT with **`contents:write`** on **`hrodrig/homebrew-kzero`** (the default **`GITHUB_TOKEN`** cannot push to another repository). The release workflow fails early if this secret is missing.
+**GitHub Actions secret:** **`HOMEBREW_TAP_TOKEN`** — PAT with **`contents:write`** on **`hrodrig/homebrew-kzero`**.
 
-Snapshot builds (no git tag): **`make snapshot`** → artifacts under **`dist/`** (archives **`.tar.gz`** / **`.zip`**, Linux **`.deb`** / **`.rpm`**, checksums). See **`contrib/README.md`** for packaging notes.
+### Verify Cosign (v0.7.0+)
+
+```bash
+# checksums.txt (download assets + .sig / .pem from the GitHub Release)
+cosign verify-blob --certificate-identity-regexp 'https://github.com/hrodrig/kzero/.+' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate checksums.txt.pem --signature checksums.txt.sig checksums.txt
+
+# GHCR image (replace TAG)
+cosign verify --certificate-identity-regexp 'https://github.com/hrodrig/kzero/.+' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  ghcr.io/hrodrig/kzero:TAG
+```
 
 [↑ Back to top](#top)
 

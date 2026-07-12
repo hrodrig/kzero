@@ -37,10 +37,10 @@ This document captures **0.9.x** requirements. For shipped behavior see [CHANGEL
 | **45** | **E2E smoke in CI** | Minimal pipeline via **kind** or **kzero-selfhosted** fixture; validates binary + config on PR — not “kzero saves cluster from inside”. |
 | **46** | **Watchdog test coverage** | API unreachable during long wait (extends **0.8.0** criterion #1). |
 | **47** | **SPEC contract index** | Table: implemented vs deferred vs experimental; aligns with **`analyze`** Deferred warnings. |
-| **48** | **Docs polish** | [deployment-models.md](deployment-models.md), [scope-and-alternatives.md](scope-and-alternatives.md); What's new **0.8.x**; **`cosign verify`** in README; README length trim. |
+| **48** | **Docs polish** | deployment-models, scope-and-alternatives, Cosign verify, README trim (**done** on develop). |
 | **49** | *(Stretch)* **`kzero doctor`** | Config + API ping + binary presence + workload existence + RBAC hints (**done** on develop). |
 | **50** | *(Stretch)* **Retry jitter** | Full jitter on exponential backoff (**done** on develop). |
-| **51** | *(Stretch)* **JSON Schema** | Editor autocomplete for **`kzero.yaml`**. |
+| **51** | *(Stretch)* **JSON Schema** | Editor autocomplete — **`configs/kzero.schema.json`** (**done** on develop). |
 | **52** | *(Stretch)* **`kubectl-kzero` plugin** | Ship **`kubectl-kzero`** binary (thin wrapper → same **`internal/cli`**); **`kubectl kzero …`** on bastion; GoReleaser + README; discoverable via **`kubectl plugin list`**. |
 | **53** | *(Stretch)* **Shell completion** | **`kzero completion <bash\|zsh\|fish\|powershell>`** — strict shell arg validation, tests, README (port [groot #80](https://github.com/hrodrig/groot/blob/main/pkg/cmd/completion.go)); replaces Cobra default nested completion; **`kubectl kzero completion`** when **#52** lands. |
 
@@ -91,4 +91,4 @@ Each PR: **`make lint`**, **`make test`**, **`make cover-check`**.
 - Replacing **1.0.0** default-native or exit-code taxonomy work
 - Breaking **`run.execution`** (`shell` / `native` / `auto`) or in-cluster auth behavior without documented migration
 
-**Last reviewed:** 2026-07-11 (**v0.9.1** shipped; **#49**–**#50**, **#52**–**#53** done on develop; stretch **#48**, **#51** remain)
+**Last reviewed:** 2026-07-11 (**v0.9.1** shipped; stretch **#48**–**#53** done on develop)

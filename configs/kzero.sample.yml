@@ -1,6 +1,10 @@
+# yaml-language-server: $schema=./kzero.schema.json
+# Editors: VS Code / Cursor YAML extension uses the line above; or set
+# "$schema": "https://raw.githubusercontent.com/hrodrig/kzero/main/configs/kzero.schema.json"
 schema_version: "1.0"
 
 # kzero v1 sample configuration (workloads + Helm + hooks).
+# JSON Schema (editor autocomplete): configs/kzero.schema.json — runtime validation is still the Go loader.
 #
 # In scope: ordered pipeline steps (down/up), Helm releases via helm.workspace scripts,
 # and optional custom scripts. This profile targets cluster workloads only, not node lifecycle.

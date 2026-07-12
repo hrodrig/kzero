@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **JSON Schema (#51):** **[configs/kzero.schema.json](configs/kzero.schema.json)** for editor autocomplete (`schema_version` **1.0**); sample YAML Language Server hint; SPEC/README notes (runtime validation remains the Go loader).
 - **Shell completion (#53):** **`kzero completion <bash|zsh|fish|powershell>`** — strict shell arg validation (invalid/missing → non-zero), script on stdout; README one-liners and man page entry.
 - **`kubectl-kzero` plugin (#52):** second release binary (same `cmd/kzero`) for **`kubectl kzero …`**; GoReleaser archives/packages/Homebrew; **`make install-kubectl-plugin`**; version line shows entry-point label.
 - **`kzero doctor` (#49):** config + binary PATH checks + API ping + pipeline workload existence + SelfSubjectAccessReview RBAC hints; **`--output text|json`**; non-zero exit on errors.
@@ -16,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Retry backoff (#50):** live per-step retry waits use **full jitter** uniformly in **`[0, exponential]`** (still capped at **2m**) so concurrent runs do not align on the same delay.
+- **Docs (#48):** README trim + Cosign verify examples; retry table documents full jitter; What's new points at stretch on **`develop`**.
 
 ## [0.9.1] - 2026-07-11
 
