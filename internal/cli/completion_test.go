@@ -7,12 +7,11 @@ import (
 )
 
 func TestCompletion_generatesScript(t *testing.T) {
-	t.Parallel()
-
+	// Do not use t.Parallel: newRootCmd + cobra.OnInitialize mutates global viper
+	// (same pattern as TestRootCommand_HasExpectedSubcommands).
 	for _, shell := range completionShells {
 		shell := shell
 		t.Run(shell, func(t *testing.T) {
-			t.Parallel()
 			var stdout, stderr bytes.Buffer
 			cmd := newRootCmd()
 			cmd.SetOut(&stdout)
@@ -36,8 +35,6 @@ func TestCompletion_generatesScript(t *testing.T) {
 }
 
 func TestCompletion_rejectsInvalidShell(t *testing.T) {
-	t.Parallel()
-
 	var stdout, stderr bytes.Buffer
 	cmd := newRootCmd()
 	cmd.SetOut(&stdout)
@@ -57,8 +54,6 @@ func TestCompletion_rejectsInvalidShell(t *testing.T) {
 }
 
 func TestCompletion_requiresExactlyOneArg(t *testing.T) {
-	t.Parallel()
-
 	cases := []struct {
 		name string
 		args []string
@@ -69,7 +64,6 @@ func TestCompletion_requiresExactlyOneArg(t *testing.T) {
 	for _, tc := range cases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			var stdout bytes.Buffer
 			cmd := newRootCmd()
 			cmd.SetOut(&stdout)
