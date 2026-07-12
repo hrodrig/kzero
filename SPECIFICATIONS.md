@@ -46,6 +46,8 @@ Use this table with **`kzero analyze`** (stdout plan + optional **Deferred** sum
 | **`run.api_watchdog`** | **Implemented** | `/healthz` probes; trips → `pipeline.stalled` (not user interrupt). |
 | **`verify`**, **`infra_probe`**, **`kzero probe`** | **Implemented** | Post-up readiness and pre-destructive probe cache. |
 | **`kzero target --output slug`** | **Implemented** | Filesystem-safe cluster slug for wrapper logs. |
+| **`kzero doctor`** | **Implemented** | Config + binaries + API + workload refs + RBAC hints; no mutations (see § **`kzero doctor`**). |
+| **`kzero completion`** / **`kubectl-kzero`** | **Implemented** | Shell completion scripts; optional kubectl plugin binary on **`PATH`**. |
 | **Graceful shutdown** (SIGINT/SIGTERM) | **Implemented** | Cancels pipeline context; distinct from watchdog stall. |
 | **Pipeline parallelism** (`run.worker_concurrency`) | **Out of scope** | Removed from contract **0.5.3**; use step order + `custom:`. |
 | **Node / cloud lifecycle** | **Out of scope** | See §2 Out of scope. |
@@ -364,6 +366,38 @@ In order (omit lines when the corresponding config value is empty):
 
 `analyze` does **not** invoke the execution engine; it does **not** mutate cluster state. For planned hook/script invocations in `dry-run` mode, use `kzero down` / `kzero up` with `run.mode: dry-run`.
 
+## `kzero doctor`
+
+Operator **preflight without mutations** (ROADMAP **#49**). Complements **`analyze`** (plan + optional cluster **Get** validation) by also checking host binaries and RBAC **can-i** hints before a live run.
+
+### Checks (in order)
+
+| Check | When | Pass / fail |
+|-------|------|-------------|
+| **config** | Always | Config file loads (`schema_version`, pipelines, `run`, …). Invalid YAML → command fails before other checks. |
+| **binaries.kubectl** | **`run.execution`** is **`shell`** or **`auto`** (default **`shell`**) | **`command.kubectl`** or **`kubectl`** on **`PATH`**. Skipped with OK note when **`native`**. |
+| **binaries.helm** | Same execution modes **and** at least one **`release.*`** step | **`command.helm`** or **`helm`** on **`PATH`**. Missing → **error** for **`shell`**, **warn** for **`auto`**. |
+| **kubernetes.api** | Always after config | Same handshake as live preflight (`Discovery().ServerVersion()` via **`run.kubeconfig`** / default rules). |
+| **kubernetes.workloads** | Pipeline lists **`deployment`** / **`statefulset`** / **`pvc`** / **`exec`** refs | Same read-only checks as **`analyze`** cluster validation (object exists; scalable workloads have **`spec.replicas`** set). |
+| **kubernetes.rbac** | Those refs need scale/delete verbs | **`SelfSubjectAccessReview`** for **`get`/`update`/`patch`** on **`deployments`/`statefulsets`** (apps) and **`get`/`delete`** on **`persistentvolumeclaims`**, scoped to each step namespace. Denied → **error**. SAR API errors → **warn** (non-fatal). |
+
+### Output and exit codes
+
+- **`--output text`** (default): heading **`Doctor: OK`** or **`Doctor: FAIL`**, then one line per finding: **`[OK]`** / **`[WARN]`** / **`[ERROR]`** + check id + message.
+- **`--output json`**: `{ "ok": bool, "findings": [{ "check", "severity", "message" }] }` (`severity` is **`ok`**, **`warn`**, or **`error`**).
+- Exit **0** when no finding has severity **`error`** (warnings allowed).
+- Exit **non-zero** when config load fails or any finding is **`error`**.
+
+### Relation to other commands
+
+| Command | Mutations | Plan | API | Binaries | RBAC SAR |
+|---------|-----------|------|-----|----------|----------|
+| **`analyze`** | No | Yes | Optional cluster **Get** | No | No |
+| **`doctor`** | No | No | Required API ping + workloads + SAR | Yes (shell/auto) | Yes |
+| **`down`/`up`/`reset` live** | Yes | Via engine logs | Preflight + steps | Used by shell executor | Enforced by API |
+
+Does **not** run phase hooks, notify, verify, or **`infra_probe`**.
+
 ## `kzero notify test`
 
 - Loads **`notify.*`** from config and POSTs to **every enabled channel**. Does **not** contact the Kubernetes API or run pipeline steps.
@@ -548,10 +582,11 @@ If `down` fails, `up` must not run.
 
 ## E. CLI surface
 - `TestRootCommand_HasExpectedSubcommands`
-  - analyze/down/up/reset are present.
+  - analyze/doctor/down/up/reset are present.
 - `TestAnalyze_InvalidConfigExitCode`
   - Analyze returns non-zero on invalid config.
-
+- `TestDoctor_okJSON` / doctor package tests
+  - Doctor report OK with fake client; binary and RBAC failures exit non-zero.
 ## F. Live execution (per-step hooks)
 - `TestLiveRunner_PerStepPreRunsBeforeKubectlWithStepEnv`
   - Step `pre` runs before `kubectl scale`; hook process receives `KZERO_PHASE`, `KZERO_PIPELINE_STEP_INDEX`, `KZERO_STEP_HOOK=pre`, and `KZERO_STEP_REF` as documented.

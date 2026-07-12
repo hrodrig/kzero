@@ -66,6 +66,7 @@ so operators can scale workloads and Helm releases in a safe, repeatable way.`,
 
 	rootCmd.AddCommand(
 		newAnalyzeCmd(),
+		newDoctorCmd(),
 		newTargetCmd(),
 		newNotifyCmd(),
 		newVerifyCmd(),

@@ -89,6 +89,13 @@ Full schema:
 .B analyze
 Validate config and print a normalized execution plan (no cluster mutations).
 .TP
+.B doctor
+Operator preflight without mutations: config, binaries, API reachability, workload refs, RBAC hints.
+Optional
+.BR \-\-output " \fItext|json\fR"
+(default
+.BR text ).
+.TP
 .B target
 Print the Kubernetes target block (context, cluster, kubeconfig path).
 Use

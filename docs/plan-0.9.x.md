@@ -38,7 +38,7 @@ This document captures **0.9.x** requirements. For shipped behavior see [CHANGEL
 | **46** | **Watchdog test coverage** | API unreachable during long wait (extends **0.8.0** criterion #1). |
 | **47** | **SPEC contract index** | Table: implemented vs deferred vs experimental; aligns with **`analyze`** Deferred warnings. |
 | **48** | **Docs polish** | [deployment-models.md](deployment-models.md), [scope-and-alternatives.md](scope-and-alternatives.md); What's new **0.8.x**; **`cosign verify`** in README; README length trim. |
-| **49** | *(Stretch)* **`validate --strict` / `doctor`** | Config + API ping + binary presence + RBAC hints for pipeline steps. |
+| **49** | *(Stretch)* **`kzero doctor`** | Config + API ping + binary presence + workload existence + RBAC hints (**done** on develop). |
 | **50** | *(Stretch)* **Retry jitter** | Randomize backoff delay (existing **0.5.2** retry). |
 | **51** | *(Stretch)* **JSON Schema** | Editor autocomplete for **`kzero.yaml`**. |
 | **52** | *(Stretch)* **`kubectl-kzero` plugin** | Ship **`kubectl-kzero`** binary (thin wrapper → same **`internal/cli`**); **`kubectl kzero …`** on bastion; GoReleaser + README; discoverable via **`kubectl plugin list`**. |
@@ -91,4 +91,4 @@ Each PR: **`make lint`**, **`make test`**, **`make cover-check`**.
 - Replacing **1.0.0** default-native or exit-code taxonomy work
 - Breaking **`run.execution`** (`shell` / `native` / `auto`) or in-cluster auth behavior without documented migration
 
-**Last reviewed:** 2026-07-11 (**v0.9.1** shipped; **#52**–**#53** done on develop; stretch **#48–#51** remain)
+**Last reviewed:** 2026-07-11 (**v0.9.1** shipped; **#49**, **#52**–**#53** done on develop; stretch **#48**, **#50**–**#51** remain)

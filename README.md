@@ -186,6 +186,15 @@ kubectl kzero analyze --config ./kzero.yaml
 
 `kzero version` / `kubectl kzero version` print the binary label (`kzero` vs `kubectl-kzero`) so logs show which entry point fired.
 
+### Doctor (preflight without mutations)
+
+```bash
+kzero doctor --config ./kzero.yaml
+kzero doctor --config ./kzero.yaml --output json
+```
+
+Checks config load, **`kubectl`/`helm`** on **`PATH`** (when **`run.execution`** is **`shell`** or **`auto`**), API reachability, pipeline workload refs, and SelfSubjectAccessReview RBAC hints. Errors → non-zero exit; warnings allowed with exit 0.
+
 [↑ Back to top](#top)
 
 ## Quick start
