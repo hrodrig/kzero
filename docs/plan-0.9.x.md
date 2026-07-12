@@ -78,7 +78,7 @@ Stretch after **v0.9.0**: **#49–#53** in **0.9.1** patches (suggested order: *
 | PR | Item | Roadmap | Priority |
 |----|------|---------|----------|
 | PR8 | *(Optional 0.9.1)* **`kubectl-kzero`** binary + packaging + docs | **#52** | Stretch — bastion kubectl workflow; no engine changes |
-| PR9 | *(Optional 0.9.1)* Shell completion (`completion.go` + tests + README) | **#53** | Stretch — operator DX; do before or with **#52** so plugin inherits |
+| PR9 | *(Optional 0.9.1)* Shell completion (`completion.go` + tests + README) | **#53** | **Done** (develop) |
 
 Each PR: **`make lint`**, **`make test`**, **`make cover-check`**.
 
@@ -91,4 +91,4 @@ Each PR: **`make lint`**, **`make test`**, **`make cover-check`**.
 - Replacing **1.0.0** default-native or exit-code taxonomy work
 - Breaking **`run.execution`** (`shell` / `native` / `auto`) or in-cluster auth behavior without documented migration
 
-**Last reviewed:** 2026-07-08
+**Last reviewed:** 2026-07-11 (**v0.9.1** shipped; **#53** done on develop; stretch **#48–#52** remain)

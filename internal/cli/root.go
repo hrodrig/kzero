@@ -62,6 +62,7 @@ so operators can scale workloads and Helm releases in a safe, repeatable way.`,
 
 	rootCmd.Version = Version
 	rootCmd.SetVersionTemplate("{{.Version}}\n")
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
 	rootCmd.AddCommand(
 		newAnalyzeCmd(),
@@ -73,6 +74,7 @@ so operators can scale workloads and Helm releases in a safe, repeatable way.`,
 		newUpCmd(),
 		newResetCmd(),
 		newVersionCmd(),
+		newCompletionCmd(),
 	)
 
 	return rootCmd

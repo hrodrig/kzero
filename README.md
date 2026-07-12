@@ -156,6 +156,21 @@ Tap: **[hrodrig/homebrew-kzero](https://github.com/hrodrig/homebrew-kzero)** (ca
 
 Then run **`kzero --config /etc/kzero/kzero.yaml analyze`** (or follow **[Quick start](#quick-start)** to build from a clone).
 
+### Shell completion
+
+```bash
+# Bash / Zsh (current session)
+source <(kzero completion bash)
+source <(kzero completion zsh)
+
+# Fish (persist)
+kzero completion fish > ~/.config/fish/completions/kzero.fish
+```
+
+```powershell
+kzero completion powershell | Out-String | Invoke-Expression
+```
+
 [↑ Back to top](#top)
 
 ## Quick start

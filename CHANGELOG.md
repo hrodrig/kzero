@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Shell completion (#53):** **`kzero completion <bash|zsh|fish|powershell>`** — strict shell arg validation (invalid/missing → non-zero), script on stdout; README one-liners and man page entry.
+
 ## [0.9.1] - 2026-07-11
 
 ### Security
