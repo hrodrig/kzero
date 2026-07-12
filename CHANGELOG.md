@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Go toolchain:** bump minimum Go to **1.26.5** (`go.mod`, `Dockerfile`) — addresses [GO-2026-4970](https://pkg.go.dev/vuln/GO-2026-4970) and [GO-2026-5856](https://pkg.go.dev/vuln/GO-2026-5856) (stdlib) reported by Grype on `golang:1.26.4` images.
 - **Docker:** final stage `gcr.io/distroless/static-debian13:nonroot` (`Dockerfile`, `Dockerfile.release`) — Debian 12 base EOL.
 
+### Fixed
+
+- **Validate client factory:** replace mutable **`DefaultClientFactory`** with thread-safe **`ClientFactoryDefault()`** / **`SwapDefaultClientFactory()`**.
+- **Engine preflight tests:** inject **`Engine.PreflightFactory`** so parallel live **`RunDown`** tests do not clobber the process-wide factory before the pipeline step starts.
+
 ## [0.9.0] - 2026-07-08
 
 ### Added
