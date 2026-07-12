@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Go toolchain:** bump minimum Go to **1.26.5** (`go.mod`, `Dockerfile`) — addresses [GO-2026-4970](https://pkg.go.dev/vuln/GO-2026-4970) and [GO-2026-5856](https://pkg.go.dev/vuln/GO-2026-5856) (stdlib) reported by Grype on `golang:1.26.4` images.
+- **Dependencies:** bump transitive `oras.land/oras-go/v2` to **v2.6.2** (Helm OCI) — closes Dependabot **#6** / [GHSA-fxhp-mv3v-67qp](https://github.com/advisories/GHSA-fxhp-mv3v-67qp) ([CVE-2026-50163](https://www.cve.org/CVERecord?id=CVE-2026-50163)); remove `.grype.yaml` ignore.
+- **Docker:** final stage `gcr.io/distroless/static-debian13:nonroot` (`Dockerfile`, `Dockerfile.release`) — Debian 12 base EOL.
+
 ## [0.9.0] - 2026-07-08
 
 ### Added

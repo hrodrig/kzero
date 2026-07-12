@@ -1,10 +1,2 @@
 # Grype policy for `make docker-scan` / CI (default --fail-on high).
-#
-# Transitive Helm OCI dependency; kzero does not run oras tar extraction on
-# untrusted artifacts outside Helm's controlled chart pull path.
-ignore:
-  - vulnerability: GHSA-fxhp-mv3v-67qp
-    package:
-      type: go-module
-      name: oras.land/oras-go/v2
-    reason: "CVE-2026-50163 — no fixed oras-go tag yet (v2.6.1 still flagged). Fix merged oras-go main 2026-05-28; await v2.6.2. Transitive via helm OCI; operator controls registries."
+# Add `ignore:` entries only for documented false positives or pending upstream fixes.

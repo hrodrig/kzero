@@ -4,7 +4,7 @@
 
 [![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/hrodrig/kzero/releases)
 [![GitHub release](https://img.shields.io/github/v/release/hrodrig/kzero)](https://github.com/hrodrig/kzero/releases)
-[![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8.svg)](https://go.dev/dl/)
+[![Go](https://img.shields.io/badge/Go-1.26.5-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hrodrig/kzero)
 [![CI](https://github.com/hrodrig/kzero/actions/workflows/ci.yml/badge.svg)](https://github.com/hrodrig/kzero/actions/workflows/ci.yml)
@@ -86,7 +86,7 @@ Host tooling depends on **`run.execution`** and your pipeline step types (see [S
 | Phase hooks, **`custom:`**, per-step **`pre`/`post`** | **`/bin/sh`**; scripts often call **`kubectl`** themselves |
 
 - **RBAC** sufficient for the operations in your pipelines (for example **`get`/`patch`/`scale`**, PVC delete, Helm releases, pod exec)
-- **Go 1.26.4+** if you [build from source](#quick-start) (`make build`) or use [`go install`](#install-with-go)
+- **Go 1.26.5+** if you [build from source](#quick-start) (`make build`) or use [`go install`](#install-with-go)
 
 [↑ Back to top](#top)
 
@@ -142,7 +142,7 @@ Paste the block **as a whole**, or chain with `&&`, so **`apt` does not run** af
 
 **Windows:** use the **`.zip`** asset for your arch (for example **`kzero_v0.7.4_windows_amd64.zip`**), unpack, run **`kzero.exe`** where **`kubectl`** is available.
 
-**Docker:** `docker pull ghcr.io/hrodrig/kzero:v0.7.4` (match the image tag to the **[release](https://github.com/hrodrig/kzero/releases)** you want). Published images use **`gcr.io/distroless/static-debian12:nonroot`** (static **`kzero`** binary only: no shell, no BusyBox/Alpine runtime). **`Dockerfile`** in this repo uses the same final stage. Package: [ghcr.io/hrodrig/kzero](https://github.com/hrodrig/kzero/pkgs/container/kzero).
+**Docker:** `docker pull ghcr.io/hrodrig/kzero:v0.7.4` (match the image tag to the **[release](https://github.com/hrodrig/kzero/releases)** you want). Published images use **`gcr.io/distroless/static-debian13:nonroot`** (static **`kzero`** binary only: no shell, no BusyBox/Alpine runtime). **`Dockerfile`** in this repo uses the same final stage. Package: [ghcr.io/hrodrig/kzero](https://github.com/hrodrig/kzero/pkgs/container/kzero).
 
 **Homebrew** and **BSD packaging** helpers: see **[Install or update](#install-or-update)** and **`contrib/README.md`**.
 
@@ -174,7 +174,7 @@ If you installed from **[Releases](#install-or-update)** or **`go install`** (be
 
 ### Install with Go
 
-From any machine with Go **1.26.4+** (installs to `$(go env GOPATH)/bin`; ensure that directory is on your `PATH`):
+From any machine with Go **1.26.5+** (installs to `$(go env GOPATH)/bin`; ensure that directory is on your `PATH`):
 
 ```bash
 go install github.com/hrodrig/kzero/cmd/kzero@latest
