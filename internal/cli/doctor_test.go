@@ -63,6 +63,65 @@ run:
 	}
 }
 
+func TestDoctor_textOutput(t *testing.T) {
+	replicas := int32(1)
+	client := fake.NewSimpleClientset(&appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: "ns"},
+		Spec:       appsv1.DeploymentSpec{Replicas: &replicas},
+	})
+	client.Fake.PrependReactor("create", "selfsubjectaccessreviews", func(action clienttesting.Action) (bool, runtime.Object, error) {
+		return true, &authv1.SelfSubjectAccessReview{
+			Status: authv1.SubjectAccessReviewStatus{Allowed: true},
+		}, nil
+	})
+	old := validate.SwapDefaultClientFactory(func(string) (kubernetes.Interface, error) { return client, nil })
+	t.Cleanup(func() { validate.SwapDefaultClientFactory(old) })
+
+	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
+	if err := os.WriteFile(cfgPath, []byte(`
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.ns/app
+run:
+  mode: dry-run
+  execution: native
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout bytes.Buffer
+	cmd := newRootCmd()
+	cmd.SetOut(&stdout)
+	cmd.SetErr(&stdout)
+	cmd.SetArgs([]string{"doctor", "--config", cfgPath})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("doctor: %v\n%s", err, stdout.String())
+	}
+	out := stdout.String()
+	for _, want := range []string{"Doctor: OK", "[OK   ]", "config"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("missing %q in %q", want, out)
+		}
+	}
+}
+
+func TestDoctorSeverityLabel(t *testing.T) {
+	t.Parallel()
+	if got := doctorSeverityLabel(doctor.SeverityError); got != "ERROR" {
+		t.Fatalf("got %q", got)
+	}
+	if got := doctorSeverityLabel(doctor.SeverityWarn); got != "WARN " {
+		t.Fatalf("got %q", got)
+	}
+	if got := doctorSeverityLabel(doctor.SeverityOK); got != "OK   " {
+		t.Fatalf("got %q", got)
+	}
+	if got := doctorSeverityLabel(doctor.Severity("x")); got != "????" {
+		t.Fatalf("got %q", got)
+	}
+}
+
 func TestDoctor_badConfig(t *testing.T) {
 	cfgPath := filepath.Join(t.TempDir(), "bad.yaml")
 	if err := os.WriteFile(cfgPath, []byte(`

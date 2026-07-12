@@ -15,25 +15,52 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func TestBackoff_exponential(t *testing.T) {
+func TestExponential_backoff(t *testing.T) {
 	t.Parallel()
 	base := 8 * time.Second
-	if got := Backoff(base, 1); got != 8*time.Second {
+	if got := Exponential(base, 1); got != 8*time.Second {
 		t.Fatalf("failedTry 1: got %v want 8s", got)
 	}
-	if got := Backoff(base, 2); got != 16*time.Second {
+	if got := Exponential(base, 2); got != 16*time.Second {
 		t.Fatalf("failedTry 2: got %v want 16s", got)
 	}
-	if got := Backoff(base, 3); got != 32*time.Second {
+	if got := Exponential(base, 3); got != 32*time.Second {
 		t.Fatalf("failedTry 3: got %v want 32s", got)
 	}
 }
 
-func TestBackoff_capsAtMax(t *testing.T) {
+func TestExponential_capsAtMax(t *testing.T) {
 	t.Parallel()
 	base := time.Minute
-	if got := Backoff(base, 10); got != maxBackoff {
+	if got := Exponential(base, 10); got != maxBackoff {
 		t.Fatalf("got %v want cap %v", got, maxBackoff)
+	}
+}
+
+func TestBackoff_fullJitterInRange(t *testing.T) {
+	t.Parallel()
+	base := 8 * time.Second
+	ceiling := Exponential(base, 2) // 16s
+	seen := make(map[time.Duration]struct{})
+	for i := 0; i < 80; i++ {
+		got := Backoff(base, 2)
+		if got < 0 || got > ceiling {
+			t.Fatalf("jitter out of range: got %v want [0, %v]", got, ceiling)
+		}
+		seen[got] = struct{}{}
+	}
+	if len(seen) < 2 {
+		t.Fatalf("expected varied jitter samples, got %d distinct values", len(seen))
+	}
+}
+
+func TestFullJitter_zero(t *testing.T) {
+	t.Parallel()
+	if got := fullJitter(0); got != 0 {
+		t.Fatalf("got %v", got)
+	}
+	if got := fullJitter(-1); got != 0 {
+		t.Fatalf("got %v", got)
 	}
 }
 
@@ -78,27 +105,27 @@ func TestAttempts_defaults(t *testing.T) {
 	}
 }
 
-func TestBackoff_zeroBaseUsesDefault(t *testing.T) {
+func TestExponential_zeroBaseUsesDefault(t *testing.T) {
 	t.Parallel()
-	if got := Backoff(0, 1); got != 5*time.Second {
+	if got := Exponential(0, 1); got != 5*time.Second {
 		t.Fatalf("got %v want 5s", got)
 	}
-	if got := Backoff(-1, 2); got != 10*time.Second {
+	if got := Exponential(-1, 2); got != 10*time.Second {
 		t.Fatalf("got %v want 10s", got)
 	}
 }
 
-func TestBackoff_failedTryBelowOne(t *testing.T) {
+func TestExponential_failedTryBelowOne(t *testing.T) {
 	t.Parallel()
-	if got := Backoff(4*time.Second, 0); got != 4*time.Second {
+	if got := Exponential(4*time.Second, 0); got != 4*time.Second {
 		t.Fatalf("got %v", got)
 	}
 }
 
-func TestBackoff_exceedsMaxWithoutEarlyLoopExit(t *testing.T) {
+func TestExponential_exceedsMaxWithoutEarlyLoopExit(t *testing.T) {
 	t.Parallel()
 	// failedTry=2 with huge base hits d > maxBackoff after single double
-	if got := Backoff(90*time.Second, 2); got != maxBackoff {
+	if got := Exponential(90*time.Second, 2); got != maxBackoff {
 		t.Fatalf("got %v want %v", got, maxBackoff)
 	}
 }

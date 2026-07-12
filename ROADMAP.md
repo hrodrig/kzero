@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-07-11 (**v0.9.1** tagged; stretch **#49**, **#52**–**#53** on `develop`; **#48**, **#50**–**#51** remain)
+**Last reviewed:** 2026-07-11 (**v0.9.1** tagged; stretch **#49**–**#50**, **#52**–**#53** on `develop`; **#48**, **#51** remain)
 
 ### Versioning note
 
@@ -35,7 +35,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.6.x** | **Closed** in **v0.6.0** |
 | **0.7.x** | **Closed** — **#23–#31** in **v0.7.2**; **#29** `job`/`cronjob` still open. **v0.7.3**: text log levels. **v0.7.4**: `--print-sample-config`. |
 | **0.8.x** | **Closed** — API watchdog, notify delivery, stalled event (**#35–#41**) in **v0.8.0**. |
-| **0.9.x** | **v0.9.0** core shipped (**#43–#47**); **v0.9.1** security patch; stretch **#49**, **#52**–**#53** done on `develop`; **#48**, **#50**–**#51** still open — see [docs/plan-0.9.x.md](docs/plan-0.9.x.md). |
+| **0.9.x** | **v0.9.0** core shipped (**#43–#47**); **v0.9.1** security patch; stretch **#49**–**#50**, **#52**–**#53** done on `develop`; **#48**, **#51** still open — see [docs/plan-0.9.x.md](docs/plan-0.9.x.md). |
 | **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**); **#29** optional in band or pre-1.0; **#42** exit codes. |
 
 **Shell path:** **`run.execution: shell`** (default) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native/auto** uses the Helm SDK and API primitives above.
@@ -189,7 +189,7 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 | 47 | **SPEC: contract vs experimental/deferred** — single operator-facing index | Done (v0.9.0) |
 | 48 | **Docs** — [deployment-models.md](docs/deployment-models.md) kickoff **done**; [scope-and-alternatives.md](docs/scope-and-alternatives.md) linked; What's new **0.9.x** in CHANGELOG/README; **`cosign verify`** in README (v0.7.0+); README trim deferred to **0.9.1** | Partial (**v0.9.0**) |
 | 49 | *(Stretch / 0.9.1)* **`kzero doctor`** — config + connectivity + binaries + RBAC hints | Done (develop) |
-| 50 | *(Stretch)* **Retry jitter** on existing backoff | Pending |
+| 50 | *(Stretch)* **Retry jitter** on existing backoff | Done (develop) |
 | 51 | *(Stretch)* **JSON Schema** for editor autocomplete | Pending |
 | 52 | *(Stretch / 0.9.1)* **`kubectl-kzero` plugin** — `kubectl kzero …` via **`kubectl-kzero`** on PATH (same CLI as **`kzero`**; bastion DX; GoReleaser) | Done (develop) |
 | 53 | *(Stretch / 0.9.1)* **Shell completion** — `kzero completion <bash\|zsh\|fish\|powershell>` with strict validation, tests, README ([groot #80](https://github.com/hrodrig/groot/blob/main/pkg/cmd/completion.go) pattern); **`kubectl kzero completion`** when **#52** ships | Done (develop) |

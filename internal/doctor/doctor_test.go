@@ -137,6 +137,104 @@ func TestRun_rbacDenied(t *testing.T) {
 	assertHas(t, rep, "kubernetes.rbac", SeverityError)
 }
 
+func TestRun_nilConfig(t *testing.T) {
+	t.Parallel()
+	rep := Run(context.Background(), nil, Options{})
+	if rep.OK {
+		t.Fatal("expected fail")
+	}
+	assertHas(t, rep, "config", SeverityError)
+}
+
+func TestRun_helmBinaryMissingOnShell(t *testing.T) {
+	t.Parallel()
+	cfg := &config.Config{
+		Run: config.RunConfig{Mode: "dry-run", Execution: "shell"},
+		Pipelines: config.PipelinesConfig{
+			Up: []config.PipelineStep{{Type: "release", Namespace: "ns", Name: "app"}},
+		},
+	}
+	client := fake.NewSimpleClientset()
+	allowAllSAR(client)
+	rep := Run(context.Background(), cfg, Options{
+		Factory: func(string) (kubernetes.Interface, error) { return client, nil },
+		LookPath: func(file string) (string, error) {
+			if file == "kubectl" {
+				return "/bin/kubectl", nil
+			}
+			return "", errors.New("no helm")
+		},
+	})
+	if rep.OK {
+		t.Fatal("expected helm missing error on shell")
+	}
+	assertHas(t, rep, "binaries.helm", SeverityError)
+}
+
+func TestRun_helmBinaryWarnOnAuto(t *testing.T) {
+	t.Parallel()
+	cfg := &config.Config{
+		Run: config.RunConfig{Mode: "dry-run", Execution: "auto"},
+		Pipelines: config.PipelinesConfig{
+			Down: []config.PipelineStep{{Type: "release", Namespace: "ns", Name: "app"}},
+		},
+	}
+	client := fake.NewSimpleClientset()
+	allowAllSAR(client)
+	rep := Run(context.Background(), cfg, Options{
+		Factory: func(string) (kubernetes.Interface, error) { return client, nil },
+		LookPath: func(file string) (string, error) {
+			if file == "kubectl" {
+				return "/bin/kubectl", nil
+			}
+			return "", errors.New("no helm")
+		},
+	})
+	if !rep.OK {
+		t.Fatalf("auto missing helm should warn only, got %+v", rep.Findings)
+	}
+	assertHas(t, rep, "binaries.helm", SeverityWarn)
+}
+
+func TestRun_helmBinaryOK(t *testing.T) {
+	t.Parallel()
+	cfg := &config.Config{
+		Run:       config.RunConfig{Mode: "dry-run", Execution: "shell"},
+		Command:   config.CommandConfig{Helm: "helm3"},
+		Pipelines: config.PipelinesConfig{Up: []config.PipelineStep{{Type: "release", Namespace: "ns", Name: "r"}}},
+	}
+	client := fake.NewSimpleClientset()
+	allowAllSAR(client)
+	rep := Run(context.Background(), cfg, Options{
+		Factory: func(string) (kubernetes.Interface, error) { return client, nil },
+		LookPath: func(file string) (string, error) {
+			switch file {
+			case "kubectl":
+				return "/bin/kubectl", nil
+			case "helm3":
+				return "/bin/helm3", nil
+			default:
+				return "", errors.New("miss")
+			}
+		},
+	})
+	if !rep.OK {
+		t.Fatalf("expected OK: %+v", rep.Findings)
+	}
+	assertHas(t, rep, "binaries.helm", SeverityOK)
+}
+
+func TestCheckWorkloads_noRefs(t *testing.T) {
+	t.Parallel()
+	cfg := &config.Config{Run: config.RunConfig{Execution: "native"}}
+	findings := checkWorkloads(context.Background(), cfg, func(string) (kubernetes.Interface, error) {
+		return fake.NewSimpleClientset(), nil
+	})
+	if len(findings) != 1 || findings[0].Severity != SeverityOK {
+		t.Fatalf("%+v", findings)
+	}
+}
+
 func TestCollectRBACNeeds(t *testing.T) {
 	t.Parallel()
 	cfg := &config.Config{

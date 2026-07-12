@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"math/rand/v2"
 	"strings"
 	"time"
 
@@ -23,8 +24,9 @@ func Attempts(cfg *config.Config) int {
 	return cfg.Retry.Attempts
 }
 
-// Backoff returns wait time before the next try after failure number failedTry (1 = first failure).
-func Backoff(base time.Duration, failedTry int) time.Duration {
+// Exponential returns the uncapped-then-capped exponential delay before the
+// next try after failure number failedTry (1 = first failure), without jitter.
+func Exponential(base time.Duration, failedTry int) time.Duration {
 	if base <= 0 {
 		base = 5 * time.Second
 	}
@@ -42,6 +44,22 @@ func Backoff(base time.Duration, failedTry int) time.Duration {
 		return maxBackoff
 	}
 	return d
+}
+
+// Backoff returns a full-jitter wait in [0, Exponential(base, failedTry)]
+// (inclusive). Used by the live engine between retries so concurrent
+// operators do not retry in lockstep (ROADMAP #50).
+func Backoff(base time.Duration, failedTry int) time.Duration {
+	return fullJitter(Exponential(base, failedTry))
+}
+
+// fullJitter picks uniformly from [0, d] inclusive (AWS "full jitter").
+func fullJitter(d time.Duration) time.Duration {
+	if d <= 0 {
+		return 0
+	}
+	// Int64N panics if n <= 0; d+1 is always >= 1 here.
+	return time.Duration(rand.Int64N(int64(d) + 1))
 }
 
 // IsRetriable reports whether a pipeline step failure should be retried in live mode.
