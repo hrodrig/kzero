@@ -21,7 +21,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 
 **Executor (single binary):** the **native** path covers **`deployment` / `statefulset`** scale and rollout wait, **`release.*`** via **Helm SDK**, **`pvc` delete**, and **`exec` in pod** — on a **bastion** this avoids host **`kubectl`** / **`helm`** while staying out-of-band. Set **`run.execution: native`** (or **`auto`**) for that path. Phase hooks and **`custom:`** shell scripts remain valid on bastions with **`/bin/sh`**; in-cluster Jobs should prefer declarative **`pvc`**, **`exec`**, and SDK **`release.*`** over host-only scripts when used at all.
 
-**Remaining gap before 1.0.0:** default **`run.execution: native`** when omitted (**#32**), product-repo **kind**/envtest CI (**#34**), and exit-code taxonomy (**#42**). PVC/data-reset patterns (**#33**) documented. **`release.*`** on the **shell** path still requires **`<helm.workspace>/<name>.sh`** and external **`helm`** on **`PATH`**.
+**Remaining gap before 1.0.0:** default **`run.execution: native`** when omitted (**#32**) and product-repo **kind**/envtest CI (**#34**). PVC patterns (**#33**) and exit codes (**#42**) done on **`develop`**. **`release.*`** on the **shell** path still requires **`<helm.workspace>/<name>.sh`** and external **`helm`** on **`PATH`**.
 
 **Log capture** before or after pipelines is **out of scope** for the engine—invoke external tools via phase hooks when operators need archives. **Local stdout/stderr** (and wrapper tee to disk on the **management host**) is the audit trail when notify and API are both unavailable; see [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md).
 
@@ -213,7 +213,7 @@ Major when YAML **`schema_version`**, executor behavior, and step types are stab
 | 32 | **Default native execution** for workload steps when `run.execution` is omitted (shell opt-in). | Pending |
 | 33 | **PVC / StatefulSet data strategy** documented as pipeline patterns (snapshot, wipe, init-job) beyond core delete primitives. | Done (develop, [pvc-statefulset-data-strategy.md](docs/examples/pvc-statefulset-data-strategy.md)) |
 | 34 | **Integration tests** with **kind** or envtest in CI, with documented flake policy and runtime budget. | Pending |
-| 42 | **Documented exit code taxonomy** for CLI scripts/wrappers: today all non-zero returns collapse to `1` (`cmd/kzero/main.go:14`); map subsystem failures to stable codes (config, Kubernetes client/API, executor aborted, notify delivery, partial failures) following the same pattern adopted for [groot 0.9.x #82](https://github.com/hrodrig/groot/blob/main/pkg/cmd/exitcode.go). Implementation note: not breaking for existing wrappers — codes beyond config error are only emitted where the underlying failure category is unambiguous. | Pending |
+| 42 | **Documented exit code taxonomy** for CLI scripts/wrappers: stable codes **0–4** (`internal/exitcode`, groot-style `ExitError`); config / Kubernetes / executor / notify. Plain errors default to **1**. | Done (develop) |
 | 55 | *(Optional)* **Post-pipeline log upload** — after a run, push **`run.log_file`** (or wrapper tee output) to S3/GCS/SFTP (env creds, `continue_on_error`, `--no-upload`); hooks/selfhosted patterns remain the default; not a groot-style archive bundle. | Pending |
 
 ---

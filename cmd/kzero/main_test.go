@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/hrodrig/kzero/internal/exitcode"
 )
 
 func TestRunMain_printSampleConfig(t *testing.T) {
@@ -67,7 +69,7 @@ run:
 	}
 
 	os.Args = []string{"kzero", "analyze", "--config", cfg}
-	if got := runMain(); got != 1 {
-		t.Fatalf("runMain: exit code %d, want 1", got)
+	if got := runMain(); got != exitcode.ConfigError {
+		t.Fatalf("runMain: exit code %d, want %d (config)", got, exitcode.ConfigError)
 	}
 }

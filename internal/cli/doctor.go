@@ -9,6 +9,7 @@ import (
 
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/doctor"
+	"github.com/hrodrig/kzero/internal/exitcode"
 	"github.com/spf13/cobra"
 )
 
@@ -29,13 +30,14 @@ Checks:
 
 Exit codes:
   0  all checks passed (warnings allowed)
-  1  one or more errors
+  1  config load failure
+  2  one or more check errors (API / workloads / RBAC / binaries)
 `,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cfg, err := config.Load(cfgFile)
 			if err != nil {
-				return fmt.Errorf("doctor config: %w", err)
+				return exitcode.New(exitcode.ConfigError, fmt.Errorf("doctor config: %w", err))
 			}
 			applyCLIRunOverrides(cfg)
 
@@ -47,7 +49,7 @@ Exit codes:
 				return err
 			}
 			if !rep.OK {
-				return fmt.Errorf("doctor: checks failed")
+				return exitcode.New(exitcode.KubernetesError, fmt.Errorf("doctor: checks failed"))
 			}
 			return nil
 		},

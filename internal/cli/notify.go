@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/exitcode"
 	"github.com/hrodrig/kzero/internal/notify"
 	"github.com/spf13/cobra"
 )
@@ -30,13 +31,13 @@ pipeline.success, or pipeline.error payload formatting.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cfg, err := config.Load(cfgFile)
 			if err != nil {
-				return fmt.Errorf("load config: %w", err)
+				return exitcode.New(exitcode.ConfigError, fmt.Errorf("load config: %w", err))
 			}
 			if err := notify.ValidateTestEvent(event); err != nil {
-				return err
+				return exitcode.New(exitcode.ConfigError, err)
 			}
 			if !notify.AnyEnabled(cfg) {
-				return fmt.Errorf("notify test: no notify channel enabled in config")
+				return exitcode.New(exitcode.ConfigError, fmt.Errorf("notify test: no notify channel enabled in config"))
 			}
 			format, err := resolvedLogFormat()
 			if err != nil {
@@ -47,7 +48,7 @@ pipeline.success, or pipeline.error payload formatting.`,
 			}
 			return runTimed(cmd.ErrOrStderr(), "notify test", cfg.Run.Color, format, func() error {
 				if err := notify.DispatchTest(cmd.Context(), cfg, event, nil); err != nil {
-					return err
+					return exitcode.New(exitcode.NotifyFailed, err)
 				}
 				_, err := fmt.Fprintf(cmd.OutOrStdout(), "notify test: sent event %q to enabled channel(s)\n", event)
 				return err

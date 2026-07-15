@@ -9,6 +9,7 @@ import (
 	"github.com/hrodrig/kzero/internal/cluster"
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/engine"
+	"github.com/hrodrig/kzero/internal/exitcode"
 	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/preflight"
 	"github.com/hrodrig/kzero/internal/validate"
@@ -22,7 +23,7 @@ func printAnalyzePlan(w, errW io.Writer, cfg *config.Config, configPath string) 
 		return err
 	}
 	if err := cluster.Print(w, cfg); err != nil {
-		return fmt.Errorf("kubernetes target: %w", err)
+		return exitcode.New(exitcode.KubernetesError, fmt.Errorf("kubernetes target: %w", err))
 	}
 	if _, err := fmt.Fprintln(w); err != nil {
 		return err
@@ -35,7 +36,7 @@ func printAnalyzePlan(w, errW io.Writer, cfg *config.Config, configPath string) 
 		return err
 	}
 	if err := validate.PrintClusterValidation(w, errW, cfg, validate.ClientFactoryDefault()); err != nil {
-		return err
+		return exitcode.New(exitcode.KubernetesError, err)
 	}
 	if w := preflight.AnalyzeWarning(context.Background(), cfg, validate.ClientFactoryDefault()); w != "" {
 		_ = log.WriteLine(errW, log.LevelWarn, "warning: "+w)

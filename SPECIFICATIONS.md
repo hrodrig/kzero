@@ -419,7 +419,7 @@ Operator **preflight without mutations** (ROADMAP **#49**). Complements **`analy
 - **`--output text`** (default): heading **`Doctor: OK`** or **`Doctor: FAIL`**, then one line per finding: **`[OK]`** / **`[WARN]`** / **`[ERROR]`** + check id + message.
 - **`--output json`**: `{ "ok": bool, "findings": [{ "check", "severity", "message" }] }` (`severity` is **`ok`**, **`warn`**, or **`error`**).
 - Exit **0** when no finding has severity **`error`** (warnings allowed).
-- Exit **non-zero** when config load fails or any finding is **`error`**.
+- Exit **1** when config load fails; exit **2** when any finding is **`error`** (see [Process exit codes](#process-exit-codes-42)).
 
 ### Relation to other commands
 
@@ -545,10 +545,24 @@ If `down` fails, `up` must not run.
 
 - Any failed hook or pipeline step aborts the current phase immediately.
 - `hooks.on-error` runs once per failed command invocation.
-- After `on-error`, command exits non-zero.
+- After `on-error`, command exits non-zero (see exit codes below).
 - `post-*` hook for that phase must not run if phase execution failed.
 - A step’s `post` hook must not run if that step’s `pre` hook failed or if the step’s main action failed.
 - For `reset`, failure in `down` skips `up`.
+
+### Process exit codes (#42)
+
+Stable codes for wrappers and cron. Same pattern as [groot exitcode](https://github.com/hrodrig/groot/blob/main/internal/cmd/exitcode.go). Implementation: `internal/exitcode`. stderr messages stay the underlying error text (no `exit code N:` prefix).
+
+| Code | Constant | When |
+|------|----------|------|
+| **0** | Success | Command completed without error |
+| **1** | ConfigError | Config load/validate failure, invalid flags/args, or unclassified plain error |
+| **2** | KubernetesError | Client/target resolve, cluster validation **FAIL**, verify/doctor check failures |
+| **3** | ExecutorAborted | Pipeline step/hook failure, probe gate abort, watchdog stall / signal cancel (when not overridden by notify) |
+| **4** | NotifyFailed | **`notify.require_delivery`** and error/stalled notify POST failed; or **`kzero notify test`** POST failure |
+
+Scripts that only test **non-zero** remain compatible. Codes **2–4** are set only via explicit wraps where the failure class is unambiguous.
 
 ## 6. Dry-Run Policy
 

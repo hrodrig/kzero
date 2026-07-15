@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/exitcode"
 	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/notify"
 )
@@ -57,6 +58,9 @@ func TestFinishWithError_requireDeliveryFailsOnNotifyError(t *testing.T) {
 	if !strings.Contains(got.Error(), "notify delivery required") {
 		t.Fatalf("expected notify delivery error, got %v", got)
 	}
+	if code := exitcode.Of(got); code != exitcode.NotifyFailed {
+		t.Fatalf("exit code %d, want %d (notify)", code, exitcode.NotifyFailed)
+	}
 	if !strings.Contains(got.Error(), notify.EventError) {
 		t.Fatalf("expected pipeline.error event in error, got %v", got)
 	}
@@ -98,6 +102,9 @@ func TestFinishWithError_requireDeliveryFailsOnStalledNotify(t *testing.T) {
 	}
 	if !strings.Contains(got.Error(), notify.EventStalled) {
 		t.Fatalf("expected pipeline.stalled event in error, got %v", got)
+	}
+	if code := exitcode.Of(got); code != exitcode.NotifyFailed {
+		t.Fatalf("exit code %d, want %d (notify)", code, exitcode.NotifyFailed)
 	}
 }
 

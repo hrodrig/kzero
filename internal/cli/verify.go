@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/exitcode"
 	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/verify"
 	"github.com/spf13/cobra"
@@ -18,7 +19,7 @@ node Ready status. Does not scale workloads or run Helm.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cfg, err := config.Load(cfgFile)
 			if err != nil {
-				return fmt.Errorf("load config: %w", err)
+				return exitcode.New(exitcode.ConfigError, fmt.Errorf("load config: %w", err))
 			}
 			format, err := resolvedLogFormat()
 			if err != nil {
@@ -46,9 +47,9 @@ func runVerify(cmd *cobra.Command, cfg *config.Config, format log.Format, printT
 	}
 	if verify.Failed(report) {
 		if err != nil {
-			return err
+			return exitcode.Ensure(exitcode.KubernetesError, err)
 		}
-		return fmt.Errorf("%s", verify.ErrorMessage(report))
+		return exitcode.New(exitcode.KubernetesError, fmt.Errorf("%s", verify.ErrorMessage(report)))
 	}
 	return nil
 }

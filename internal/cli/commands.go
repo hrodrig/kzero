@@ -9,6 +9,7 @@ import (
 	"github.com/hrodrig/kzero/internal/cluster"
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/engine"
+	"github.com/hrodrig/kzero/internal/exitcode"
 	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/notify"
 	"github.com/hrodrig/kzero/internal/probe"
@@ -33,7 +34,7 @@ func applyCLIRunOverrides(cfg *config.Config) {
 
 func writeKubernetesTarget(w io.Writer, cfg *config.Config) error {
 	if err := cluster.Print(w, cfg); err != nil {
-		return fmt.Errorf("kubernetes target: %w", err)
+		return exitcode.New(exitcode.KubernetesError, fmt.Errorf("kubernetes target: %w", err))
 	}
 	if _, err := fmt.Fprintln(w); err != nil {
 		return err
@@ -74,11 +75,11 @@ func runPipelineCommand(cmd *cobra.Command, command string, cfg *config.Config, 
 			}
 		}
 		if err := run(ctx, eng, cfg); err != nil {
-			return err
+			return exitcode.Ensure(exitcode.ExecutorAborted, err)
 		}
 		if shouldAutoVerify(cfg, command) {
 			if err := runVerify(cmd, cfg, format, false); err != nil {
-				return fmt.Errorf("post-up verify: %w", err)
+				return exitcode.Ensure(exitcode.ExecutorAborted, fmt.Errorf("post-up verify: %w", err))
 			}
 		}
 		if notify.AnyEnabled(cfg) {
@@ -99,7 +100,7 @@ func newAnalyzeCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load(cfgFile)
 			if err != nil {
-				return fmt.Errorf("analyze config: %w", err)
+				return exitcode.New(exitcode.ConfigError, fmt.Errorf("analyze config: %w", err))
 			}
 			writeDeferredFeatureWarnings(cmd.ErrOrStderr(), cfg)
 			configPath := cfgFile
@@ -129,7 +130,7 @@ func buildPipelineCmd(use, short, label string, run pipelineRunFunc) *cobra.Comm
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load(cfgFile)
 			if err != nil {
-				return fmt.Errorf("load config: %w", err)
+				return exitcode.New(exitcode.ConfigError, fmt.Errorf("load config: %w", err))
 			}
 			applyCLIRunOverrides(cfg)
 			writeDeferredFeatureWarnings(cmd.ErrOrStderr(), cfg)
@@ -169,7 +170,7 @@ func newTargetCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load(cfgFile)
 			if err != nil {
-				return fmt.Errorf("load config: %w", err)
+				return exitcode.New(exitcode.ConfigError, fmt.Errorf("load config: %w", err))
 			}
 			switch output {
 			case "block":
@@ -181,17 +182,20 @@ func newTargetCmd() *cobra.Command {
 					return err
 				}
 				return runTimed(cmd.ErrOrStderr(), "target", cfg.Run.Color, format, func() error {
-					return cluster.Print(cmd.OutOrStdout(), cfg)
+					if err := cluster.Print(cmd.OutOrStdout(), cfg); err != nil {
+						return exitcode.New(exitcode.KubernetesError, err)
+					}
+					return nil
 				})
 			case "slug":
 				tgt, err := cluster.ResolveFromConfig(cfg)
 				if err != nil {
-					return err
+					return exitcode.New(exitcode.KubernetesError, err)
 				}
 				_, err = fmt.Fprintln(cmd.OutOrStdout(), cluster.SanitizeForFilename(tgt.ClusterName))
 				return err
 			default:
-				return fmt.Errorf("target --output: unknown value %q (want block or slug)", output)
+				return exitcode.New(exitcode.ConfigError, fmt.Errorf("target --output: unknown value %q (want block or slug)", output))
 			}
 		},
 	}

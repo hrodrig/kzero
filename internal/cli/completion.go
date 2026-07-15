@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 
+	"github.com/hrodrig/kzero/internal/exitcode"
 	"github.com/spf13/cobra"
 )
 
@@ -47,7 +48,7 @@ Examples:
 				return root.GenPowerShellCompletionWithDesc(out)
 			default:
 				// OnlyValidArgs should reject this; keep a clear fallback.
-				return fmt.Errorf("unsupported shell %q (want bash, zsh, fish, or powershell)", args[0])
+				return exitcode.New(exitcode.ConfigError, fmt.Errorf("unsupported shell %q (want bash, zsh, fish, or powershell)", args[0]))
 			}
 		},
 	}

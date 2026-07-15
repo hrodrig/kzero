@@ -243,7 +243,23 @@ export KZERO_RUN_MODE=live
 kzero reset \-\-config ./kzero.yaml
 .RE
 .SH EXIT STATUS
-0 on success; non-zero on config validation errors, hook failures, or pipeline step failures.
+.TP
+.B 0
+Success.
+.TP
+.B 1
+Config load/validate failure, invalid flags/args, or unclassified error.
+.TP
+.B 2
+Kubernetes client/API error (target, cluster validation, verify/doctor checks).
+.TP
+.B 3
+Pipeline/executor aborted (step, hook, probe gate, watchdog/signal).
+.TP
+.B 4
+Notify delivery failed (\fBnotify.require_delivery\fR or \fBnotify test\fR POST).
+.PP
+Wrappers that only check non-zero stay compatible. See SPECIFICATIONS.md §5.
 .SH SEE ALSO
 .BR kubectl (1),
 .BR helm (1)

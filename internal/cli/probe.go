@@ -6,6 +6,7 @@ import (
 
 	"github.com/hrodrig/kzero/internal/config"
 	"github.com/hrodrig/kzero/internal/engine"
+	"github.com/hrodrig/kzero/internal/exitcode"
 	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/probe"
 	"github.com/spf13/cobra"
@@ -20,7 +21,7 @@ release_ready), then pipeline.down. Does not run the main pipelines.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cfg, err := config.Load(cfgFile)
 			if err != nil {
-				return fmt.Errorf("load config: %w", err)
+				return exitcode.New(exitcode.ConfigError, fmt.Errorf("load config: %w", err))
 			}
 			writeDeferredFeatureWarnings(cmd.ErrOrStderr(), cfg)
 			format, err := resolvedLogFormat()
@@ -39,7 +40,7 @@ release_ready), then pipeline.down. Does not run the main pipelines.`,
 				emit := log.New(cmd.OutOrStdout(), format)
 				emit.SetCommand("probe")
 				eng := engine.New(cfg, emit)
-				return probe.Run(ctx, cfg, eng, nil, emit)
+				return exitcode.Ensure(exitcode.ExecutorAborted, probe.Run(ctx, cfg, eng, nil, emit))
 			})
 		},
 	}
@@ -50,5 +51,5 @@ func runInfraProbeGate(cmd *cobra.Command, cfg *config.Config, eng *engine.Engin
 	if emit == nil {
 		emit = log.New(cmd.OutOrStdout(), log.FormatText)
 	}
-	return probe.RunGate(ctx, cfg, eng, nil, emit, command)
+	return exitcode.Ensure(exitcode.ExecutorAborted, probe.RunGate(ctx, cfg, eng, nil, emit, command))
 }

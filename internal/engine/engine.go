@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
+	"github.com/hrodrig/kzero/internal/exitcode"
 	"github.com/hrodrig/kzero/internal/log"
 	"github.com/hrodrig/kzero/internal/notify"
 	"github.com/hrodrig/kzero/internal/redact"
@@ -224,7 +225,7 @@ func finishWithError(ctx context.Context, eng *Engine, cfg *config.Config, err e
 		eng.logPipelineInterrupted()
 	}
 	if dispatchErr := dispatchPipelineError(ctx, eng, cfg, err); dispatchErr != nil {
-		return fmt.Errorf("%w: %w", err, dispatchErr)
+		return exitcode.New(exitcode.NotifyFailed, fmt.Errorf("%w: %w", err, dispatchErr))
 	}
 	if cfg.Hooks.OnError == "" {
 		return err
