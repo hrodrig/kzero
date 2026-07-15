@@ -84,7 +84,7 @@ Host tooling depends on **`run.execution`** and your pipeline step types (see [S
 |------|------------|
 | **`run.execution: shell`** (default) | **`kubectl`** on `PATH` (or **`command.kubectl`**); **`helm`** when using **`release.*`** shell scripts |
 | **`run.execution: native`** / **`auto`** | Valid **kubeconfig** (or in-cluster SA); **no host `kubectl`** for scale/wait/**`pvc`**/**`exec`**/**Helm SDK** **`release.*`** |
-| Phase hooks, **`custom:`**, per-step **`pre`/`post`** | **`/bin/sh`**; scripts often call **`kubectl`** themselves |
+| Phase hooks, **`custom:`**, per-step **`pre`/`post`** | Always **`/bin/sh <script>`** (shebang ignored). Scripts must be **POSIX**/`/bin/sh`-safe — on Ubuntu **`/bin/sh`** is often **dash** (`pipefail` / `[[` fail). See [SPEC — Hook and script interpreter](SPECIFICATIONS.md#hook-and-script-interpreter-binsh). |
 
 - **RBAC** sufficient for the operations in your pipelines (for example **`get`/`patch`/`scale`**, PVC delete, Helm releases, pod exec)
 - **Go 1.26.5+** if you [build from source](#quick-start) (`make build`) or use [`go install`](#install-with-go)

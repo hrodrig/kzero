@@ -36,8 +36,8 @@ Use this table with **`kzero analyze`** (stdout plan + optional **Deferred** sum
 |------|--------|-------|
 | **YAML schema `1.0`** (`schema_version`, `pipelines`, `run`) | **Implemented** | Required keys; unknown keys ignored with loader warnings. |
 | **Phases** `down` / `up` / `reset` | **Implemented** | `reset` = `down` then phase-boundary preflight then `up`. |
-| **Phase hooks** `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error` | **Implemented** | Shell scripts; env passthrough rules in §3. |
-| **Per-step hooks** `pre` / `post` on map steps | **Implemented** | Scoped to one pipeline step. |
+| **Phase hooks** `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error` | **Implemented** | Always **`/bin/sh`**; POSIX-safe scripts (see § Hook and script interpreter). |
+| **Per-step hooks** `pre` / `post` on map steps | **Implemented** | Scoped to one pipeline step; same **`/bin/sh`** rules. |
 | **Step types** `deployment`, `statefulset`, `release`, `pvc`, `exec`, `custom` | **Implemented** | Compact refs + Helm workspace scripts / Helm SDK (`run.execution`). |
 | **`run.mode`** `dry-run` / `live` | **Implemented** | Dry-run skips cluster mutations and notify POSTs. |
 | **`run.execution`** `shell` / `native` / `auto` | **Implemented** | Workloads + Helm; `pvc` / `exec` always native. |
@@ -137,6 +137,27 @@ When `run.mode` is `live`, `deployment` and `statefulset` steps use a **Workload
 | `auto` | Try **native** (workloads + Helm SDK for releases); on client init failure, fall back to **shell** and print a one-line notice on the run output stream. |
 
 Hooks, `custom:` steps, and per-step `pre`/`post` always use `/bin/sh` regardless of `run.execution`.
+
+### Hook and script interpreter (`/bin/sh`)
+
+Phase hooks, per-step **`pre`/`post`**, **`custom:`** scripts, and **`release.*`** install scripts on the **shell** path are invoked as:
+
+```text
+/bin/sh <script-path> [args…]
+```
+
+(not as an executable that follows a shebang). A leading `#!/bin/bash` (or similar) in the file is **ignored**.
+
+**Operator contract:** scripts must be valid for the host’s **`/bin/sh`** (typically **POSIX**). On many Linux distros (notably **Ubuntu** / **Debian**) `/bin/sh` is **dash**, which rejects common bashisms such as:
+
+- `set -o pipefail`
+- `[[ … ]]` tests
+- bash arrays / `${name[0]}`
+- process substitution
+
+Prefer `set -eu` (without `pipefail`) and POSIX constructs. Validate with `/bin/sh -n <script>` or by running the script under `/bin/sh` on the target OS before a live pipeline.
+
+Configurable hook interpreters or shebang honor are **out of scope** for schema **1.0** (optional future opt-in; not required for **1.0.0**).
 
 ### API watchdog (`run.api_watchdog`)
 
@@ -239,7 +260,7 @@ More examples (StatefulSet `pre` before scale, assert scripts): [docs/examples/p
 
 For each pipeline step, when `run.mode` is `live`:
 
-1. If `pre` is set, run `/bin/sh <pre>` before the step’s main action.
+1. If `pre` is set, run `/bin/sh <pre>` before the step’s main action (same interpreter rules as [Hook and script interpreter](#hook-and-script-interpreter-binsh)).
 2. Run the main action (workload scale / rollout wait per `run.execution`, or release script / custom script).
 3. If `post` is set, run `/bin/sh <post>` **only if** the main action succeeded.
 

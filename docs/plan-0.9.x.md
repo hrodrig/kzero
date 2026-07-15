@@ -1,12 +1,12 @@
 # Plan 0.9.x — bastion-first hardening
 
-**Status:** **Ready for tag** — **#43–#47** on `develop`; merge `develop` → `main`, push tag **`v0.9.0`**; **GitHub Actions Release** runs GoReleaser (local `make release` is manual fallback only).
+**Status:** **Done** — band closed through **v0.9.2** (core **#43–#47**, security **v0.9.1**, stretch **#48–#53**). Next: [plan-1.0.0.md](plan-1.0.0.md).
 
 **Motivation:** External audits (2026-06) and operator learnings from **0.8.x** agree: kzero should **orchestrate** clusters from **out-of-band** hosts (bastion, management VM, cron). In-cluster Job is **supported** but must not be marketed as the primary **`reset`** path when API or network reliability is uncertain. See [deployment-models.md](deployment-models.md).
 
 This document captures **0.9.x** requirements. For shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMAP.md), and [SPECIFICATIONS.md](../SPECIFICATIONS.md).
 
-**Relationship to 1.0.0:** **0.9.x** closes operational gaps and documentation; **1.0.0** (**#32–#34**, **#42**) remains the stable-contract semver band.
+**Relationship to 1.0.0:** **0.9.x** closed operational gaps; **1.0.0** (**#32–#34**, **#42**) is the stable-contract band — see [plan-1.0.0.md](plan-1.0.0.md).
 
 ---
 

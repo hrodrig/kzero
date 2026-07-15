@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Planning:** [docs/plan-1.0.0.md](docs/plan-1.0.0.md) — **1.0.0** stable-contract band (**#32–#34**, **#42**); PR order and success criteria.
+
+### Changed
+
+- **SPEC:** document that hooks / **`custom:`** / shell **`release.*`** scripts always run as **`/bin/sh <path>`** (shebang ignored); must be POSIX-safe (Ubuntu **dash** vs bashisms such as **`pipefail`**).
+
 ### Fixed
 
 - **CLI tests:** drop `t.Parallel` from completion tests that call `newRootCmd` — global Viper/`cobra.OnInitialize` raced under CI `go test -race`.

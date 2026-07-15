@@ -204,6 +204,8 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 
 ## 1.0.0 (future) — stable contract and platform depth
 
+**Implementation plan:** [docs/plan-1.0.0.md](docs/plan-1.0.0.md).
+
 Major when YAML **`schema_version`**, executor behavior, and step types are stable enough for long-term compatibility promises.
 
 | # | Item | Status |
