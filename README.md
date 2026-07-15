@@ -253,6 +253,7 @@ For **bastion**, **cron**, **CI**, and **live** patterns: **[kzero-selfhosted](h
 | Goal | Start here |
 |------|------------|
 | **Full platform reset** (truncate, PVC, Helm SDK, probe) | [kzero-selfhosted/run/examples/full-reset-example/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/full-reset-example) · [validation runbook](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/full-reset-validation.md) |
+| **PVC / StatefulSet data patterns** | [pvc-statefulset-data-strategy.md](docs/examples/pvc-statefulset-data-strategy.md) — scale→wait→`pvc.*`, wipe, snapshot/`custom:`, init |
 | **Bastion / cron / systemd** | [kzero-selfhosted/run/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run) — [standalone](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/standalone/README.md), [automation & CI](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/automation-and-pipelines.md) |
 | **Network loss during live reset** | [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md) — **`run.api_watchdog`**, notify **`[ERR]`**, phase-boundary preflight (**v0.8.0**); supplemental mitigations; [plan-0.8.x.md](docs/plan-0.8.x.md) |
 | **`docker run`** (analyze / version; live limits) | [run/docker/README.md](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docker/README.md) |

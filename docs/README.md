@@ -6,7 +6,7 @@
 | [scope-and-alternatives.md](scope-and-alternatives.md) | **When to use kzero** vs Helm, GitOps, scripts, provisioning, DR (by scope) |
 | [../SPECIFICATIONS.md](../SPECIFICATIONS.md) | Behavior contract, config shape, and TDD baseline |
 | [../ROADMAP.md](../ROADMAP.md) | Prioritized planned work and known gaps (in-repo source of truth) |
-| [plan-1.0.0.md](plan-1.0.0.md) | **Draft** — stable contract (**#32–#34**, **#42**); after **v0.9.2** |
+| [plan-1.0.0.md](plan-1.0.0.md) | **In progress** — **#33** done; remaining **#42** / **#34** / **#32** |
 | [plan-1.1.0.md](plan-1.1.0.md) | **Draft** — post-1.0 bounded: hook interpreter, **#29**, resume-from-step |
 | [plan-0.9.x.md](plan-0.9.x.md) | **Done** — **v0.9.0**–**v0.9.2** bastion-first + stretch (**#43–#53**) |
 | [plan-0.6.0.md](plan-0.6.0.md) | Implementation plan for **v0.6.0** (notify, preflight, verify, infra probe, slog) |
@@ -15,6 +15,7 @@
 | [demo-kzero.yaml](demo-kzero.yaml) | Minimal YAML used by [demo.tape](demo.tape) (VHS) |
 | [demo.tape](demo.tape) | VHS tape to record [demo.gif](demo.gif) |
 | [examples/pipeline-order-and-integrity.md](examples/pipeline-order-and-integrity.md) | Ordered `down` steps, `wait_for_ready` limits, per-step `post` examples |
+| [examples/pvc-statefulset-data-strategy.md](examples/pvc-statefulset-data-strategy.md) | PVC / StatefulSet data patterns: scale→wait→delete, wipe, snapshot/`custom:`, init |
 | [examples/notifications.md](examples/notifications.md) | **notify** channels, `kzero notify test`, env overrides, live vs dry-run |
 | [examples/pipeline-network-loss.md](examples/pipeline-network-loss.md) | Long live **`reset`** on bastions: two-phase outage pattern, **v0.8.0** engine features + supplemental mitigations |
 | [examples/infra-probe.md](examples/infra-probe.md) | **`infra_probe`** schema, checks, gate (`kzero probe`) |

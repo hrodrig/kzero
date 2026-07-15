@@ -191,6 +191,8 @@ Compact step references (`<kind>.<namespace>/<name>`) in `pipelines.down` and `p
 | `pvc` | delete claim via API (`DeletePropagationBackground`, ignore-not-found) | same (delete only; typically used on **`down`** after scale-down) |
 | `exec` | run `command` in pod container via API exec subresource | same |
 
+**PVC / StatefulSet data reset** is composed from these primitives (scale → wait → `pvc.*`, in-place `exec`, snapshot/`custom:`, init after empty volumes). Patterns: [docs/examples/pvc-statefulset-data-strategy.md](docs/examples/pvc-statefulset-data-strategy.md). kzero does **not** add snapshot or CSI backup step kinds in v1.
+
 `daemonset` is **not** a built-in kind in v1 because the Kubernetes API server does not expose a `/scale` subresource for DaemonSet, so `kubectl scale daemonset/...` returns `Error from server (NotFound): the server could not find the requested resource`. Configs that reference `daemonset.<ns>/<name>` are rejected at parse time.
 
 To drain DaemonSet pods as part of a pipeline, use a `custom:` step that patches a `nodeSelector` no node satisfies, and reverses it on `up`:
