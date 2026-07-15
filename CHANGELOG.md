@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Notifications cookbook:** exit-code / **`require_delivery`** guidance; **`pipeline.stalled`** in events; fix bad **`--event error`** → **`pipeline.error`**; sample YAML shows **`require_delivery`**.
 - **`make help`:** sectional colored output (pgwd-style); **`NO_COLOR=1`** disables ANSI.
 - **SPEC:** contract index band **1.0.0**; **`require_delivery`** covers **`pipeline.error`** and **`pipeline.stalled`**.
+- **README:** 1.0.0 develop highlights; exit codes; `doctor`/`completion`; product kind CI; notify `require_delivery` / stalled; default native in config table.
 
 ### Fixed
 

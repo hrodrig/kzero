@@ -36,7 +36,7 @@ Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (an
 
 **Releases** ([GitHub Releases](https://github.com/hrodrig/kzero/releases)) ship **binaries**, **`.deb`** / **`.rpm`**, **`ghcr.io/hrodrig/kzero`**, and **Homebrew**. **Supply chain (v0.7.0+):** SPDX / CycloneDX SBOMs + Cosign on **`checksums.txt`** and GHCR — see [verify Cosign](#verify-cosign-v070). No Helm charts as release artifacts.
 
-Behavior and acceptance: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:** **v0.9.2** (doctor, completion, **`kubectl-kzero`**, retry jitter, JSON Schema, docs polish); **v0.9.1** (security patch); **v0.9.0** (graceful shutdown, `require_delivery`, E2E smoke, watchdog tests, SPEC index) — [CHANGELOG.md](CHANGELOG.md). Mitigations: [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). Diagrams: **[docs/diagrams.md](docs/diagrams.md)**.
+Behavior and acceptance: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:** **v0.9.2** (doctor, completion, **`kubectl-kzero`**, retry jitter, JSON Schema, docs polish); **v0.9.1** / **v0.9.0** (graceful shutdown, `require_delivery`, E2E smoke, watchdog tests, SPEC index). **1.0.0 (develop / next tag):** default **`run.execution: native`** (**#32**), process exit codes **0–4** (**#42**), product kind CI (**#34**), PVC/StatefulSet cookbook (**#33**) — [CHANGELOG.md](CHANGELOG.md) **[Unreleased]**. Mitigations: [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). Diagrams: **[docs/diagrams.md](docs/diagrams.md)**.
 
 ## Table of contents
 
@@ -65,7 +65,8 @@ Behavior and acceptance: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:*
 ## Features
 
 - **Configuration-first** (`schema_version: "1.0"`): pipelines and hooks live in config, not hardcoded playbooks.
-- **Commands**: `analyze`, `target`, `notify test`, `verify`, `probe`, `down`, `up`, `reset`, `version` — global **`--log-format text|json`** and **`--log-level`** on pipeline output (see SPEC). (`reset` = full `down` then `up`; if `down` fails, `up` does not run). Every pipeline command prints a **`Kubernetes target:`** block (`started_at`, optional `client_id`, context, cluster, API server, kubeconfig path) before work starts. **`kzero notify test`** verifies outbound **`notify.*`** channels without running a pipeline. **`analyze`** optionally checks the API that each `deployment` / `statefulset` in the plan exists when kubeconfig loads.
+- **Commands**: `analyze`, `doctor`, `target`, `notify test`, `verify`, `probe`, `down`, `up`, `reset`, `completion`, `version` — global **`--log-format text|json`** and **`--log-level`** on pipeline output (see SPEC). (`reset` = full `down` then `up`; if `down` fails, `up` does not run). Every pipeline command prints a **`Kubernetes target:`** block (`started_at`, optional `client_id`, context, cluster, API server, kubeconfig path) before work starts. **`kzero notify test`** verifies outbound **`notify.*`** channels without running a pipeline. **`analyze`** optionally checks the API that each `deployment` / `statefulset` / **`pvc`** / **`exec`** in the plan exists when kubeconfig loads.
+- **Exit codes (stable for wrappers):** **0** success; **1** config; **2** Kubernetes; **3** executor / pipeline abort; **4** notify delivery (`require_delivery` or **`notify test`** POST fail) — [SPEC §5](SPECIFICATIONS.md#process-exit-codes-42).
 - **Phase hooks**: `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error` (shell script paths).
 - **Per-step hooks** (`pre` / `post`): optional shell scripts for a **single** pipeline step—run immediately before and after that step’s main action; **`post` runs only if the main action succeeds**.
 - **Step types**: compact refs (`deployment.ns/name`, `statefulset.ns/name`, `pvc.ns/claim`, `exec.ns/pod`), `release.ns/name` (**Helm SDK** chart manifest **`<release>.yaml`** or legacy **`<release>.sh`** under `helm.workspace`), and `custom: ./script.sh` (with optional sibling `pre` / `post` keys on the same YAML mapping). DaemonSet is **not** supported as a built-in kind because `kubectl scale` rejects it (no `/scale` subresource); use a `custom:` step with `kubectl patch` to set a `nodeSelector` that drains the pods.
@@ -194,7 +195,7 @@ kzero doctor --config ./kzero.yaml
 kzero doctor --config ./kzero.yaml --output json
 ```
 
-Checks config load, **`kubectl`/`helm`** on **`PATH`** (when **`run.execution`** is **`shell`** or **`auto`**), API reachability, pipeline workload refs, and SelfSubjectAccessReview RBAC hints. Errors → non-zero exit; warnings allowed with exit 0.
+Checks config load, **`kubectl`/`helm`** on **`PATH`** (when **`run.execution`** is **`shell`** or **`auto`**; skipped under default **`native`**), API reachability, pipeline workload refs, and SelfSubjectAccessReview RBAC hints. Config fail → exit **1**; check errors → exit **2**; warnings allowed with exit **0**.
 
 [↑ Back to top](#top)
 
@@ -255,9 +256,9 @@ For **bastion**, **cron**, **CI**, and **live** patterns: **[kzero-selfhosted](h
 | **Full platform reset** (truncate, PVC, Helm SDK, probe) | [kzero-selfhosted/run/examples/full-reset-example/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/full-reset-example) · [validation runbook](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/full-reset-validation.md) |
 | **PVC / StatefulSet data patterns** | [pvc-statefulset-data-strategy.md](docs/examples/pvc-statefulset-data-strategy.md) — scale→wait→`pvc.*`, wipe, snapshot/`custom:`, init |
 | **Bastion / cron / systemd** | [kzero-selfhosted/run/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run) — [standalone](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/standalone/README.md), [automation & CI](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/automation-and-pipelines.md) |
-| **Network loss during live reset** | [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md) — **`run.api_watchdog`**, notify **`[ERR]`**, phase-boundary preflight (**v0.8.0**); supplemental mitigations; [plan-0.8.x.md](docs/plan-0.8.x.md) |
+| **Network loss during live reset** | [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md) — **`run.api_watchdog`**, notify **`[ERR]`** / **`require_delivery`**, phase-boundary preflight; supplemental mitigations |
 | **`docker run`** (analyze / version; live limits) | [run/docker/README.md](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docker/README.md) |
-| **kind e2e** smoke | [testing/kind/README.md](https://github.com/hrodrig/kzero-selfhosted/blob/main/testing/kind/README.md) |
+| **kind e2e** (product CI) | [testing/kind/](testing/kind/) — GHA **`integration-kind`**; full lab: [kzero-selfhosted/testing/kind](https://github.com/hrodrig/kzero-selfhosted/tree/main/testing/kind) |
 | **Reference hooks & probe assets** | [run/examples/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples) |
 
 Install the **CLI** here ([Install or update](#install-or-update)); run it from a host with **kubeconfig** and the tools your YAML requires (**`kubectl`** / **`helm`** on the shell path; **`native`** reduces host dependencies — see [Requirements](#requirements)).
@@ -342,7 +343,7 @@ Full schema, validation, and acceptance criteria: **[SPECIFICATIONS.md](SPECIFIC
 | **`helm`** | **`workspace`**: directory of **`<release>.yaml`** Helm SDK chart manifests (recommended with **`run.execution: native`**) and/or legacy **`<release>.sh`** scripts; optional **`registries`** for OCI login. |
 | **`command`** | Optional paths for **`kubectl`** and **`helm`**. |
 | **`hooks`** | Optional global scripts: **`pre-down`**, **`post-down`**, **`pre-up`**, **`post-up`**, **`on-error`**. |
-| **`notify`** | Optional outbound alerts: **`slack`**, **`discord`**, **`teams`**, **`pagerduty`**, **`webhook`**; fires on pipeline start/success/error in **`live`** mode. Test with **`kzero notify test`** (see [docs/examples/notifications.md](docs/examples/notifications.md)). |
+| **`notify`** | Optional outbound alerts: **`slack`**, **`discord`**, **`teams`**, **`pagerduty`**, **`webhook`**; **`live`** events **`pipeline.start`**, **`success`**, **`error`**, **`stalled`**. Optional **`require_delivery`** (fail run with exit **4** if error/stalled POST fails). Test with **`kzero notify test`** — [notifications.md](docs/examples/notifications.md). |
 | **`pipelines`** | See [`pipelines`](#pipelines) below. |
 | **`retry`** | See [`retry`](#retry) below. |
 | **`run`** | See [`run`](#run) below. |
@@ -352,7 +353,7 @@ Full schema, validation, and acceptance criteria: **[SPECIFICATIONS.md](SPECIFIC
 | Key | Purpose |
 |-----|---------|
 | **`mode`** | **`dry-run`** (log plan only) or **`live`** (execute steps). Required. |
-| **`execution`** | **`shell`**, **`native`**, or **`auto`** — see [Features](#features) and SPEC. |
+| **`execution`** | **`native`** (default when omitted), **`shell`** (opt-in), or **`auto`** — see [Features](#features) and SPEC. |
 | **`timeout`** | Wall-clock budget for a full **`down`**, **`up`**, or **`reset`** (Go duration, e.g. **`25m`**). |
 | **`kubeconfig`** | Path passed to **`kubectl`** / **`helm`**; empty uses the process environment / default kubeconfig search. |
 | **`operation_timeout`** | Per-operation ceiling (e.g. **`45s`**) for individual kubectl/helm calls inside a step. |
@@ -472,7 +473,7 @@ pipelines:
         pre: ./hooks/pre-scale-purge.sh
 ```
 
-Here `pre-scale-purge.sh` runs **before** `kubectl scale` for `job-queue` (so the pod can still accept `kubectl exec` or similar). Optional `post` runs **after** a successful scale (or other main action for that step).
+Here `pre-scale-purge.sh` runs **before** the scale action for `job-queue` (**`native`** API or **`shell`** `kubectl scale` — so the pod can still accept exec). Optional `post` runs **after** a successful scale (or other main action for that step).
 
 ## <a id="pipeline-order-and-integrity-on-down"></a>Pipeline order and integrity on `down`
 
