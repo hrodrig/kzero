@@ -131,6 +131,7 @@ pipelines:
     - "not-valid"
 run:
   mode: dry-run
+  execution: shell
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}

@@ -26,6 +26,7 @@ pipelines:
   up: []
 run:
   mode: "dry-run"
+  execution: shell
 notify:
   webhook:
     enabled: true
@@ -59,6 +60,7 @@ pipelines:
   up: []
 run:
   mode: "dry-run"
+  execution: shell
 notify:
   slack:
     enabled: false

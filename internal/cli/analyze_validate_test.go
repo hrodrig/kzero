@@ -35,6 +35,7 @@ pipelines:
     - deployment.ns/app
 run:
   mode: "dry-run"
+  execution: shell
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -69,6 +70,7 @@ pipelines:
     - deployment.ns/ghost
 run:
   mode: "dry-run"
+  execution: shell
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -140,6 +142,7 @@ pipelines:
     - pvc.db/data-0
 run:
   mode: "dry-run"
+  execution: shell
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -180,6 +183,7 @@ pipelines:
         command: ["psql", "-c", "select 1"]
 run:
   mode: "dry-run"
+  execution: shell
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}

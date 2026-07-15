@@ -25,7 +25,7 @@ func TestFinishWithError_requireDeliveryFailsOnNotifyError(t *testing.T) {
 
 	req := true
 	cfg := &config.Config{
-		Run: config.RunConfig{Mode: "live"},
+		Run: config.RunConfig{Mode: "live", Execution: "shell"},
 		Notify: config.NotifyConfig{
 			RequireDelivery: &req,
 			Webhook: config.GenericWebhookConfig{
@@ -76,7 +76,7 @@ func TestFinishWithError_requireDeliveryFailsOnStalledNotify(t *testing.T) {
 
 	req := true
 	cfg := &config.Config{
-		Run: config.RunConfig{Mode: "live"},
+		Run: config.RunConfig{Mode: "live", Execution: "shell"},
 		Notify: config.NotifyConfig{
 			RequireDelivery: &req,
 			Webhook: config.GenericWebhookConfig{
@@ -118,7 +118,7 @@ func TestFinishWithError_notifyFailureWithoutRequireDeliveryReturnsPipelineErr(t
 
 	req := false
 	cfg := &config.Config{
-		Run: config.RunConfig{Mode: "live"},
+		Run: config.RunConfig{Mode: "live", Execution: "shell"},
 		Notify: config.NotifyConfig{
 			RequireDelivery: &req,
 			Webhook: config.GenericWebhookConfig{

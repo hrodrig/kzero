@@ -32,6 +32,7 @@ infra_probe:
       - release.probe-ns/probe-storage
 run:
   mode: dry-run
+  execution: shell
 `
 	if err := os.WriteFile(cfgPath, []byte(cfg), 0o644); err != nil {
 		t.Fatal(err)

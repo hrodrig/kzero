@@ -6,7 +6,7 @@
 | [scope-and-alternatives.md](scope-and-alternatives.md) | **When to use kzero** vs Helm, GitOps, scripts, provisioning, DR (by scope) |
 | [../SPECIFICATIONS.md](../SPECIFICATIONS.md) | Behavior contract, config shape, and TDD baseline |
 | [../ROADMAP.md](../ROADMAP.md) | Prioritized planned work and known gaps (in-repo source of truth) |
-| [plan-1.0.0.md](plan-1.0.0.md) | **In progress** — **#33**, **#42**, **#34** done; remaining **#32** |
+| [plan-1.0.0.md](plan-1.0.0.md) | **Gates complete** — **#32–#34**, **#42**; await validate → tag |
 | [plan-1.1.0.md](plan-1.1.0.md) | **Draft** — post-1.0 bounded: hook interpreter, **#29**, resume-from-step |
 | [plan-0.9.x.md](plan-0.9.x.md) | **Done** — **v0.9.0**–**v0.9.2** bastion-first + stretch (**#43–#53**) |
 | [plan-0.6.0.md](plan-0.6.0.md) | Implementation plan for **v0.6.0** (notify, preflight, verify, infra probe, slog) |

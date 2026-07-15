@@ -136,12 +136,12 @@ This subsection documents **observable behavior in the codebase today** (strictl
 
 ### Workload execution backend (`run.execution`)
 
-When `run.mode` is `live`, `deployment` and `statefulset` steps use a **Workload** executor selected by `run.execution` (default **`shell`** if omitted):
+When `run.mode` is `live`, `deployment` and `statefulset` steps use a **Workload** executor selected by `run.execution` (default **`native`** if omitted — **1.0.0 #32**; set **`shell`** explicitly for kubectl/helm subprocesses):
 
 | Value | Behavior |
 |-------|----------|
-| `shell` | `kubectl scale` and `kubectl rollout status` (subprocess; honors `command.kubectl` and `KUBECONFIG` from `run.kubeconfig`). |
-| `native` | `k8s.io/client-go`: update workload replica count and poll readiness (no `kubectl` for scale/wait). Requires a valid kubeconfig / in-cluster config. **`release.*`** steps use **Helm SDK** (`helm.sh/helm/v3`) instead of shell **`helm`** / **`.sh`** scripts. **`pvc.*`** steps delete claims via the API (always native; ignores `run.execution`). **`exec.*`** steps run commands in a pod/container via **remotecommand** (always native). |
+| `shell` | `kubectl scale` and `kubectl rollout status` (subprocess; honors `command.kubectl` and `KUBECONFIG` from `run.kubeconfig`). **Opt-in** after **1.0.0**. |
+| `native` | `k8s.io/client-go`: update workload replica count and poll readiness (no `kubectl` for scale/wait). Requires a valid kubeconfig / in-cluster config. **`release.*`** steps use **Helm SDK** (`helm.sh/helm/v3`) instead of shell **`helm`** / **`.sh`** scripts. **`pvc.*`** steps delete claims via the API (always native; ignores `run.execution`). **`exec.*`** steps run commands in a pod/container via **remotecommand** (always native). **Default** when `run.execution` is omitted. |
 | `auto` | Try **native** (workloads + Helm SDK for releases); on client init failure, fall back to **shell** and print a one-line notice on the run output stream. |
 
 Hooks, `custom:` steps, and per-step `pre`/`post` always use `/bin/sh` regardless of `run.execution`.
@@ -416,7 +416,7 @@ Operator **preflight without mutations** (ROADMAP **#49**). Complements **`analy
 | Check | When | Pass / fail |
 |-------|------|-------------|
 | **config** | Always | Config file loads (`schema_version`, pipelines, `run`, …). Invalid YAML → command fails before other checks. |
-| **binaries.kubectl** | **`run.execution`** is **`shell`** or **`auto`** (default **`shell`**) | **`command.kubectl`** or **`kubectl`** on **`PATH`**. Skipped with OK note when **`native`**. |
+| **binaries.kubectl** | **`run.execution`** is **`shell`** or **`auto`** (default when omitted is **`native`**) | **`command.kubectl`** or **`kubectl`** on **`PATH`**. Skipped with OK note when **`native`**. |
 | **binaries.helm** | Same execution modes **and** at least one **`release.*`** step | **`command.helm`** or **`helm`** on **`PATH`**. Missing → **error** for **`shell`**, **warn** for **`auto`**. |
 | **kubernetes.api** | Always after config | Same handshake as live preflight (`Discovery().ServerVersion()` via **`run.kubeconfig`** / default rules). |
 | **kubernetes.workloads** | Pipeline lists **`deployment`** / **`statefulset`** / **`pvc`** / **`exec`** refs | Same read-only checks as **`analyze`** cluster validation (object exists; scalable workloads have **`spec.replicas`** set). |

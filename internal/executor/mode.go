@@ -13,14 +13,16 @@ const (
 	ExecutionAuto   = "auto"
 )
 
-// ExecutionMode returns the effective execution backend from cfg (default shell).
+// ExecutionMode returns the effective execution backend from cfg.
+// Empty or omitted execution matches load-time default (#32): native.
+// nil cfg keeps shell (no config — safer for misuse paths that expect kubectl helpers).
 func ExecutionMode(cfg *config.Config) string {
 	if cfg == nil {
 		return ExecutionShell
 	}
 	e := strings.TrimSpace(cfg.Run.Execution)
 	if e == "" {
-		return ExecutionShell
+		return ExecutionNative
 	}
 	return e
 }

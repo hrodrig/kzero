@@ -12,7 +12,7 @@ func TestRunSteps_orderAndPhases(t *testing.T) {
 	rec := &RecordingRunner{}
 	eng := &Engine{Runner: rec}
 	cfg := &config.Config{
-		Run: config.RunConfig{Mode: "dry-run"},
+		Run: config.RunConfig{Mode: "dry-run", Execution: "shell"},
 	}
 	up := []config.PipelineStep{
 		{Ref: "deployment.ns/a", Type: "deployment", Namespace: "ns", Name: "a"},

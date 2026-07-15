@@ -63,6 +63,7 @@ func TestRunDown_apiWatchdogTripsDuringBlockingStep(t *testing.T) {
 	kubeconfig := writeAPIServerKubeconfig(t, srv.URL)
 	cfg := &config.Config{
 		Run: config.RunConfig{
+			Execution: "shell",
 			Mode:       "live",
 			Kubeconfig: kubeconfig,
 			APIWatchdog: &config.APIWatchdogConfig{
@@ -136,6 +137,7 @@ func TestStartAPIObserver_tripsWithFakeAPIServer(t *testing.T) {
 
 	cfg := &config.Config{
 		Run: config.RunConfig{
+			Execution: "shell",
 			Mode:       "live",
 			Kubeconfig: writeAPIServerKubeconfig(t, srv.URL),
 			APIWatchdog: &config.APIWatchdogConfig{

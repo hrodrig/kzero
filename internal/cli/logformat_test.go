@@ -20,6 +20,7 @@ pipelines:
   up: []
 run:
   mode: "dry-run"
+  execution: shell
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -63,6 +64,7 @@ pipelines:
   up: []
 run:
   mode: "dry-run"
+  execution: shell
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}

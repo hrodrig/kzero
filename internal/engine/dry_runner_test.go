@@ -13,7 +13,7 @@ func TestDryRunner_CustomScriptIsPlannedOnly(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run", Execution: "shell"}}
 	r := &DryRunner{Log: testEmitter(&buf)}
 	step := config.PipelineStep{Custom: "./hooks/x.sh"}
 
@@ -31,7 +31,7 @@ func TestDryRunner_LogIncludesClientID(t *testing.T) {
 
 	var buf bytes.Buffer
 	cfg := &config.Config{
-		Run:    config.RunConfig{Mode: "dry-run"},
+		Run:    config.RunConfig{Mode: "dry-run", Execution: "shell"},
 		Client: config.ClientConfig{ID: "lab"},
 	}
 	r := &DryRunner{Log: testEmitter(&buf)}
@@ -50,7 +50,7 @@ func TestDryRunner_RunHook_skipsEmptyAndHonoursCancel(t *testing.T) {
 
 	var buf bytes.Buffer
 	r := &DryRunner{Log: testEmitter(&buf)}
-	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run", Execution: "shell"}}
 
 	if err := r.RunHook(context.Background(), cfg, "pre", ""); err != nil {
 		t.Fatal(err)
@@ -71,7 +71,7 @@ func TestDryRunner_ReleaseDownPlansHelmUninstall(t *testing.T) {
 
 	var buf bytes.Buffer
 	r := &DryRunner{Log: testEmitter(&buf)}
-	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run", Execution: "shell"}}
 	step := config.PipelineStep{
 		Ref:       "release.monitoring/kube-prometheus-stack",
 		Type:      "release",
@@ -114,7 +114,7 @@ func TestDryRunner_PVCDeletePlan(t *testing.T) {
 
 	var buf bytes.Buffer
 	r := &DryRunner{Log: testEmitter(&buf)}
-	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run", Execution: "shell"}}
 	step := config.PipelineStep{
 		Ref: "pvc.database/data-postgresql-0", Type: "pvc",
 		Namespace: "database", Name: "data-postgresql-0",
@@ -132,7 +132,7 @@ func TestDryRunner_ExecPlan(t *testing.T) {
 
 	var buf bytes.Buffer
 	r := &DryRunner{Log: testEmitter(&buf)}
-	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "dry-run", Execution: "shell"}}
 	step := config.PipelineStep{
 		Ref: "exec.database/postgresql-0", Type: "exec",
 		Namespace: "database", Name: "postgresql-0",

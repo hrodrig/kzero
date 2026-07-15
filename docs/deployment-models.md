@@ -41,7 +41,7 @@ kzero is built for **maintenance and recovery**: ordered **`down`**, **`up`**, a
 | **Hosts** | Dedicated bastion, management VM, CI runner with kubeconfig, or admin laptop on a stable network path to the API |
 | **Scheduling** | **cron**, **systemd timer**, or manual invocation — see [kzero-selfhosted/run/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run). Optional: **`kubectl kzero …`** when **`kubectl-kzero`** is on **`PATH`** (**0.9.x #52**). |
 | **Credentials** | **`run.kubeconfig`** pointing at a file on the host (or **`KUBECONFIG`**) |
-| **Execution** | **`run.execution: shell`** (default) or **`native`** / **`auto`** — native reduces host **`kubectl`** / **`helm`** dependencies on the **same bastion** |
+| **Execution** | **`run.execution: native`** (default when omitted) or **`auto`** / opt-in **`shell`** — native reduces host **`kubectl`** / **`helm`** dependencies on the **same bastion** |
 | **Destructive work** | **`reset`**, **`down`** with **`pvc`**, Helm uninstall, long **`helm --wait`** — **always** out-of-band |
 | **Audit** | Tee stdout/stderr to disk ([`run-kzero`](https://github.com/hrodrig/kzero-selfhosted/blob/develop/run/examples/full-reset-example/run-kzero)); enable **`run.api_watchdog`** and **`notify.*`** for live runs |
 | **Examples** | [full-reset-example](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/full-reset-example), [pipeline-network-loss.md](examples/pipeline-network-loss.md) |

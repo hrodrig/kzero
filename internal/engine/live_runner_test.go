@@ -27,7 +27,7 @@ func TestLiveRunner_ScaleDownDeployment(t *testing.T) {
 		},
 	}
 	cfg := &config.Config{
-		Run:     config.RunConfig{Mode: "live", Kubeconfig: "/tmp/kube"},
+		Run:     config.RunConfig{Mode: "live", Kubeconfig: "/tmp/kube", Execution: "shell"},
 		Command: config.CommandConfig{Kubectl: "/bin/kubectl"},
 	}
 	step := config.PipelineStep{
@@ -62,7 +62,7 @@ func TestLiveRunner_ScaleUpDefaultReplicas(t *testing.T) {
 			return nil, nil
 		},
 	}
-	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}, Command: config.CommandConfig{Kubectl: "kubectl"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live", Execution: "shell"}, Command: config.CommandConfig{Kubectl: "kubectl"}}
 	step := config.PipelineStep{Ref: "deployment.ns/app", Type: "deployment", Namespace: "ns", Name: "app"}
 
 	if err := r.RunPipelineStep(context.Background(), cfg, PhaseUp, 0, step); err != nil {
@@ -83,7 +83,7 @@ func TestLiveRunner_RolloutStatusWhenWaitForReady(t *testing.T) {
 			return nil, nil
 		},
 	}
-	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}, Command: config.CommandConfig{Kubectl: "kubectl"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live", Execution: "shell"}, Command: config.CommandConfig{Kubectl: "kubectl"}}
 	three := 3
 	step := config.PipelineStep{
 		Ref:          "statefulset.db/pg",
@@ -138,7 +138,7 @@ func TestLiveRunner_ReleaseDownHelmUninstall(t *testing.T) {
 		},
 	}
 	cfg := &config.Config{
-		Run:  config.RunConfig{Mode: "live"},
+		Run:  config.RunConfig{Mode: "live", Execution: "shell"},
 		Helm: config.HelmConfig{Workspace: dir},
 	}
 	step := config.PipelineStep{
@@ -182,7 +182,7 @@ func TestLiveRunner_ReleaseUpRunsInstallScript(t *testing.T) {
 		},
 	}
 	cfg := &config.Config{
-		Run:  config.RunConfig{Mode: "live"},
+		Run:  config.RunConfig{Mode: "live", Execution: "shell"},
 		Helm: config.HelmConfig{Workspace: dir},
 	}
 	step := config.PipelineStep{
@@ -228,7 +228,7 @@ func TestLiveRunner_PerStepPreRunsBeforeKubectlWithStepEnv(t *testing.T) {
 		},
 	}
 	cfg := &config.Config{
-		Run:     config.RunConfig{Mode: "live", Kubeconfig: "/tmp/kube"},
+		Run:     config.RunConfig{Mode: "live", Kubeconfig: "/tmp/kube", Execution: "shell"},
 		Command: config.CommandConfig{Kubectl: "/bin/kubectl"},
 	}
 	step := config.PipelineStep{
@@ -284,7 +284,7 @@ func TestLiveRunner_ReleasePostHookGetsReleaseEnv(t *testing.T) {
 		},
 	}
 	cfg := &config.Config{
-		Run:  config.RunConfig{Mode: "live"},
+		Run:  config.RunConfig{Mode: "live", Execution: "shell"},
 		Helm: config.HelmConfig{Workspace: dir},
 	}
 	step := config.PipelineStep{
@@ -321,7 +321,7 @@ func TestLiveRunner_LogsClientIDOnScale(t *testing.T) {
 	}
 	cfg := &config.Config{
 		Client:  config.ClientConfig{ID: "audit-runner"},
-		Run:     config.RunConfig{Mode: "live"},
+		Run:     config.RunConfig{Mode: "live", Execution: "shell"},
 		Command: config.CommandConfig{Kubectl: "kubectl"},
 	}
 	step := config.PipelineStep{
@@ -429,7 +429,7 @@ func TestLiveRunner_LogsClientIDOnHelmUninstall(t *testing.T) {
 	}
 	cfg := &config.Config{
 		Client:  config.ClientConfig{ID: "audit-runner"},
-		Run:     config.RunConfig{Mode: "live"},
+		Run:     config.RunConfig{Mode: "live", Execution: "shell"},
 		Command: config.CommandConfig{Helm: "helm"},
 	}
 	step := config.PipelineStep{
@@ -462,7 +462,7 @@ func TestLiveRunner_HookEnvIncludesClientID(t *testing.T) {
 	}
 	cfg := &config.Config{
 		Client: config.ClientConfig{ID: "pilot-ns"},
-		Run:    config.RunConfig{Mode: "live"},
+		Run:    config.RunConfig{Mode: "live", Execution: "shell"},
 	}
 	if err := r.RunHook(context.Background(), cfg, "pre-down", script); err != nil {
 		t.Fatal(err)
@@ -481,7 +481,7 @@ func TestLiveRunner_RunHook_emptyPathNoOp(t *testing.T) {
 			return nil, nil
 		},
 	}
-	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live", Execution: "shell"}}
 	if err := r.RunHook(context.Background(), cfg, "pre-down", ""); err != nil {
 		t.Fatal(err)
 	}
@@ -503,7 +503,7 @@ func TestLiveRunner_RunHook_invokesSh(t *testing.T) {
 			return []byte("out\n"), nil
 		},
 	}
-	cfg := &config.Config{Run: config.RunConfig{Mode: "live", Kubeconfig: "/tmp/k"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live", Kubeconfig: "/tmp/k", Execution: "shell"}}
 	if err := r.RunHook(context.Background(), cfg, "pre-down", script); err != nil {
 		t.Fatal(err)
 	}
@@ -530,7 +530,7 @@ func TestLiveRunner_RunMainStep_customScript(t *testing.T) {
 			return nil, nil
 		},
 	}
-	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live", Execution: "shell"}}
 	step := config.PipelineStep{Custom: script}
 
 	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 2, step); err != nil {
@@ -551,7 +551,7 @@ func TestLiveRunner_RunMainStep_emptyRefErrors(t *testing.T) {
 	t.Parallel()
 
 	r := &LiveRunner{}
-	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live", Execution: "shell"}}
 	step := config.PipelineStep{Type: "deployment", Namespace: "ns", Name: "x"}
 
 	err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 3, step)
@@ -564,7 +564,7 @@ func TestLiveRunner_RunMainStep_unsupportedType(t *testing.T) {
 	t.Parallel()
 
 	r := &LiveRunner{}
-	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live", Execution: "shell"}}
 	step := config.PipelineStep{Ref: "job.batch/x", Type: "job", Namespace: "batch", Name: "x"}
 
 	err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step)
@@ -586,7 +586,7 @@ func TestLiveRunner_DaemonSetUnsupported(t *testing.T) {
 			return nil, nil
 		},
 	}
-	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}, Command: config.CommandConfig{Kubectl: "kubectl"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live", Execution: "shell"}, Command: config.CommandConfig{Kubectl: "kubectl"}}
 	step := config.PipelineStep{
 		Ref:       "daemonset.kube-system/fluent-bit",
 		Type:      "daemonset",
@@ -620,7 +620,7 @@ func TestLiveRunner_noEnvPassthroughHook(t *testing.T) {
 		},
 	}
 	cfg := &config.Config{
-		Run:     config.RunConfig{Mode: "live", NoEnvPassthrough: true},
+		Run:     config.RunConfig{Mode: "live", NoEnvPassthrough: true, Execution: "shell"},
 		Command: config.CommandConfig{Kubectl: "/bin/kubectl"},
 	}
 	step := config.PipelineStep{
@@ -656,7 +656,7 @@ func TestLiveRunner_PVCDelete(t *testing.T) {
 		},
 		Log: testEmitter(&buf),
 	}
-	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live", Execution: "shell"}}
 	step := config.PipelineStep{
 		Ref: "pvc.database/data-postgresql-0", Type: "pvc",
 		Namespace: "database", Name: "data-postgresql-0",
@@ -682,7 +682,7 @@ func TestLiveRunner_pvcFor_caches(t *testing.T) {
 
 	kc := cluster.TestKubeconfigPath(t)
 	r := &LiveRunner{}
-	cfg := &config.Config{Run: config.RunConfig{Kubeconfig: kc}}
+	cfg := &config.Config{Run: config.RunConfig{Kubeconfig: kc, Execution: "shell"}}
 	p1, err := r.pvcFor(cfg)
 	if err != nil {
 		t.Fatalf("pvcFor: %v", err)
@@ -713,7 +713,7 @@ func TestLiveRunner_PodExec(t *testing.T) {
 			},
 		},
 	}
-	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live", Execution: "shell"}}
 	step := config.PipelineStep{
 		Ref: "exec.database/postgresql-0", Type: "exec",
 		Namespace: "database", Name: "postgresql-0",
@@ -742,7 +742,7 @@ func TestLiveRunner_PodExecFailure(t *testing.T) {
 			},
 		},
 	}
-	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live", Execution: "shell"}}
 	step := config.PipelineStep{
 		Ref: "exec.database/postgresql-0", Type: "exec",
 		Namespace: "database", Name: "postgresql-0",
@@ -770,7 +770,7 @@ func TestLiveRunner_podExecFor_caches(t *testing.T) {
 
 	kc := cluster.TestKubeconfigPath(t)
 	r := &LiveRunner{}
-	cfg := &config.Config{Run: config.RunConfig{Kubeconfig: kc}}
+	cfg := &config.Config{Run: config.RunConfig{Kubeconfig: kc, Execution: "shell"}}
 	p1, err := r.podExecFor(cfg)
 	if err != nil {
 		t.Fatalf("podExecFor: %v", err)

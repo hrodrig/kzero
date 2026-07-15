@@ -10,5 +10,5 @@ pipelines:
         timeout: 2m
 run:
   mode: live
-  execution: native
+  # execution omitted → native (default #32)
   color: never

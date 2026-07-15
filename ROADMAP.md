@@ -15,13 +15,13 @@ The first **public** releases are **0.2.0** onward (there was no prior `1.0.x` l
 
 ### Strategic direction
 
-The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`**: `shell` (default), **`native`** (client-go scale + rollout wait), or **`auto`** (native with shell fallback).
+The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`**: **`native`** (default when omitted — client-go scale + rollout wait), **`shell`** (opt-in kubectl), or **`auto`** (native with shell fallback).
 
 **Deployment model (operator posture):** kzero **orchestrates** the cluster from **outside** it. The **recommended** production path is **out-of-band** — bastion, management VM, or cron on a host with **kubeconfig** — especially for destructive **`down`**, **`reset`**, and recovery when API or network reliability is uncertain. **In-cluster Job/CronJob** is **supported** (empty **`run.kubeconfig`**, distroless image, **`run.execution: native`**) as **optional packaging** for non-destructive or CI/smoke work, **not** as the target architecture for platform resets. Rationale and tables: **[docs/deployment-models.md](docs/deployment-models.md)**.
 
 **Executor (single binary):** the **native** path covers **`deployment` / `statefulset`** scale and rollout wait, **`release.*`** via **Helm SDK**, **`pvc` delete**, and **`exec` in pod** — on a **bastion** this avoids host **`kubectl`** / **`helm`** while staying out-of-band. Set **`run.execution: native`** (or **`auto`**) for that path. Phase hooks and **`custom:`** shell scripts remain valid on bastions with **`/bin/sh`**; in-cluster Jobs should prefer declarative **`pvc`**, **`exec`**, and SDK **`release.*`** over host-only scripts when used at all.
 
-**Remaining gap before 1.0.0:** default **`run.execution: native`** when omitted (**#32**). PVC patterns (**#33**), exit codes (**#42**), and kind CI (**#34**) done on **`develop`**. **`release.*`** on the **shell** path still requires **`<helm.workspace>/<name>.sh`** and external **`helm`** on **`PATH`**.
+**1.0.0 gates on `develop`:** PVC patterns (**#33**), exit codes (**#42**), kind CI (**#34**), default native (**#32**). Tag after migration notes + **`make release-check`**. **`release.*`** on the **shell** path still requires **`<helm.workspace>/<name>.sh`** and external **`helm`** on **`PATH`**.
 
 **Log capture** before or after pipelines is **out of scope** for the engine—invoke external tools via phase hooks when operators need archives. **Local stdout/stderr** (and wrapper tee to disk on the **management host**) is the audit trail when notify and API are both unavailable; see [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md).
 
@@ -39,7 +39,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**); **#42** exit codes — [plan-1.0.0.md](docs/plan-1.0.0.md). |
 | **1.1.0** | Hook interpreter opt-in (**#56**); **#29** job/cronjob/CRD patch; resume-from-step (**#57**) — [plan-1.1.0.md](docs/plan-1.1.0.md). |
 
-**Shell path:** **`run.execution: shell`** (default) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native/auto** uses the Helm SDK and API primitives above.
+**Shell path:** **`run.execution: shell`** (opt-in) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native** (default) / **auto** use the Helm SDK and API primitives above.
 
 ---
 
@@ -210,7 +210,7 @@ Major when YAML **`schema_version`**, executor behavior, and step types are stab
 
 | # | Item | Status |
 |---|------|--------|
-| 32 | **Default native execution** for workload steps when `run.execution` is omitted (shell opt-in). | Pending |
+| 32 | **Default native execution** for workload steps when `run.execution` is omitted (shell opt-in). | Done (develop) |
 | 33 | **PVC / StatefulSet data strategy** documented as pipeline patterns (snapshot, wipe, init-job) beyond core delete primitives. | Done (develop, [pvc-statefulset-data-strategy.md](docs/examples/pvc-statefulset-data-strategy.md)) |
 | 34 | **Integration tests** with **kind** or envtest in CI, with documented flake policy and runtime budget. | Done (develop, `testing/kind/` + job **`integration-kind`**) |
 | 42 | **Documented exit code taxonomy** for CLI scripts/wrappers: stable codes **0–4** (`internal/exitcode`, groot-style `ExitError`); config / Kubernetes / executor / notify. Plain errors default to **1**. | Done (develop) |

@@ -19,7 +19,7 @@ func TestRunDown_dryRunPreflightBeforeHooks(t *testing.T) {
 	rec := &RecordingRunner{}
 	eng := &Engine{Runner: rec, Log: emit}
 	cfg := &config.Config{
-		Run:   config.RunConfig{Mode: "dry-run"},
+		Run:   config.RunConfig{Mode: "dry-run", Execution: "shell"},
 		Hooks: config.HooksConfig{PreDown: "./pre.sh"},
 		Pipelines: config.PipelinesConfig{
 			Down: []config.PipelineStep{{Ref: "deployment.ns/a", Type: "deployment", Namespace: "ns", Name: "a"}},
@@ -46,7 +46,7 @@ func TestRunDown_livePreflightBlocksPipeline(t *testing.T) {
 		},
 	}
 	cfg := &config.Config{
-		Run:   config.RunConfig{Mode: "live"},
+		Run:   config.RunConfig{Mode: "live", Execution: "shell"},
 		Hooks: config.HooksConfig{PreDown: "./pre.sh"},
 		Pipelines: config.PipelinesConfig{
 			Down: []config.PipelineStep{{Ref: "deployment.ns/a", Type: "deployment", Namespace: "ns", Name: "a"}},
@@ -65,7 +65,7 @@ func TestRunDown_livePreflightOk(t *testing.T) {
 	rec := &RecordingRunner{}
 	eng := &Engine{Runner: rec, PreflightFactory: livePreflightOKFactory()}
 	cfg := &config.Config{
-		Run: config.RunConfig{Mode: "live"},
+		Run: config.RunConfig{Mode: "live", Execution: "shell"},
 		Pipelines: config.PipelinesConfig{
 			Down: []config.PipelineStep{{Ref: "deployment.ns/a", Type: "deployment", Namespace: "ns", Name: "a"}},
 		},

@@ -22,8 +22,8 @@ cluster:
   environment: "dev"
   description: "Reference profile for kzero v1"
 
-# Directory containing <release>.sh install/uninstall scripts and values files for Helm.
-# The release name in pipelines must match the script basename (e.g. kube-prometheus-stack.sh).
+# Helm workspace: prefer <release>.yaml chart manifests (default run.execution: native / Helm SDK).
+# Opt-in run.execution: shell still uses <release>.sh install scripts (basename = release name).
 helm:
   workspace: "./helm-assets"
 
@@ -111,7 +111,7 @@ verify:
 # Infra probe: optional gate before destructive down/reset (live only when enabled).
 # Goal: validate registry, image pull creds, StorageClass/PVC, Helm install — not app workloads.
 # Use kzero-selfhosted run/examples/infra-probe/ (Redis reference: .sh for shell, .yaml chart manifest for native).
-# Native / distroless: run.execution: native + probe-redis.yaml under helm.workspace — see docs/examples/infra-probe/
+# Default execution is native (Helm SDK). Probe Redis: probe-redis.yaml under helm.workspace — see docs/examples/infra-probe/
 # Standalone: kzero probe -c <file>
 infra_probe:
   enabled: false
@@ -134,6 +134,7 @@ retry:
 run:
   kubeconfig: ""
   mode: "dry-run"
+  # execution omitted → native (1.0.0 #32). Opt-in: shell | auto
   color: "auto"   # elapsed-time line: auto | always | never (NO_COLOR disables)
   verify: false   # when true, run kzero verify after successful up / reset
   probe_cache_dir: ""   # default: OS user cache dir (kzero/probe); set for shared cache path

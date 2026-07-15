@@ -67,6 +67,7 @@ pipelines:
         replicas: 1
 run:
   mode: "dry-run"
+  execution: shell
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}

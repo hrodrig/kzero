@@ -158,7 +158,8 @@ type RunConfig struct {
 	Mode       string `mapstructure:"mode"`
 	// Color controls ANSI styling on the command timing line: auto, always, or never.
 	Color string `mapstructure:"color"`
-	// Execution selects workload step backend: shell (kubectl), native (client-go), or auto.
+	// Execution selects workload step backend: native (client-go + Helm SDK; default when omitted),
+	// shell (kubectl/helm subprocesses; opt-in), or auto (native with shell fallback).
 	Execution        string        `mapstructure:"execution"`
 	Timeout          time.Duration `mapstructure:"timeout"`
 	OperationTimeout time.Duration `mapstructure:"operation_timeout"`

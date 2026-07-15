@@ -109,6 +109,7 @@ pipelines:
     - "not-a-valid-step"
 run:
   mode: "dry-run"
+  execution: shell
 `), 0o600); err != nil {
 		t.Fatalf("write invalid config: %v", err)
 	}
@@ -150,6 +151,7 @@ pipelines:
     - deployment.argocd/argocd-server
 run:
   mode: "dry-run"
+  execution: shell
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -191,6 +193,7 @@ pipelines:
     - release.monitoring/kube-prometheus-stack
 run:
   mode: "dry-run"
+  execution: shell
 notify:
   slack:
     enabled: true
@@ -233,6 +236,7 @@ pipelines:
     - deployment.argocd/argocd-server
 run:
   mode: "dry-run"
+  execution: shell
 notify:
   slack:
     enabled: true
@@ -263,6 +267,7 @@ pipelines:
     - deployment.argocd/argocd-server
 run:
   mode: "dry-run"
+  execution: shell
   api_watchdog:
     enabled: true
     interval: 60s
@@ -297,6 +302,7 @@ pipelines:
     - deployment.argocd/argocd-server
 run:
   mode: "dry-run"
+  execution: shell
 notify:
   require_delivery: true
 `), 0o600); err != nil {
@@ -329,6 +335,7 @@ pipelines:
     - deployment.argocd/argocd-server
 run:
   mode: "dry-run"
+  execution: shell
 notify:
   require_delivery: true
 `), 0o600); err != nil {
@@ -362,6 +369,7 @@ pipelines:
     - deployment.ns/widget
 run:
   mode: "dry-run"
+  execution: shell
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -406,6 +414,7 @@ pipelines:
     - deployment.ns/widget
 run:
   mode: "dry-run"
+  execution: shell
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -439,6 +448,7 @@ pipelines:
     - deployment.ns/widget
 run:
   mode: "dry-run"
+  execution: shell
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -465,6 +475,7 @@ pipelines:
   down: []
 run:
   mode: "dry-run"
+  execution: shell
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -494,6 +505,7 @@ pipelines:
   down: []
 run:
   mode: "dry-run"
+  execution: shell
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -542,6 +554,7 @@ pipelines:
     - deployment.ns/a
 run:
   mode: "dry-run"
+  execution: shell
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}

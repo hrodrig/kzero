@@ -69,7 +69,7 @@ Behavior and acceptance: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:*
 - **Phase hooks**: `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error` (shell script paths).
 - **Per-step hooks** (`pre` / `post`): optional shell scripts for a **single** pipeline step—run immediately before and after that step’s main action; **`post` runs only if the main action succeeds**.
 - **Step types**: compact refs (`deployment.ns/name`, `statefulset.ns/name`, `pvc.ns/claim`, `exec.ns/pod`), `release.ns/name` (**Helm SDK** chart manifest **`<release>.yaml`** or legacy **`<release>.sh`** under `helm.workspace`), and `custom: ./script.sh` (with optional sibling `pre` / `post` keys on the same YAML mapping). DaemonSet is **not** supported as a built-in kind because `kubectl scale` rejects it (no `/scale` subresource); use a `custom:` step with `kubectl patch` to set a `nodeSelector` that drains the pods.
-- **`run.execution`**: **`shell`** (default — **`kubectl`** / **`helm`** subprocesses), **`native`** (client-go scale + **Helm SDK** + API **`pvc`** / **`exec`**), or **`auto`** (native with shell fallback). On a **bastion**, **`native`** avoids host **`kubectl`** / **`helm`** while staying out-of-band; in-cluster Jobs may use **`native`** with the distroless image — see [deployment-models.md](docs/deployment-models.md) and [SPEC — `run.execution`](SPECIFICATIONS.md#workload-execution-backend-runexecution).
+- **`run.execution`**: **`native`** (default when omitted — client-go scale + **Helm SDK** + API **`pvc`** / **`exec`**), **`shell`** (opt-in — **`kubectl`** / **`helm`** subprocesses), or **`auto`** (native with shell fallback). On a **bastion**, **`native`** avoids host **`kubectl`** / **`helm`** while staying out-of-band; in-cluster Jobs may use the distroless image — see [deployment-models.md](docs/deployment-models.md) and [SPEC — `run.execution`](SPECIFICATIONS.md#workload-execution-backend-runexecution).
 - **Run modes**: `dry-run` (plan only, no cluster mutations) and `live`.
 
 **Libraries** (see [`go.mod`](go.mod)): [Cobra](https://github.com/spf13/cobra) **v1.10.2**, [Viper](https://github.com/spf13/viper) **v1.21.0**.
@@ -82,8 +82,8 @@ Host tooling depends on **`run.execution`** and your pipeline step types (see [S
 
 | Path | Host tools |
 |------|------------|
-| **`run.execution: shell`** (default) | **`kubectl`** on `PATH` (or **`command.kubectl`**); **`helm`** when using **`release.*`** shell scripts |
-| **`run.execution: native`** / **`auto`** | Valid **kubeconfig** (or in-cluster SA); **no host `kubectl`** for scale/wait/**`pvc`**/**`exec`**/**Helm SDK** **`release.*`** |
+| **`run.execution: native`** (default) / **`auto`** | Valid **kubeconfig** (or in-cluster SA); **no host `kubectl`** for scale/wait/**`pvc`**/**`exec`**/**Helm SDK** **`release.*`** |
+| **`run.execution: shell`** (opt-in) | **`kubectl`** on `PATH` (or **`command.kubectl`**); **`helm`** when using **`release.*`** shell scripts |
 | Phase hooks, **`custom:`**, per-step **`pre`/`post`** | Always **`/bin/sh <script>`** (shebang ignored). Scripts must be **POSIX**/`/bin/sh`-safe — on Ubuntu **`/bin/sh`** is often **dash** (`pipefail` / `[[` fail). See [SPEC — Hook and script interpreter](SPECIFICATIONS.md#hook-and-script-interpreter-binsh). |
 
 - **RBAC** sufficient for the operations in your pipelines (for example **`get`/`patch`/`scale`**, PVC delete, Helm releases, pod exec)

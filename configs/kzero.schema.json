@@ -214,7 +214,8 @@
         "execution": {
           "type": "string",
           "enum": ["shell", "native", "auto"],
-          "description": "shell = kubectl/helm; native = client-go + Helm SDK; auto = native with shell fallback."
+          "default": "native",
+          "description": "Omitted → native (client-go + Helm SDK). shell = kubectl/helm opt-in; auto = native with shell fallback."
         },
         "timeout": {
           "type": "string",

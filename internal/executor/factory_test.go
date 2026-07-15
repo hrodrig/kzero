@@ -25,8 +25,8 @@ func TestExecutionMode_and_WantNative(t *testing.T) {
 		t.Fatal("auto wants native attempt")
 	}
 	cfg.Run.Execution = ""
-	if ExecutionMode(cfg) != ExecutionShell || WantNative(cfg) {
-		t.Fatal("empty execution -> shell")
+	if ExecutionMode(cfg) != ExecutionNative || !WantNative(cfg) {
+		t.Fatal("empty execution -> native (#32)")
 	}
 }
 

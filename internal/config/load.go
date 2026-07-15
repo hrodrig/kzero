@@ -718,7 +718,8 @@ func validateRunColor(cfg *Config) error {
 func validateRunExecution(cfg *Config) error {
 	e := strings.TrimSpace(cfg.Run.Execution)
 	if e == "" {
-		cfg.Run.Execution = "shell"
+		// 1.0.0 #32: omitted → native (shell is explicit opt-in).
+		cfg.Run.Execution = "native"
 		return nil
 	}
 	switch e {

@@ -564,8 +564,8 @@ run:
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.Run.Execution != "shell" {
-		t.Fatalf("expected default execution shell, got %q", cfg.Run.Execution)
+	if cfg.Run.Execution != "native" {
+		t.Fatalf("expected default execution native (#32), got %q", cfg.Run.Execution)
 	}
 
 	bad := writeTempConfig(t, `

@@ -24,18 +24,22 @@ and
 .B run.mode: dry-run
 to review plans first.
 .PP
-With
-.BR run.execution:
-.BR native
-or
-.BR auto ,
+Default
+.B run.execution
+(when omitted) is
+.BR native :
 workload and
 .B release.*
-steps use the Kubernetes and Helm Go clients when possible; host
+steps use the Kubernetes and Helm Go clients; host
 .BR kubectl
-and
+/
 .BR helm
-are optional on that path.
+are optional.
+Set
+.B shell
+explicitly for kubectl/helm subprocesses, or
+.B auto
+for native with shell fallback.
 .PP
 During live
 .BR down ,

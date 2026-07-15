@@ -41,7 +41,7 @@ func TestRunDown_cancelsDuringStepWithinBoundedTime(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Run: config.RunConfig{Mode: "live"},
+		Run: config.RunConfig{Mode: "live", Execution: "shell"},
 		Pipelines: config.PipelinesConfig{
 			Down: []config.PipelineStep{
 				{Type: "deployment", Ref: "ns/app"},

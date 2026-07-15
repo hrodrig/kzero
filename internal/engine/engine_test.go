@@ -24,7 +24,7 @@ func stepKey(phase Phase, index int) string {
 
 func TestNew_liveModeUsesLiveRunner(t *testing.T) {
 	t.Parallel()
-	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live", Execution: "shell"}}
 	e := New(cfg, testEmitter(io.Discard))
 	if _, ok := e.Runner.(*LiveRunner); !ok {
 		t.Fatalf("expected LiveRunner, got %T", e.Runner)
@@ -33,7 +33,7 @@ func TestNew_liveModeUsesLiveRunner(t *testing.T) {
 
 func TestNew_unknownModeFallsBackToDryRunner(t *testing.T) {
 	t.Parallel()
-	cfg := &config.Config{Run: config.RunConfig{Mode: "bogus"}}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "bogus", Execution: "shell"}}
 	e := New(cfg, testEmitter(io.Discard))
 	if _, ok := e.Runner.(*DryRunner); !ok {
 		t.Fatalf("expected DryRunner for unknown mode, got %T", e.Runner)
@@ -51,7 +51,7 @@ func TestOnErrorHookFailureWrapsOriginalError(t *testing.T) {
 	}
 	eng := &Engine{Runner: rec}
 	cfg := &config.Config{
-		Run:   config.RunConfig{Mode: "dry-run"},
+		Run:   config.RunConfig{Mode: "dry-run", Execution: "shell"},
 		Hooks: config.HooksConfig{OnError: "./err.sh"},
 		Pipelines: config.PipelinesConfig{
 			Down: []config.PipelineStep{{Ref: "deployment.ns/a", Type: "deployment", Namespace: "ns", Name: "a"}},
@@ -73,7 +73,7 @@ func TestDownOrder_PreStepsPost(t *testing.T) {
 	rec := &RecordingRunner{}
 	eng := &Engine{Runner: rec}
 	cfg := &config.Config{
-		Run: config.RunConfig{Mode: "dry-run"},
+		Run: config.RunConfig{Mode: "dry-run", Execution: "shell"},
 		Hooks: config.HooksConfig{
 			PreDown:  "./pre.sh",
 			PostDown: "./post.sh",
@@ -102,7 +102,7 @@ func TestDownOrder_PerStepPrePostAroundStep(t *testing.T) {
 	rec := &RecordingRunner{}
 	eng := &Engine{Runner: rec}
 	cfg := &config.Config{
-		Run: config.RunConfig{Mode: "dry-run"},
+		Run: config.RunConfig{Mode: "dry-run", Execution: "shell"},
 		Hooks: config.HooksConfig{
 			PreDown:  "./pre.sh",
 			PostDown: "./post.sh",
@@ -139,7 +139,7 @@ func TestFailureInPerStepPreHook_SkipsStepAndGlobalPost(t *testing.T) {
 	}
 	eng := &Engine{Runner: rec}
 	cfg := &config.Config{
-		Run:   config.RunConfig{Mode: "dry-run"},
+		Run:   config.RunConfig{Mode: "dry-run", Execution: "shell"},
 		Hooks: config.HooksConfig{PreDown: "./pre.sh", PostDown: "./post.sh", OnError: "./err.sh"},
 		Pipelines: config.PipelinesConfig{
 			Down: []config.PipelineStep{
@@ -173,7 +173,7 @@ func TestFailureInMainStep_SkipsPerStepPostHook(t *testing.T) {
 	}
 	eng := &Engine{Runner: rec}
 	cfg := &config.Config{
-		Run:   config.RunConfig{Mode: "dry-run"},
+		Run:   config.RunConfig{Mode: "dry-run", Execution: "shell"},
 		Hooks: config.HooksConfig{OnError: "./err.sh"},
 		Pipelines: config.PipelinesConfig{
 			Down: []config.PipelineStep{
@@ -195,7 +195,7 @@ func TestUpOrder_PreStepsPost(t *testing.T) {
 	rec := &RecordingRunner{}
 	eng := &Engine{Runner: rec}
 	cfg := &config.Config{
-		Run: config.RunConfig{Mode: "dry-run"},
+		Run: config.RunConfig{Mode: "dry-run", Execution: "shell"},
 		Hooks: config.HooksConfig{
 			PreUp:  "./pre-up.sh",
 			PostUp: "./post-up.sh",
@@ -224,7 +224,7 @@ func TestResetOrder_DownThenUp(t *testing.T) {
 	rec := &RecordingRunner{}
 	eng := &Engine{Runner: rec}
 	cfg := &config.Config{
-		Run: config.RunConfig{Mode: "dry-run"},
+		Run: config.RunConfig{Mode: "dry-run", Execution: "shell"},
 		Hooks: config.HooksConfig{
 			PreDown: "./pd.sh", PostDown: "./pod.sh",
 			PreUp: "./pu.sh", PostUp: "./pou.sh",
@@ -254,7 +254,7 @@ func TestFailureInStep_TriggersOnErrorAndAbortsPhase(t *testing.T) {
 	}
 	eng := &Engine{Runner: rec}
 	cfg := &config.Config{
-		Run: config.RunConfig{Mode: "dry-run"},
+		Run: config.RunConfig{Mode: "dry-run", Execution: "shell"},
 		Hooks: config.HooksConfig{
 			PreDown:  "./pre.sh",
 			PostDown: "./post.sh",
@@ -293,7 +293,7 @@ func TestFailureInPreHook_TriggersOnErrorAndSkipsPhase(t *testing.T) {
 	}
 	eng := &Engine{Runner: rec}
 	cfg := &config.Config{
-		Run:   config.RunConfig{Mode: "dry-run"},
+		Run:   config.RunConfig{Mode: "dry-run", Execution: "shell"},
 		Hooks: config.HooksConfig{PreDown: "./pre.sh", OnError: "./err.sh"},
 		Pipelines: config.PipelinesConfig{
 			Down: []config.PipelineStep{{Ref: "deployment.ns/a", Type: "deployment", Namespace: "ns", Name: "a"}},
@@ -325,7 +325,7 @@ func TestReset_FailureInDown_SkipsUp(t *testing.T) {
 	}
 	eng := &Engine{Runner: rec}
 	cfg := &config.Config{
-		Run:   config.RunConfig{Mode: "dry-run"},
+		Run:   config.RunConfig{Mode: "dry-run", Execution: "shell"},
 		Hooks: config.HooksConfig{OnError: "./err.sh"},
 		Pipelines: config.PipelinesConfig{
 			Down: []config.PipelineStep{{Ref: "deployment.ns/a", Type: "deployment", Namespace: "ns", Name: "a"}},
@@ -352,7 +352,7 @@ func TestPostHookNotRunAfterPipelineFailure(t *testing.T) {
 	}
 	eng := &Engine{Runner: rec}
 	cfg := &config.Config{
-		Run: config.RunConfig{Mode: "dry-run"},
+		Run: config.RunConfig{Mode: "dry-run", Execution: "shell"},
 		Hooks: config.HooksConfig{
 			PreDown:  "./pre.sh",
 			PostDown: "./post.sh",
@@ -378,7 +378,7 @@ func TestFailureInPostDown_InvokesOnError(t *testing.T) {
 	}
 	eng := &Engine{Runner: rec}
 	cfg := &config.Config{
-		Run: config.RunConfig{Mode: "dry-run"},
+		Run: config.RunConfig{Mode: "dry-run", Execution: "shell"},
 		Hooks: config.HooksConfig{
 			PreDown:  "./pre.sh",
 			PostDown: "./post.sh",
@@ -430,7 +430,7 @@ func TestRunDown_retriesTransientPipelineStep(t *testing.T) {
 	var logBuf strings.Builder
 	eng := &Engine{Runner: rec, Log: testEmitter(&logBuf), PreflightFactory: livePreflightOKFactory()}
 	cfg := &config.Config{
-		Run:   config.RunConfig{Mode: "live"},
+		Run:   config.RunConfig{Mode: "live", Execution: "shell"},
 		Retry: config.RetryConfig{Attempts: 3, Delay: time.Millisecond},
 		Pipelines: config.PipelinesConfig{
 			Down: []config.PipelineStep{
@@ -462,7 +462,7 @@ func TestRunDown_doesNotRetryNotFound(t *testing.T) {
 	}
 	eng := &Engine{Runner: rec, PreflightFactory: livePreflightOKFactory()}
 	cfg := &config.Config{
-		Run:   config.RunConfig{Mode: "live"},
+		Run:   config.RunConfig{Mode: "live", Execution: "shell"},
 		Retry: config.RetryConfig{Attempts: 3, Delay: time.Millisecond},
 		Pipelines: config.PipelinesConfig{
 			Down: []config.PipelineStep{
@@ -494,7 +494,7 @@ func TestRunDown_dryRunSkipsRetry(t *testing.T) {
 	}
 	eng := &Engine{Runner: rec}
 	cfg := &config.Config{
-		Run:   config.RunConfig{Mode: "dry-run"},
+		Run:   config.RunConfig{Mode: "dry-run", Execution: "shell"},
 		Retry: config.RetryConfig{Attempts: 3, Delay: time.Millisecond},
 		Pipelines: config.PipelinesConfig{
 			Down: []config.PipelineStep{
@@ -519,7 +519,7 @@ func TestRunDown_dryRunSkipsRetry(t *testing.T) {
 
 func TestStartAPIObserver_disabledDoesNotModifyCtx(t *testing.T) {
 	cfg := &config.Config{
-		Run: config.RunConfig{Mode: "dry-run"},
+		Run: config.RunConfig{Mode: "dry-run", Execution: "shell"},
 	}
 	eng := &Engine{}
 	ctx := context.Background()
@@ -538,6 +538,7 @@ func TestStartAPIObserver_defaultsWhenZeroConfig(t *testing.T) {
 
 	cfg := &config.Config{
 		Run: config.RunConfig{
+			Execution: "shell",
 			Mode:        "live",
 			APIWatchdog: &config.APIWatchdogConfig{Enabled: true},
 		},
