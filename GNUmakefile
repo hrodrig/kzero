@@ -20,37 +20,68 @@ BUILDDATE := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 LDFLAGS  := -ldflags "-s -w -X github.com/hrodrig/kzero/internal/cli.Version=$(VERSION) -X github.com/hrodrig/kzero/internal/notify.AppVersion=$(VERSION) -X github.com/hrodrig/kzero/internal/cli.Commit=$(COMMIT) -X github.com/hrodrig/kzero/internal/cli.BuildDate=$(BUILDDATE) -X github.com/hrodrig/kzero/internal/cli.Branch=$(BRANCH)"
 PORT_VERSION := $(shell cat VERSION 2>/dev/null | tr -d '\n\r' | sed 's/^v//')
 
+# Colored help (same pattern as pgwd). Disable: NO_COLOR=1 make help
+GREEN  := \033[0;32m
+YELLOW := \033[0;33m
+CYAN   := \033[0;36m
+RESET  := \033[0m
+ifneq ($(NO_COLOR),)
+  GREEN  :=
+  YELLOW :=
+  CYAN   :=
+  RESET  :=
+endif
+
 .DEFAULT_GOAL := help
 
 .PHONY: help
 help:
-	@echo "kzero — Kubernetes pipeline CLI"
+	@echo "$(GREEN)kzero$(RESET) — Kubernetes pipeline CLI"
 	@echo ""
-	@echo "  build           Build ./bin/kzero for current platform"
-	@echo "  install-kubectl-plugin  Install kubectl-kzero into \$$BINDIR (must be on PATH)"
-	@echo "  build-all       Cross-compile to $(DIST)/ (linux, darwin, windows, freebsd, openbsd)"
-	@echo "  install         go install to \$$GOBIN"
-	@echo "  install-man     Install man page to \$$MANDIR/man1 (default /usr/local/share/man)"
-	@echo "  clean           Remove ./bin/kzero, ./bin/kubectl-kzero, coverage.out, and $(DIST)/"
-	@echo "  test            Unit tests (go test ./...)"
-	@echo "  test-kind       Kind integration (testing/kind/kind-e2e.sh; needs Docker/kind/kubectl)"
-	@echo "  cover           Unit tests with coverage.out"
-	@echo "  cover-check     Fail if total statement coverage < $(COVERAGE_MIN)% (override: COVERAGE_MIN=70)"
-	@echo "  lint            gofmt -s, go vet, gocyclo (<=14)"
-	@echo "  lint-fix        gofmt -s -w"
-	@echo "  tools           Install govulncheck and gocyclo to \$$GOBIN"
-	@echo "  security        govulncheck ./..."
-	@echo "  docker-build    Build container image kzero:local"
-	@echo "  docker-scan     Build kzero:scan and run Grype (needs Docker)"
-	@echo "  release-check   VERSION semver + lint + test + cover-check + security + docker-scan"
-	@echo "  release         release-check then goreleaser (only from main)"
-	@echo "  snapshot        Goreleaser snapshot to $(DIST)/ (no tag; includes .deb/.rpm/.tar.gz)"
-	@echo "  dist-freebsd    Tarball for FreeBSD ports (default FREEBSD_ARCH=amd64)"
-	@echo "  dist-openbsd    Tarball for OpenBSD ports (default OPENBSD_ARCH=amd64)"
-	@echo "  port-freebsd-sync   Set PORTVERSION in contrib/freebsd/Makefile from VERSION"
-	@echo "  port-openbsd-sync   Set DISTNAME/PKGNAME/MASTER_SITES/DISTFILES in contrib/openbsd/port/Makefile"
+	@echo "Usage: make [target]"
 	@echo ""
-	@echo "Current VERSION file: $$(cat VERSION 2>/dev/null | tr -d '\n\r' || echo '?')  (ldflags $(VERSION))"
+	@echo "$(YELLOW)Build:$(RESET)"
+	@echo "  $(GREEN)build$(RESET)                     Build ./bin/kzero for current platform"
+	@echo "  $(GREEN)build-all$(RESET)                 Cross-compile to $(DIST)/ (linux, darwin, windows, freebsd, openbsd)"
+	@echo ""
+	@echo "$(YELLOW)Install & clean:$(RESET)"
+	@echo "  $(GREEN)install$(RESET)                   go install to \$$GOBIN"
+	@echo "  $(GREEN)install-kubectl-plugin$(RESET)    Install kubectl-kzero into \$$BINDIR (must be on PATH)"
+	@echo "  $(GREEN)install-man$(RESET)               Install man page to \$$MANDIR/man1 (default /usr/local/share/man)"
+	@echo "  $(GREEN)clean$(RESET)                     Remove ./bin/kzero, ./bin/kubectl-kzero, coverage.out, and $(DIST)/"
+	@echo ""
+	@echo "$(YELLOW)Test:$(RESET)"
+	@echo "  $(GREEN)test$(RESET)                      Unit tests (go test ./...)"
+	@echo "  $(GREEN)test-kind$(RESET)                 Kind integration (testing/kind/kind-e2e.sh; needs Docker/kind/kubectl)"
+	@echo "  $(GREEN)cover$(RESET)                     Unit tests with coverage.out"
+	@echo "  $(GREEN)cover-check$(RESET)               Fail if total statement coverage < $(COVERAGE_MIN)% (override: COVERAGE_MIN=70)"
+	@echo ""
+	@echo "$(YELLOW)Quality:$(RESET)"
+	@echo "  $(GREEN)lint$(RESET)                      gofmt -s, go vet, gocyclo (<=14)"
+	@echo "  $(GREEN)lint-fix$(RESET)                  gofmt -s -w"
+	@echo "  $(GREEN)tools$(RESET)                     Install govulncheck and gocyclo to \$$GOBIN"
+	@echo "  $(GREEN)security$(RESET)                  govulncheck ./..."
+	@echo ""
+	@echo "$(YELLOW)Docker:$(RESET)"
+	@echo "  $(GREEN)docker-build$(RESET)              Build container image kzero:local"
+	@echo "  $(GREEN)docker-scan$(RESET)               Build kzero:scan and run Grype (needs Docker)"
+	@echo ""
+	@echo "$(YELLOW)Release:$(RESET)"
+	@echo "  $(GREEN)release-check$(RESET)             VERSION semver + lint + test + cover-check + security + docker-scan"
+	@echo "  $(GREEN)release$(RESET)                   release-check then goreleaser (only from main)"
+	@echo "  $(GREEN)snapshot$(RESET)                  Goreleaser snapshot to $(DIST)/ (no tag; includes .deb/.rpm/.tar.gz)"
+	@echo "  $(GREEN)dist-freebsd$(RESET)              Tarball for FreeBSD ports (default FREEBSD_ARCH=amd64)"
+	@echo "  $(GREEN)dist-openbsd$(RESET)              Tarball for OpenBSD ports (default OPENBSD_ARCH=amd64)"
+	@echo "  $(GREEN)port-freebsd-sync$(RESET)         Set PORTVERSION in contrib/freebsd/Makefile from VERSION"
+	@echo "  $(GREEN)port-openbsd-sync$(RESET)         Set DISTNAME/PKGNAME/MASTER_SITES/DISTFILES in contrib/openbsd/port/Makefile"
+	@echo ""
+	@echo "$(CYAN)Current version:$(RESET) $$(cat VERSION 2>/dev/null | tr -d '\n\r' || echo '?') (ldflags $(VERSION), branch $(BRANCH))"
+	@echo ""
+	@echo "$(CYAN)Examples:$(RESET)"
+	@echo "  make build"
+	@echo "  make test-kind"
+	@echo "  make release-check"
+	@echo "  NO_COLOR=1 make help"
 
 .PHONY: build build-all install install-kubectl-plugin install-man clean test test-kind cover cover-check lint lint-fix tools security docker-build docker-scan release-check release snapshot dist-freebsd dist-openbsd port-freebsd-sync port-openbsd-sync
 

@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Default `run.execution` (#32):** when omitted, **`native`** (was **`shell`**). Migration: keep **`.sh`** Helm releases → set **`run.execution: shell`** (or **`auto`**); prefer **`<release>.yaml`** + SDK on the default path. Sample/schema/SPEC/README updated.
 - **SPEC:** document that hooks / **`custom:`** / shell **`release.*`** scripts always run as **`/bin/sh <path>`** (shebang ignored); must be POSIX-safe (Ubuntu **dash** vs bashisms such as **`pipefail`**).
 - **Notifications cookbook:** exit-code / **`require_delivery`** guidance; **`pipeline.stalled`** in events; fix bad **`--event error`** → **`pipeline.error`**; sample YAML shows **`require_delivery`**.
+- **`make help`:** sectional colored output (pgwd-style); **`NO_COLOR=1`** disables ANSI.
 
 ### Fixed
 
