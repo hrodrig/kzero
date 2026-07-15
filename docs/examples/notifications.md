@@ -1,6 +1,6 @@
 # Notifications (notify)
 
-How to configure outbound alerts for pipeline **start**, **success**, and **error** events, and how to **test channels without running a pipeline**.
+How to configure outbound alerts for pipeline **start**, **success**, **error**, and **stalled** events, and how to **test channels without running a pipeline**.
 
 kzero sends HTTP POSTs in **`run.mode: live`** only (`down`, `up`, `reset`). **`dry-run`** does not fire pipeline notifications. Use **`kzero notify test`** to verify wiring at any time.
 
@@ -21,15 +21,17 @@ Preview real event formatting:
 kzero notify test -c /path/to/kzero.yaml --event pipeline.start
 kzero notify test -c /path/to/kzero.yaml --event pipeline.success
 kzero notify test -c /path/to/kzero.yaml --event pipeline.error
+kzero notify test -c /path/to/kzero.yaml --event pipeline.stalled
 ```
 
-`pipeline.error` in test mode includes **sample** `failed_step` and `error` fields so you can check Slack/Teams layout before a real failure.
+`pipeline.error` in test mode includes **sample** `failed_step` and `error` fields so you can check Slack/Teams layout before a real failure. Invalid `--event` values (for example bare `error`) fail with exit **1** (config).
 
 ## YAML schema
 
 ```yaml
 notify:
   on_error: true          # default true when any channel is enabled
+  require_delivery: false # when true, failed pipeline.error / pipeline.stalled POST fails the run (exit 4)
   slack:
     enabled: false
     webhook_url: ""
@@ -57,9 +59,26 @@ Annotated reference: [configs/kzero.sample.yml](../../configs/kzero.sample.yml).
 | `pipeline.start` | After the **`Kubernetes target:`** block, before the first hook or step |
 | `pipeline.success` | After successful `post-down` / `post-up` / full `reset` |
 | `pipeline.error` | On fail-fast, **before** `hooks.on-error` (includes step ref when available) |
+| `pipeline.stalled` | When **`run.api_watchdog`** trips (API unreachable mid-wait) |
 | `notify.test` | Only via **`kzero notify test`** (not sent by pipelines) |
 
 Set **`notify.on_error: false`** to suppress **`pipeline.error`** while keeping start/success.
+
+## Delivery failures and exit codes
+
+Failed outbound POSTs always log **`[ERR]`** with redacted URLs (v0.8.0+). Process exit depends on command and **`require_delivery`**:
+
+| Situation | Exit | Notes |
+|-----------|------|--------|
+| `kzero notify test` POST fails | **4** | Always (NotifyFailed) |
+| `kzero notify test` no channel / bad `--event` / bad config | **1** | ConfigError |
+| Live `pipeline.error` / `pipeline.stalled` POST fails, `require_delivery: false` (default) | unchanged | Pipeline exit stays from step/watchdog (usually **3**); alert loss only in logs |
+| Same POST fails, `require_delivery: true` | **4** | Fail-fast on alert delivery (`KZERO_NOTIFY_REQUIRE_DELIVERY`) |
+| `pipeline.start` / `pipeline.success` POST fails | unchanged | Logged **`[ERR]`**; does **not** use `require_delivery` |
+
+**Soft default:** leave `require_delivery: false` when cron can retry and local logs are enough. **Hard:** set `true` when on-call must receive the error/stalled alert or the run should count as failed.
+
+Full taxonomy: [SPECIFICATIONS.md](../../SPECIFICATIONS.md) §5 (exit codes). Mitigations: [pipeline-network-loss.md](pipeline-network-loss.md).
 
 ## Channel examples
 
@@ -191,8 +210,9 @@ When configured, notifications include **`client_id`** from **`client.id`** and 
 | HTTP 4xx from webhook | URL, auth headers, and firewall egress |
 | Duplicate error alerts | **`pipeline.error`** fires before **`on-error`** hook; hook may send its own alert |
 | Secrets in logs | kzero redacts webhook URLs in notify **error messages**; keep URLs out of committed YAML |
-| Live reset ran but no Slack after API outage | Enable **`run.api_watchdog`** and confirm **`kzero notify test --event stalled`**. Failed POSTs should log **`[ERR]`** since **v0.8.0** — see [pipeline-network-loss.md](pipeline-network-loss.md). Total bastion network loss still requires local logs + external watchdog. |
+| Live reset ran but no Slack after API outage | Enable **`run.api_watchdog`** and confirm **`kzero notify test --event pipeline.stalled`**. Failed POSTs should log **`[ERR]`** since **v0.8.0** — see [pipeline-network-loss.md](pipeline-network-loss.md). Total bastion network loss still requires local logs + external watchdog. |
+| Want fail when error alert cannot be delivered | Set **`notify.require_delivery: true`** (exit **4** on failed `pipeline.error` / `pipeline.stalled` POST) |
 
 Contract details: [SPECIFICATIONS.md](../../SPECIFICATIONS.md) → **`notify`** and **`kzero notify test`**.
 
-**Production live `reset`:** run **`kzero notify test --event error`** before destructive work; tee stdout to a log file; consider an external watchdog — [pipeline-network-loss.md](pipeline-network-loss.md).
+**Production live `reset`:** run **`kzero notify test --event pipeline.error`** (and **`pipeline.stalled`** if the watchdog is enabled) before destructive work; tee stdout to a log file; consider an external watchdog — [pipeline-network-loss.md](pipeline-network-loss.md).

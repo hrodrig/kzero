@@ -538,7 +538,7 @@ func TestStartAPIObserver_defaultsWhenZeroConfig(t *testing.T) {
 
 	cfg := &config.Config{
 		Run: config.RunConfig{
-			Execution: "shell",
+			Execution:   "shell",
 			Mode:        "live",
 			APIWatchdog: &config.APIWatchdogConfig{Enabled: true},
 		},

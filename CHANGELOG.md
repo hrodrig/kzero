@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Kind CI (#34):** [`testing/kind/`](testing/kind/) — minimal Deployment live **down**/**up** (`native`); GHA job **`integration-kind`** (`timeout-minutes: 20`); flake policy in README. Full lab stays in **kzero-selfhosted**.
 - **Exit codes (#42):** stable process codes **0–4** via [`internal/exitcode`](internal/exitcode) (groot-style wrap): config **1**, Kubernetes **2**, executor **3**, notify delivery **4**; SPEC §5 + man `EXIT STATUS`.
+- **CLI exit coverage (#42):** cobra **`Execute`** paths for codes **1–4** (`analyze` cluster FAIL→2, native dry-run API fail→3, `notify test` POST fail→4, bad event/no channel→1).
 - **Docs (#33):** [docs/examples/pvc-statefulset-data-strategy.md](docs/examples/pvc-statefulset-data-strategy.md) — PVC / StatefulSet data patterns (scale→wait→delete, wipe, snapshot/`custom:`, init); linked from SPEC/README.
 - **Planning:** [docs/plan-1.0.0.md](docs/plan-1.0.0.md) — **1.0.0** stable-contract band (**#32–#34**, **#42**); PR order and success criteria.
 - **Planning:** [docs/plan-1.1.0.md](docs/plan-1.1.0.md) — bounded post-1.0 band (**#56** hook interpreter, **#29**, **#57** resume-from-step); parked ideas listed explicitly.
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Default `run.execution` (#32):** when omitted, **`native`** (was **`shell`**). Migration: keep **`.sh`** Helm releases → set **`run.execution: shell`** (or **`auto`**); prefer **`<release>.yaml`** + SDK on the default path. Sample/schema/SPEC/README updated.
 - **SPEC:** document that hooks / **`custom:`** / shell **`release.*`** scripts always run as **`/bin/sh <path>`** (shebang ignored); must be POSIX-safe (Ubuntu **dash** vs bashisms such as **`pipefail`**).
+- **Notifications cookbook:** exit-code / **`require_delivery`** guidance; **`pipeline.stalled`** in events; fix bad **`--event error`** → **`pipeline.error`**; sample YAML shows **`require_delivery`**.
 
 ### Fixed
 

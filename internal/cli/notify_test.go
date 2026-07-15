@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/hrodrig/kzero/internal/exitcode"
 )
 
 func TestNotifyTest_postsToWebhook(t *testing.T) {
@@ -72,8 +74,47 @@ notify:
 	cmd.SetOut(&bytes.Buffer{})
 	cmd.SetErr(&bytes.Buffer{})
 	cmd.SetArgs([]string{"notify", "test", "--config", cfgPath})
-	if err := cmd.Execute(); err == nil {
+	err := cmd.Execute()
+	if err == nil {
 		t.Fatal("expected error when no channel enabled")
+	}
+	if got := exitcode.Of(err); got != exitcode.ConfigError {
+		t.Fatalf("exit=%d want %d (config)", got, exitcode.ConfigError)
+	}
+}
+
+func TestNotifyTest_badEvent_isConfig(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	cfgPath := filepath.Join(t.TempDir(), "kzero.yaml")
+	if err := os.WriteFile(cfgPath, []byte(`
+schema_version: "1.0"
+pipelines:
+  down: []
+run:
+  mode: dry-run
+  execution: shell
+notify:
+  webhook:
+    enabled: true
+    url: "`+srv.URL+`"
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	cmd := newRootCmd()
+	cmd.SetOut(&bytes.Buffer{})
+	cmd.SetErr(&bytes.Buffer{})
+	cmd.SetArgs([]string{"notify", "test", "--config", cfgPath, "--event", "error"})
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected unknown event error")
+	}
+	if got := exitcode.Of(err); got != exitcode.ConfigError {
+		t.Fatalf("exit=%d want %d (config)", got, exitcode.ConfigError)
 	}
 }
 

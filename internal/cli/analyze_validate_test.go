@@ -14,6 +14,7 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 
 	"github.com/hrodrig/kzero/internal/cluster"
+	"github.com/hrodrig/kzero/internal/exitcode"
 	"github.com/hrodrig/kzero/internal/validate"
 )
 
@@ -86,6 +87,9 @@ run:
 	}
 	if !strings.Contains(stdout.String(), "FAIL  deployment.ns/ghost") {
 		t.Fatalf("stdout: %q", stdout.String())
+	}
+	if got := exitcode.Of(err); got != exitcode.KubernetesError {
+		t.Fatalf("exit=%d want %d (kubernetes)", got, exitcode.KubernetesError)
 	}
 }
 

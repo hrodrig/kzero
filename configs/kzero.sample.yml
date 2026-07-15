@@ -49,6 +49,8 @@ hooks:
 # Cookbook: docs/examples/notifications.md
 notify:
   on_error: true
+  # When true, failed pipeline.error / pipeline.stalled POST fails the run (exit 4).
+  require_delivery: false
   slack:
     enabled: false
     webhook_url: ""
