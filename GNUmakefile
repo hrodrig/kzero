@@ -33,6 +33,7 @@ help:
 	@echo "  install-man     Install man page to \$$MANDIR/man1 (default /usr/local/share/man)"
 	@echo "  clean           Remove ./bin/kzero, ./bin/kubectl-kzero, coverage.out, and $(DIST)/"
 	@echo "  test            Unit tests (go test ./...)"
+	@echo "  test-kind       Kind integration (testing/kind/kind-e2e.sh; needs Docker/kind/kubectl)"
 	@echo "  cover           Unit tests with coverage.out"
 	@echo "  cover-check     Fail if total statement coverage < $(COVERAGE_MIN)% (override: COVERAGE_MIN=70)"
 	@echo "  lint            gofmt -s, go vet, gocyclo (<=14)"
@@ -51,11 +52,14 @@ help:
 	@echo ""
 	@echo "Current VERSION file: $$(cat VERSION 2>/dev/null | tr -d '\n\r' || echo '?')  (ldflags $(VERSION))"
 
-.PHONY: build build-all install install-kubectl-plugin install-man clean test cover cover-check lint lint-fix tools security docker-build docker-scan release-check release snapshot dist-freebsd dist-openbsd port-freebsd-sync port-openbsd-sync
+.PHONY: build build-all install install-kubectl-plugin install-man clean test test-kind cover cover-check lint lint-fix tools security docker-build docker-scan release-check release snapshot dist-freebsd dist-openbsd port-freebsd-sync port-openbsd-sync
 
 build:
 	@mkdir -p bin
 	go build -trimpath $(LDFLAGS) -o bin/$(BINARY) ./cmd/kzero
+
+test-kind:
+	bash testing/kind/kind-e2e.sh
 
 install-kubectl-plugin: build
 	@case ":$$PATH:" in \

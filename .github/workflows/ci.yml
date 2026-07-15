@@ -72,3 +72,24 @@ jobs:
 
       - name: Run smoke script
         run: bash testing/smoke/smoke.sh
+
+  # Product kind gate (#34). Flake policy + budget: testing/kind/README.md
+  integration-kind:
+    name: Integration (kind)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install kind
+        uses: helm/kind-action@v1
+        with:
+          install_only: true
+
+      - name: Run kind e2e
+        run: bash testing/kind/kind-e2e.sh

@@ -1,6 +1,6 @@
 # Plan 1.0.0 — stable contract
 
-**Status:** **In progress** on **`develop`** (2026-07-15). After **0.9.x** (shipped through **v0.9.2**). **#33**, **#42** done; remaining **#34** → **#32**.
+**Status:** **In progress** on **`develop`** (2026-07-15). After **0.9.x** (shipped through **v0.9.2**). **#33**, **#42**, **#34** done; remaining **#32**.
 
 **Motivation:** Promote kzero from “mature 0.x operator CLI” to a **1.0** promise: YAML **`schema_version`**, executor defaults, and CLI exit behavior stable enough for long-lived wrappers and bastion automation. Bastion-first posture from **0.9.x** stays the default story ([deployment-models.md](deployment-models.md)).
 
@@ -26,7 +26,7 @@ For shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMA
 |---|------|---------|
 | **32** | **Default native execution** | When **`run.execution`** is omitted, use **`native`** (not **`shell`**). Operators opt into **`shell`** explicitly. **Breaking default** — migration note in CHANGELOG/SPEC/README; sample configs and analyze Deferred/warnings as needed. |
 | **33** | **PVC / StatefulSet data strategy** | **Done** — [pvc-statefulset-data-strategy.md](examples/pvc-statefulset-data-strategy.md); SPEC/README links. No new step kind. |
-| **34** | **kind / envtest in CI** | Product-repo integration tests with **documented flake policy** and runtime budget. Builds on smoke (**#45**); may reuse **kzero-selfhosted** kind fixtures where practical. |
+| **34** | **kind / envtest in CI** | **Done** — `testing/kind/` + job **`integration-kind`** (budget 20m, flake policy in README). envtest skipped (fake-client + smoke already cover API unit path). |
 | **42** | **Exit code taxonomy** | **Done** — `internal/exitcode` codes **0–4**; wraps at unambiguous CLI/engine sites; SPEC §5 + man. Pattern: groot `internal/cmd/exitcode.go`. |
 | **55** | *(Optional)* **Post-pipeline log upload** | After a run, push log file to S3/GCS/SFTP; hooks/selfhosted remain default. |
 
@@ -38,8 +38,8 @@ For shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMA
 |----|------|----------------|
 | PR1 | **#33** PVC/data patterns docs | **Done** (cookbook + SPEC/README). |
 | PR2 | **#42** Exit codes | **Done** (`internal/exitcode` + wraps). |
-| PR3 | **#34** kind/envtest CI | **Next** — confidence gate before flipping defaults. |
-| PR4 | **#32** Default **`native`** | Last — breaking default + migration + sample/SPEC sync. |
+| PR3 | **#34** kind/envtest CI | **Done** (`testing/kind/` + **`integration-kind`**). |
+| PR4 | **#32** Default **`native`** | **Next** — breaking default + migration + sample/SPEC sync. |
 | PR5 | Tag **`v1.0.0`** | Full [release checklist](../.cursor/rules/release-tests.mdc): VERSION, CHANGELOG, man `.TH`, BSD ports, demo.gif, **`make release-check`**. |
 
 Alternate: PR4 before PR3 if pilot demand is “native-first now” and CI kind can follow in **1.0.1**.
@@ -54,7 +54,7 @@ Each PR: **`make lint`**, **`make test`**, **`make cover-check`** (and **`go tes
 |---|-----------|--------|
 | 1 | Omitted **`run.execution`** → **`native`**; **`shell`** documented as opt-in | Unit/config tests + SPEC |
 | 2 | PVC/StatefulSet data patterns published and linked from SPEC/README | **Met** (#33) |
-| 3 | CI runs kind or envtest job with flake policy + budget | Workflow green |
+| 3 | CI runs kind or envtest job with flake policy + budget | **Met** (#34; confirm **`integration-kind`** green after push) |
 | 4 | Documented exit codes for unambiguous failure classes | **Met** (#42) |
 | 5 | Migration notes for **0.9.x → 1.0.0** (especially #32) | CHANGELOG |
 | 6 | **`make release-check`** green; coverage ≥ 80% | CI |
@@ -76,4 +76,4 @@ Each PR: **`make lint`**, **`make test`**, **`make cover-check`** (and **`go tes
 - **kzero** (this repo): CLI, engine, CI, packaging.
 - **kzero-selfhosted**: bastion/cron/kind e2e examples — update when #32/#33/#34 change recommended defaults or CI fixtures.
 
-**Last reviewed:** 2026-07-15 (**#33**, **#42** done; no push until local validate; next **#34**)
+**Last reviewed:** 2026-07-15 (**#33**, **#42**, **#34** done; no push until local validate; next **#32**)

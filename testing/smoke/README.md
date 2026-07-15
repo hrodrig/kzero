@@ -13,4 +13,4 @@ Run locally:
 bash testing/smoke/smoke.sh
 ```
 
-Full kind e2e lives in [kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted/tree/main/testing/kind).
+Product kind CI gate: [../kind/README.md](../kind/README.md). Full multi-workload lab: [kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted/tree/main/testing/kind).

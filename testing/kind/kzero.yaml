@@ -1,0 +1,14 @@
+# Live config for testing/kind/kind-e2e.sh (#34).
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.kzero-kind/web
+  up:
+    - deployment.kzero-kind/web:
+        replicas: 2
+        wait_for_ready: true
+        timeout: 2m
+run:
+  mode: live
+  execution: native
+  color: never

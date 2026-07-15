@@ -54,7 +54,15 @@ Use this table with **`kzero analyze`** (stdout plan + optional **Deferred** sum
 | **Deferred schema keys** | **None (v0.9.0)** | `config.DeferredFeatureWarnings` returns empty; analyze **Deferred** section omitted when empty. |
 | **Experimental** | **None declared** | No feature flags; stretch items live on [ROADMAP.md](ROADMAP.md) until promoted. |
 
-**CI contract checks:** fast binary smoke (`testing/smoke/smoke.sh` in GitHub Actions) plus unit/integration tests for API watchdog mid-wait (`internal/engine/watchdog_midwait_test.go`). Full **kind** e2e remains in [kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted/tree/main/testing/kind).
+**CI contract checks:**
+
+| Gate | Where | Budget / flakes |
+|------|-------|-----------------|
+| Binary smoke (**#45**) | `testing/smoke/smoke.sh` → job **`e2e-smoke`** | No cluster; fast |
+| Kind integration (**#34**) | `testing/kind/kind-e2e.sh` → job **`integration-kind`** | **`timeout-minutes: 20`**; one retry on kind create only — [testing/kind/README.md](testing/kind/README.md) |
+| Unit / fake-client | `go test` incl. watchdog mid-wait | Default CI job **`test`** |
+
+Operator-scale kind lab (multi-workload / PVC): [kzero-selfhosted `testing/kind`](https://github.com/hrodrig/kzero-selfhosted/tree/main/testing/kind) — not a product PR gate.
 
 ### Engine design principles
 
