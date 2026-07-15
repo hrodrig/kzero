@@ -1,6 +1,6 @@
 # Plan 1.0.0 — stable contract
 
-**Status:** **Gates complete on `develop`** (2026-07-15). After **0.9.x** (shipped through **v0.9.2**). **#33**, **#42**, **#34**, **#32** done — validate locally, then tag path (**no push until OK**).
+**Status:** **Done — v1.0.0** (2026-07-15). Gates **#32–#34**, **#42** shipped; release prep on **`develop`**, then merge **`main`** + tag.
 
 **Motivation:** Promote kzero from “mature 0.x operator CLI” to a **1.0** promise: YAML **`schema_version`**, executor defaults, and CLI exit behavior stable enough for long-lived wrappers and bastion automation. Bastion-first posture from **0.9.x** stays the default story ([deployment-models.md](deployment-models.md)).
 

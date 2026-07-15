@@ -7,24 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-15
+
 ### Added
 
 - **Kind CI (#34):** [`testing/kind/`](testing/kind/) — minimal Deployment live **down**/**up** (`native`); GHA job **`integration-kind`** (`timeout-minutes: 20`); flake policy in README. Full lab stays in **kzero-selfhosted**.
 - **Exit codes (#42):** stable process codes **0–4** via [`internal/exitcode`](internal/exitcode) (groot-style wrap): config **1**, Kubernetes **2**, executor **3**, notify delivery **4**; SPEC §5 + man `EXIT STATUS`.
 - **CLI exit coverage (#42):** cobra **`Execute`** paths for codes **1–4** (`analyze` cluster FAIL→2, native dry-run API fail→3, `notify test` POST fail→4, bad event/no channel→1).
 - **Docs (#33):** [docs/examples/pvc-statefulset-data-strategy.md](docs/examples/pvc-statefulset-data-strategy.md) — PVC / StatefulSet data patterns (scale→wait→delete, wipe, snapshot/`custom:`, init); linked from SPEC/README.
-- **Planning:** [docs/plan-1.0.0.md](docs/plan-1.0.0.md) — **1.0.0** stable-contract band (**#32–#34**, **#42**); PR order and success criteria.
-- **Planning:** [docs/plan-1.1.0.md](docs/plan-1.1.0.md) — bounded post-1.0 band (**#56** hook interpreter, **#29**, **#57** resume-from-step); parked ideas listed explicitly.
+- **Planning:** [docs/plan-1.0.0.md](docs/plan-1.0.0.md) — **1.0.0** stable-contract band (**#32–#34**, **#42**); [docs/plan-1.1.0.md](docs/plan-1.1.0.md) for post-1.0.
 
 ### Changed
 
 - **Default `run.execution` (#32):** when omitted, **`native`** (was **`shell`**). Migration: keep **`.sh`** Helm releases → set **`run.execution: shell`** (or **`auto`**); prefer **`<release>.yaml`** + SDK on the default path. Sample/schema/SPEC/README updated.
-- **SPEC:** document that hooks / **`custom:`** / shell **`release.*`** scripts always run as **`/bin/sh <path>`** (shebang ignored); must be POSIX-safe (Ubuntu **dash** vs bashisms such as **`pipefail`**).
+- **SPEC:** document that hooks / **`custom:`** / shell **`release.*`** scripts always run as **`/bin/sh <path>`** (shebang ignored); must be POSIX-safe (Ubuntu **dash** vs bashisms such as **`pipefail`**). Contract index band **1.0.0**; **`require_delivery`** covers **`pipeline.error`** and **`pipeline.stalled`**.
 - **Notifications cookbook:** exit-code / **`require_delivery`** guidance; **`pipeline.stalled`** in events; fix bad **`--event error`** → **`pipeline.error`**; sample YAML shows **`require_delivery`**.
+- **README:** stable-contract highlights; exit codes; `doctor`/`completion`; product kind CI; notify guidance; out-of-band hero banner (`docs/kzero-hero-oss.svg`/`.png`).
 - **`make help`:** sectional colored output (pgwd-style); **`NO_COLOR=1`** disables ANSI.
-- **SPEC:** contract index band **1.0.0**; **`require_delivery`** covers **`pipeline.error`** and **`pipeline.stalled`**.
-- **README:** 1.0.0 develop highlights; exit codes; `doctor`/`completion`; product kind CI; notify `require_delivery` / stalled; default native in config table.
-- **Hero art:** light GitHub-matched banner (`docs/kzero-hero-oss.svg`/`.png`) — out-of-band / bastion-first thesis, pipeline card, native/exit chips.
 
 ### Fixed
 
@@ -370,7 +369,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v0.9.2...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/hrodrig/kzero/compare/v0.9.2...v1.0.0
 [0.9.2]: https://github.com/hrodrig/kzero/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/hrodrig/kzero/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/hrodrig/kzero/compare/v0.8.1...v0.9.0

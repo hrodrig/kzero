@@ -16,7 +16,7 @@ GoReleaser **nfpm** integration produces, per Linux architecture:
 
 **Linux packages:** **`.deb`** and **`.rpm`** install **`/usr/share/man/man1/kzero.1.gz`** in addition to **`/usr/bin/kzero`** and **`/etc/kzero/kzero.yaml`**.
 
-**Homebrew:** GoReleaser publishes **`Casks/kzero.rb`** to **[hrodrig/homebrew-kzero](https://github.com/hrodrig/homebrew-kzero)** on each tagged release (`brew install hrodrig/kzero/kzero`). Requires **`HOMEBREW_TAP_TOKEN`** in the kzero repo (see README **Releases and CI**).
+**Homebrew:** GoReleaser publishes **`Casks/kzero.rb`** to **[hrodrig/homebrew-kzero](https://github.com/hrodrig/homebrew-kzero)** on each tagged release (`brew install hrodrig/kzero/kzero`). Maintainers: set repo Actions secret **`HOMEBREW_TAP_TOKEN`** (PAT with **`contents:write`** on the tap).
 
 Local install from a clone: **`make install-man`** ( **`MANDIR=/usr/share/man`** for system-wide).
 

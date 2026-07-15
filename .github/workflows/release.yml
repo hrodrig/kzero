@@ -65,7 +65,7 @@ jobs:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
           if [ -z "$HOMEBREW_TAP_TOKEN" ]; then
-            echo "::error::HOMEBREW_TAP_TOKEN is not set. Add a fine-grained or classic PAT with contents:write on hrodrig/homebrew-kzero under Settings → Secrets → Actions. See README Releases and CI."
+            echo "::error::HOMEBREW_TAP_TOKEN is not set. Add a fine-grained or classic PAT with contents:write on hrodrig/homebrew-kzero under Settings → Secrets → Actions. See contrib/README.md."
             exit 1
           fi
 

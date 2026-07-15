@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-07-15 (**v0.9.2** shipped; **1.0.0** / **1.1.0** plans drafted)
+**Last reviewed:** 2026-07-15 (**v1.0.0** shipped; **1.1.0** plan next)
 
 ### Versioning note
 
@@ -21,7 +21,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 
 **Executor (single binary):** the **native** path covers **`deployment` / `statefulset`** scale and rollout wait, **`release.*`** via **Helm SDK**, **`pvc` delete**, and **`exec` in pod** — on a **bastion** this avoids host **`kubectl`** / **`helm`** while staying out-of-band. Set **`run.execution: native`** (or **`auto`**) for that path. Phase hooks and **`custom:`** shell scripts remain valid on bastions with **`/bin/sh`**; in-cluster Jobs should prefer declarative **`pvc`**, **`exec`**, and SDK **`release.*`** over host-only scripts when used at all.
 
-**1.0.0 gates on `develop`:** PVC patterns (**#33**), exit codes (**#42**), kind CI (**#34**), default native (**#32**). Tag after migration notes + **`make release-check`**. **`release.*`** on the **shell** path still requires **`<helm.workspace>/<name>.sh`** and external **`helm`** on **`PATH`**.
+**1.0.0 (shipped):** PVC patterns (**#33**), exit codes (**#42**), kind CI (**#34**), default native (**#32**). **`release.*`** on the **shell** path still requires **`<helm.workspace>/<name>.sh`** and external **`helm`** on **`PATH`**.
 
 **Log capture** before or after pipelines is **out of scope** for the engine—invoke external tools via phase hooks when operators need archives. **Local stdout/stderr** (and wrapper tee to disk on the **management host**) is the audit trail when notify and API are both unavailable; see [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md).
 
@@ -35,8 +35,8 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.6.x** | **Closed** in **v0.6.0** |
 | **0.7.x** | **Closed** — **#23–#28**, **#30–#31** in **v0.7.2** (+ **v0.7.3**/**v0.7.4** patches). **#29** deferred **post-1.x**. |
 | **0.8.x** | **Closed** — API watchdog, notify delivery, stalled event (**#35–#41**) in **v0.8.0**. |
-| **0.9.x** | **Closed** stretch — **v0.9.0** core (**#43–#47**); **v0.9.1** security; **v0.9.2** doctor/completion/plugin/jitter/JSON Schema/docs (**#48–#53**). Next: **1.0.0** (**#32–#34**, **#42**). |
-| **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**); **#42** exit codes — [plan-1.0.0.md](docs/plan-1.0.0.md). |
+| **0.9.x** | **Closed** stretch — **v0.9.0** core (**#43–#47**); **v0.9.1** security; **v0.9.2** doctor/completion/plugin/jitter/JSON Schema/docs (**#48–#53**). |
+| **1.0.0** | **Closed** — default **native** (**#32**), PVC cookbook (**#33**), kind CI (**#34**), exit codes **0–4** (**#42**) in **v1.0.0**. |
 | **1.1.0** | Hook interpreter opt-in (**#56**); **#29** job/cronjob/CRD patch; resume-from-step (**#57**) — [plan-1.1.0.md](docs/plan-1.1.0.md). |
 
 **Shell path:** **`run.execution: shell`** (opt-in) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native** (default) / **auto** use the Helm SDK and API primitives above.
@@ -70,6 +70,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.9.0** | **0.9.x core:** graceful shutdown (#44); **`notify.require_delivery`** engine (#43); **`target --output slug`**; E2E smoke CI (#45); watchdog mid-wait tests (#46); SPEC contract index (#47); API watchdog `/healthz` HTTP probe fix; [deployment-models.md](docs/deployment-models.md). |
 | **0.9.1** | **Security patch:** Go **1.26.5** (stdlib GO-2026-4970, GO-2026-5856); **`oras.land/oras-go/v2` v2.6.2** (CVE-2026-50163 / Dependabot #6); distroless **`static-debian13:nonroot`**; Grype ignore removed. |
 | **0.9.2** | **0.9.x stretch:** shell completion (#53); **`kubectl-kzero`** (#52); **`kzero doctor`** (#49); retry full jitter (#50); JSON Schema (#51); docs Cosign/README (#48). |
+| **1.0.0** | **Stable contract:** default **`run.execution: native`** (**#32**); exit codes **0–4** (**#42**); product kind CI (**#34**); PVC/StatefulSet cookbook (**#33**); README out-of-band hero; POSIX `/bin/sh` hook contract. |
 
 ---
 
@@ -202,19 +203,17 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 
 ---
 
-## 1.0.0 (future) — stable contract and platform depth
+## 1.0.0 — stable contract (shipped in v1.0.0)
 
-**Implementation plan:** [docs/plan-1.0.0.md](docs/plan-1.0.0.md).
-
-Major when YAML **`schema_version`**, executor behavior, and step types are stable enough for long-term compatibility promises.
+**Implementation plan:** [docs/plan-1.0.0.md](docs/plan-1.0.0.md) (**Done**).
 
 | # | Item | Status |
 |---|------|--------|
-| 32 | **Default native execution** for workload steps when `run.execution` is omitted (shell opt-in). | Done (develop) |
-| 33 | **PVC / StatefulSet data strategy** documented as pipeline patterns (snapshot, wipe, init-job) beyond core delete primitives. | Done (develop, [pvc-statefulset-data-strategy.md](docs/examples/pvc-statefulset-data-strategy.md)) |
-| 34 | **Integration tests** with **kind** or envtest in CI, with documented flake policy and runtime budget. | Done (develop, `testing/kind/` + job **`integration-kind`**) |
-| 42 | **Documented exit code taxonomy** for CLI scripts/wrappers: stable codes **0–4** (`internal/exitcode`, groot-style `ExitError`); config / Kubernetes / executor / notify. Plain errors default to **1**. | Done (develop) |
-| 55 | *(Optional)* **Post-pipeline log upload** — after a run, push **`run.log_file`** (or wrapper tee output) to S3/GCS/SFTP (env creds, `continue_on_error`, `--no-upload`); hooks/selfhosted patterns remain the default; not a groot-style archive bundle. | Pending |
+| 32 | **Default native execution** for workload steps when `run.execution` is omitted (shell opt-in). | **Done** (v1.0.0) |
+| 33 | **PVC / StatefulSet data strategy** documented as pipeline patterns (snapshot, wipe, init-job) beyond core delete primitives. | **Done** (v1.0.0, [pvc-statefulset-data-strategy.md](docs/examples/pvc-statefulset-data-strategy.md)) |
+| 34 | **Integration tests** with **kind** or envtest in CI, with documented flake policy and runtime budget. | **Done** (v1.0.0, `testing/kind/` + job **`integration-kind`**) |
+| 42 | **Documented exit code taxonomy** for CLI scripts/wrappers: stable codes **0–4** (`internal/exitcode`, groot-style `ExitError`); config / Kubernetes / executor / notify. Plain errors default to **1**. | **Done** (v1.0.0) |
+| 55 | *(Optional)* **Post-pipeline log upload** — after a run, push **`run.log_file`** (or wrapper tee output) to S3/GCS/SFTP (env creds, `continue_on_error`, `--no-upload`); hooks/selfhosted patterns remain the default; not a groot-style archive bundle. | Deferred (optional / **1.1** stretch) |
 
 ---
 
