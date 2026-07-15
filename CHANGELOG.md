@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`make help`:** sectional colored output (pgwd-style); **`NO_COLOR=1`** disables ANSI.
 - **SPEC:** contract index band **1.0.0**; **`require_delivery`** covers **`pipeline.error`** and **`pipeline.stalled`**.
 - **README:** 1.0.0 develop highlights; exit codes; `doctor`/`completion`; product kind CI; notify `require_delivery` / stalled; default native in config table.
+- **Hero art:** light GitHub-matched banner (`docs/kzero-hero-oss.svg`/`.png`) — out-of-band / bastion-first thesis, pipeline card, native/exit chips.
 
 ### Fixed
 

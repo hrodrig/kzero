@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="680" viewBox="0 0 1600 680" role="img">
+  <title>kzero - out-of-band declarative workload reset</title>
+  <defs>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0a3069"/>
+      <stop offset="100%" stop-color="#1b4f9c"/>
+    </linearGradient>
+    <linearGradient id="cta" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#9a3412"/>
+      <stop offset="100%" stop-color="#c2410c"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f6f8fa"/>
+    </linearGradient>
+    <filter id="shadow" x="-8%" y="-8%" width="116%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#0f172a" flood-opacity="0.06"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="680" fill="#ffffff"/>
+  <rect x="0" y="0" width="1600" height="4" fill="url(#accent)"/>
+
+  <g transform="translate(100,120)" filter="url(#shadow)">
+    <rect width="360" height="340" rx="16" fill="url(#card)" stroke="#d0d7de"/>
+    <text x="36" y="52" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif" font-size="13" font-weight="600" fill="#656d76" letter-spacing="1.5">PIPELINE</text>
+
+    <rect x="36" y="78" width="288" height="52" rx="10" fill="#e8ebf0" stroke="#d0d7de"/>
+    <circle cx="62" cy="104" r="7" fill="#3d4450"/>
+    <text x="86" y="111" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="22" fill="#24292f">down</text>
+
+    <rect x="36" y="148" width="288" height="52" rx="10" fill="#e6f4ea" stroke="#6f9c7a"/>
+    <circle cx="62" cy="174" r="7" fill="#0e5c2f"/>
+    <text x="86" y="181" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="22" fill="#0e4b27">up</text>
+
+    <rect x="36" y="218" width="288" height="52" rx="10" fill="#fff7ed" stroke="#c2410c"/>
+    <circle cx="62" cy="244" r="7" fill="#c2410c"/>
+    <text x="86" y="251" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="22" fill="#9a3412">reset</text>
+
+    <text x="36" y="300" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="13" fill="#656d76">schema_version: "1.0"</text>
+    <text x="36" y="324" font-family="ui-sans-serif,system-ui,sans-serif" font-size="13" fill="#8b949e">ordered | fail-fast</text>
+  </g>
+
+  <text x="1020" y="168" text-anchor="middle" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif" font-size="92" font-weight="700" fill="#0d1b2a">kzero</text>
+  <rect x="860" y="190" width="320" height="5" rx="2.5" fill="url(#cta)"/>
+
+  <g transform="translate(620,230)" filter="url(#shadow)">
+    <rect width="800" height="118" rx="14" fill="#e8eef7" stroke="#3d6db5"/>
+    <rect x="0" y="0" width="8" height="118" rx="4" fill="url(#cta)"/>
+    <text x="400" y="42" text-anchor="middle" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" font-weight="700" fill="#0a3069" letter-spacing="1.2">OUT-OF-BAND | BASTION-FIRST</text>
+    <text x="400" y="78" text-anchor="middle" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif" font-size="24" font-weight="600" fill="#0d1b2a">Declarative workload reset when the API is sick</text>
+    <text x="400" y="104" text-anchor="middle" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif" font-size="16" fill="#3d4450">down to up from YAML - outside the cluster</text>
+  </g>
+
+  <text x="1020" y="400" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="16" fill="#656d76">analyze | down | up | reset | doctor | notify</text>
+
+  <g font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#24292f">
+    <rect x="720" y="440" width="168" height="38" rx="19" fill="#ffffff" stroke="#d0d7de"/>
+    <text x="804" y="464" text-anchor="middle">native default</text>
+    <rect x="904" y="440" width="120" height="38" rx="19" fill="#ffffff" stroke="#d0d7de"/>
+    <text x="964" y="464" text-anchor="middle">Helm SDK</text>
+    <rect x="1040" y="440" width="100" height="38" rx="19" fill="#ffffff" stroke="#d0d7de"/>
+    <text x="1090" y="464" text-anchor="middle">bastion</text>
+    <rect x="1156" y="440" width="104" height="38" rx="19" fill="#ffffff" stroke="#d0d7de"/>
+    <text x="1208" y="464" text-anchor="middle">exit 0-4</text>
+  </g>
+
+  <text x="800" y="560" text-anchor="middle" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif" font-size="15" fill="#656d76">YAML contract | dry-run / live | API watchdog | github.com/hrodrig/kzero</text>
+  <text x="800" y="600" text-anchor="middle" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif" font-size="14" fill="#8b949e">Not GitOps. Not in-cluster automation. Operator-run pipeline CLI.</text>
+</svg>

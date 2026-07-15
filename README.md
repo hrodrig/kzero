@@ -21,7 +21,7 @@
 
 *Badges:* **Version** is a static badge aligned with the repo **`VERSION`** file (next release target). **GitHub release** shows the latest published **tag** on GitHub; it can lag the **`VERSION`** file until a release is cut. **Go** matches **`go.mod`**. **License** points at this repository’s license file. **Ask DeepWiki** links to [DeepWiki](https://deepwiki.com/) AI-generated docs for this repository (see also [badge maker](https://deepwiki.com/badge-maker)). **CI**, **Security**, and **CodeQL** reflect [GitHub Actions](https://github.com/hrodrig/kzero/actions) workflows. **codecov** tracks coverage uploaded from CI. **pkg.go.dev**, **Go Report Card**, and **deps.dev** summarize the Go module and dependencies. **gghstats clones** shows Git clone traffic for this repo (see [gghstats](https://github.com/hrodrig/gghstats)).
 
-![kzero overview — declarative Kubernetes workload orchestration (pipelines, hooks, workload step types)](docs/kzero-hero-oss.png)
+![kzero — out-of-band bastion-first declarative workload reset (down / up / reset from YAML)](docs/kzero-hero-oss.png)
 
 <a id="terminal-demo"></a>
 **Terminal demo** (recorded with [VHS](https://github.com/charmbracelet/vhs); source [`docs/demo.tape`](docs/demo.tape), config [`docs/demo-kzero.yaml`](docs/demo-kzero.yaml)):
