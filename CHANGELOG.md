@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Planning:** [docs/plan-1.0.0.md](docs/plan-1.0.0.md) — **1.0.0** stable-contract band (**#32–#34**, **#42**); PR order and success criteria.
+- **Planning:** [docs/plan-1.1.0.md](docs/plan-1.1.0.md) — bounded post-1.0 band (**#56** hook interpreter, **#29**, **#57** resume-from-step); parked ideas listed explicitly.
 
 ### Changed
 

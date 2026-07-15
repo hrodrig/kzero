@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-07-11 (**v0.9.2** tagged — stretch **#48**–**#53**)
+**Last reviewed:** 2026-07-15 (**v0.9.2** shipped; **1.0.0** / **1.1.0** plans drafted)
 
 ### Versioning note
 
@@ -36,8 +36,8 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.7.x** | **Closed** — **#23–#28**, **#30–#31** in **v0.7.2** (+ **v0.7.3**/**v0.7.4** patches). **#29** deferred **post-1.x**. |
 | **0.8.x** | **Closed** — API watchdog, notify delivery, stalled event (**#35–#41**) in **v0.8.0**. |
 | **0.9.x** | **Closed** stretch — **v0.9.0** core (**#43–#47**); **v0.9.1** security; **v0.9.2** doctor/completion/plugin/jitter/JSON Schema/docs (**#48–#53**). Next: **1.0.0** (**#32–#34**, **#42**). |
-| **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**); **#42** exit codes. |
-| **post-1.x** | **#29** `job`/`cronjob`/CRD patch steps (until then: **`custom:`**). |
+| **1.0.0** | default **native** when `run.execution` omitted, PVC/data patterns doc, **kind**/envtest CI (**#32–#34**); **#42** exit codes — [plan-1.0.0.md](docs/plan-1.0.0.md). |
+| **1.1.0** | Hook interpreter opt-in (**#56**); **#29** job/cronjob/CRD patch; resume-from-step (**#57**) — [plan-1.1.0.md](docs/plan-1.1.0.md). |
 
 **Shell path:** **`run.execution: shell`** (default) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native/auto** uses the Helm SDK and API primitives above.
 
@@ -150,7 +150,7 @@ Broader pipeline primitives via **client-go** and **helm.sh/helm/v3**, keeping a
 | 26 | **Infra probe (native checks)**: PVC **Bound** wait, optional in-volume write/read, and probe teardown using built-in step types (extends **0.6.x #22** for distroless/single-binary runs). | **Done** (develop, PR6 — native Redis sample + docs) |
 | 27 | **Scheduling / affinity sanity** (optional probe or **`verify`** check): detect pods **Pending** due to node selectors, affinity, or taints after maintenance—separate from storage probe. | **Done** (**0.7.2** — **`pods_schedulable`**) |
 | 28 | **Cosign signing** and **SBOM** (e.g. Syft) in the GoReleaser pipeline. | **Done** (**v0.7.0**) |
-| 29 | **Additional step types**: `job`, `cronjob` (suspend), safe generic **patch** / scale patterns for CRDs. Prefer native executor; shell fallback where needed. Until then use **`custom:`**. | Deferred (**post-1.x**) |
+| 29 | **Additional step types**: `job`, `cronjob` (suspend), safe generic **patch** / scale patterns for CRDs. Prefer native executor; shell fallback where needed. Until then use **`custom:`**. | Deferred → **1.1.0** ([plan-1.1.0.md](docs/plan-1.1.0.md)) |
 | 30 | **`custom:` parity**: pass `KZERO_PHASE` and step metadata to the main custom script (same as per-step hooks / release scripts). | **Done** (**0.7.2**) |
 | 31 | **Release script ergonomics**: optional non-flat paths under `helm.workspace` (e.g. `monitoring/kube-prometheus-stack.sh`) without breaking flat `name.sh` convention. | **Done** (**0.7.2** — step **`script:`**) |
 
@@ -218,13 +218,19 @@ Major when YAML **`schema_version`**, executor behavior, and step types are stab
 
 ---
 
-## post-1.x (future) — extra step kinds
+## 1.1.0 (future) — post-1.0 ergonomics (bounded)
 
-Not required for **1.0.0** contract stability. Operators use **`custom:`** until these land.
+**Implementation plan:** [docs/plan-1.1.0.md](docs/plan-1.1.0.md). Starts after **v1.0.0**.
 
 | # | Item | Status |
 |---|------|--------|
-| 29 | **`job` / `cronjob`** (suspend) and safe generic **patch** / scale for CRDs — see **0.7.x** row. | Deferred (**post-1.x**) |
+| 56 | **Configurable hook interpreter** — default **`/bin/sh`**; opt-in bash/path for hooks / **`custom:`** / shell release scripts (no magic shebang). | Pending |
+| 29 | **`job` / `cronjob`** (suspend) and safe generic **patch** / scale for CRDs — prefer native; until then **`custom:`**. | Pending (moved from open-ended post-1.x) |
+| 57 | **Resume / restart from step** — Phase A: restart from index N; Phase B optional state file. | Pending |
+| 58 | *(Stretch)* **`kzero diff`** — live plan vs cluster. | Optional |
+| 55 | *(Stretch)* **Post-pipeline log upload** — see **1.0.0** optional; still not a tag gate. | Optional |
+
+**Parked (not 1.1):** parallel waves, webhook/schedule daemon, SSH bastion tunnel, multi-cluster YAML, approval gates, secret-manager plugins, OTel/Prometheus productization.
 
 ---
 

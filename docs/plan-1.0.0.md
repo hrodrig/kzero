@@ -6,7 +6,7 @@
 
 For shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMAP.md), and [SPECIFICATIONS.md](../SPECIFICATIONS.md). Prior band: [plan-0.9.x.md](plan-0.9.x.md) (**Done**).
 
-**Out of band for 1.0.0:** **#29** (`job` / `cronjob` / CRD patch) — **post-1.x** (`custom:` until then). **#55** post-pipeline log upload — optional stretch, not a tag gate.
+**Out of band for 1.0.0:** **#29**, hook interpreter, resume-from-step — see [plan-1.1.0.md](plan-1.1.0.md). **#55** log upload — optional stretch, not a **1.0.0** tag gate.
 
 ---
 
@@ -16,7 +16,7 @@ For shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMA
 |------|-------|--------|
 | **Required for v1.0.0** | **#32**, **#33**, **#34**, **#42** | All four must land before the major tag. |
 | **Optional stretch** | **#55** | Only if it does not delay the major. |
-| **Explicitly deferred** | **#29** | post-1.x |
+| **Explicitly deferred** | **#29**, #56–#57 | [plan-1.1.0.md](plan-1.1.0.md) |
 
 ---
 
