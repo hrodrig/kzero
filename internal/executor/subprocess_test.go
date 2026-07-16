@@ -28,9 +28,15 @@ func TestWrapSubprocess_classifiesForbidden(t *testing.T) {
 func TestWrapSubprocess_classifiesTransient(t *testing.T) {
 	t.Parallel()
 
-	err := WrapSubprocess("helm", []string{"upgrade"}, []byte("dial tcp: connection refused"), errors.New("exit status 1"))
-	if !errors.Is(err, ErrTransient) {
-		t.Fatalf("got %v", err)
+	for _, msg := range []string{
+		"dial tcp: connection refused",
+		"http2: client connection lost",
+		"Unexpected error when reading response body: connection lost",
+	} {
+		err := WrapSubprocess("helm", []string{"upgrade"}, []byte(msg), errors.New("exit status 1"))
+		if !errors.Is(err, ErrTransient) {
+			t.Fatalf("msg %q: got %v", msg, err)
+		}
 	}
 }
 

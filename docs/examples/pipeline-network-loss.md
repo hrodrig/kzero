@@ -34,8 +34,9 @@ Design maintenance assuming **both** phases can happen.
 | **Notify dispatch failures** | Failed POSTs log **`[ERR]`** with redacted URLs (**#35**); pipeline exits non-zero when **`notify.require_delivery: true`** and **`pipeline.error`** / **`pipeline.stalled`** POST fails (**#43**, **v0.9.x**) |
 | **Long waits** | Throttled **`[INF]`** progress lines every 30s during rollout/Helm waits (**#38**) |
 | **Timeouts** | **`run.timeout`** (whole pipeline), **`run.operation_timeout`** (per operation), Helm/step **`timeout`** |
+| **Per-step retry** | Live mode retries transient API/network errors (incl. **`connection lost`** / **`http2: client connection lost`** since **v1.0.1**) |
 | **Logs** | Timestamped **`[INF|WRN|ERR]`** on stdout; wrappers can tee to **`.logs/`** |
-| **Remaining gap** | Total bastion network loss still blocks all notify paths; no automatic pipeline resume |
+| **Remaining gap** | Total bastion network loss still blocks all notify paths; no automatic pipeline resume; klog mid-stream noise may appear without failing the step |
 
 ### Example: enable API watchdog
 

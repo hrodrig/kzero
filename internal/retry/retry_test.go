@@ -161,6 +161,8 @@ func TestIsRetriable_messageSubstrings(t *testing.T) {
 		"server timeout waiting",
 		"TLS handshake timeout",
 		"connection reset by peer",
+		"http2: client connection lost",
+		"Unexpected error when reading response body: connection lost",
 	} {
 		if !IsRetriable(errors.New(msg)) {
 			t.Fatalf("expected retriable: %q", msg)

@@ -91,6 +91,7 @@ func retriableMessage(msg string) bool {
 	for _, sub := range []string{
 		"connection refused",
 		"connection reset",
+		"connection lost",
 		"i/o timeout",
 		"tls handshake timeout",
 		"deadline exceeded",

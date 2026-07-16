@@ -7,7 +7,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-07-15 (**v1.0.0** shipped; **1.1.0** plan next)
+**Last reviewed:** 2026-07-15 (**v1.0.1** patch; **1.1.0** plan next)
 
 ### Versioning note
 
@@ -71,6 +71,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.9.1** | **Security patch:** Go **1.26.5** (stdlib GO-2026-4970, GO-2026-5856); **`oras.land/oras-go/v2` v2.6.2** (CVE-2026-50163 / Dependabot #6); distroless **`static-debian13:nonroot`**; Grype ignore removed. |
 | **0.9.2** | **0.9.x stretch:** shell completion (#53); **`kubectl-kzero`** (#52); **`kzero doctor`** (#49); retry full jitter (#50); JSON Schema (#51); docs Cosign/README (#48). |
 | **1.0.0** | **Stable contract:** default **`run.execution: native`** (**#32**); exit codes **0–4** (**#42**); product kind CI (**#34**); PVC/StatefulSet cookbook (**#33**); README out-of-band hero; POSIX `/bin/sh` hook contract. |
+| **1.0.1** | **Retry:** classify **`connection lost`** / **`http2: client connection lost`** as transient for live step retry and shell **`ErrTransient`**. |
 
 ---
 

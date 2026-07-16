@@ -97,6 +97,7 @@ func classifySubprocess(output, errMsg string, exitCode int) subprocessClass {
 	for _, sub := range []string{
 		"connection refused",
 		"connection reset",
+		"connection lost",
 		"i/o timeout",
 		"tls handshake timeout",
 		"deadline exceeded",
@@ -111,6 +112,7 @@ func classifySubprocess(output, errMsg string, exitCode int) subprocessClass {
 		" 429 ",
 		" 504 ",
 		"http2: server sent goaway",
+		"http2: client connection lost",
 	} {
 		if strings.Contains(msg, sub) {
 			return classTransient
