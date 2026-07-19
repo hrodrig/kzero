@@ -1,5 +1,7 @@
 # kzero roadmap
 
+<a id="top"></a>
+
 This file is the **in-repo** source of truth for **planned** work and known gaps. It complements:
 
 - **[SPECIFICATIONS.md](SPECIFICATIONS.md)** — behavior contract, schema, and what the engine does **today**
@@ -43,6 +45,8 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 
 ---
 
+[↑ Back to top](#top)
+
 ## Shipped
 
 | Release | Highlights |
@@ -75,6 +79,8 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 
 ---
 
+[↑ Back to top](#top)
+
 ## 0.3.x — operator honesty (complete in 0.2.3)
 
 Close the gap between **schema** and **engine** before larger execution changes.
@@ -87,6 +93,8 @@ Close the gap between **schema** and **engine** before larger execution changes.
 | 4 | **DaemonSet**: not a built-in scalable kind; document `custom:` workaround. | **Done** (0.2.1) |
 
 ---
+
+[↑ Back to top](#top)
 
 ## 0.4.x — native Kubernetes client (complete)
 
@@ -108,6 +116,8 @@ Introduced an **`Executor`** abstraction and workload steps against the API inst
 
 ---
 
+[↑ Back to top](#top)
+
 ## 0.5.x — execution engine (retries; sequential contract)
 
 Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subprocesses on the shell path; native API errors continue to use **`WrapAPIError`**.
@@ -120,6 +130,8 @@ Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subpr
 | 15 | **Subprocess error taxonomy** for shell path (exit codes, common stderr patterns) when native path is not used. | **Done** (0.5.7) |
 
 ---
+
+[↑ Back to top](#top)
 
 ## 0.6.x — observability, notifications, and preflight
 
@@ -137,6 +149,8 @@ Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subpr
 | 22bis | **Helm workspace contract in SPEC**: document flat **`<helm.workspace>/<release>.sh`** naming, env vars, and analyze/live resolution **before** **0.7.x #25** (Helm SDK) extends paths/OCI. | **Done** (develop, 0.6.x PR6) |
 
 ---
+
+[↑ Back to top](#top)
 
 ## 0.7.x — native cluster operations and Helm SDK
 
@@ -158,6 +172,8 @@ Broader pipeline primitives via **client-go** and **helm.sh/helm/v3**, keeping a
 
 ---
 
+[↑ Back to top](#top)
+
 ## 0.8.x — pipeline resilience (network loss and notify delivery)
 
 **Implementation plan:** [docs/plan-0.8.x.md](docs/plan-0.8.x.md) (target **`v0.8.0`**).
@@ -177,6 +193,8 @@ Motivation: live **`reset`** on a bastion lost API connectivity mid-run; process
 **Operator mitigations before 0.8 ships:** short **`run.operation_timeout`**, **`on-error`** hooks, external watchdog, wrapper log files on the **bastion** — documented in [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md).
 
 ---
+
+[↑ Back to top](#top)
 
 ## 0.9.x — bastion-first hardening (v0.9.0 shipped; stretch in 0.9.1)
 
@@ -204,6 +222,8 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 
 ---
 
+[↑ Back to top](#top)
+
 ## 1.0.0 — stable contract (shipped in v1.0.0)
 
 **Implementation plan:** [docs/plan-1.0.0.md](docs/plan-1.0.0.md) (**Done**).
@@ -217,6 +237,8 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 | 55 | *(Optional)* **Post-pipeline log upload** — after a run, push **`run.log_file`** (or wrapper tee output) to S3/GCS/SFTP (env creds, `continue_on_error`, `--no-upload`); hooks/selfhosted patterns remain the default; not a groot-style archive bundle. | Deferred (optional / **1.1** stretch) |
 
 ---
+
+[↑ Back to top](#top)
 
 ## 1.1.0 (future) — post-1.0 ergonomics (bounded)
 
@@ -235,6 +257,8 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 
 ---
 
+[↑ Back to top](#top)
+
 ## Maintenance notes
 
 - **Release cadence:** closing semver bands (0.5.x → 0.6.x) justifies frequent tags; once adoption catches up, prefer fewer tags that each earn changelog, port-sync, and demo refresh—avoid maintaining versions nobody runs.
@@ -242,3 +266,5 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 - **GoReleaser**: address `nfpms` deprecation warnings (`maintainer`, `builds` → `ids`) on the next housekeeping release.
 - **client-go version**: pin `k8s.io/*` modules to a supported Kubernetes minor; document minimum cluster version in README.
 - **Integration tests**: **0.4.x** fake-client coverage; **1.0.0 #34** product kind CI (`testing/kind/`, job **`integration-kind`**). Full lab remains in **kzero-selfhosted**.
+
+[↑ Back to top](#top)

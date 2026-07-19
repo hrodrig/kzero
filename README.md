@@ -18,7 +18,11 @@
 
 **Repo:** [github.com/hrodrig/kzero](https://github.com/hrodrig/kzero) · **Releases:** [Releases](https://github.com/hrodrig/kzero/releases) · **DeepWiki:** [hrodrig/kzero](https://deepwiki.com/hrodrig/kzero)
 
-*Badges:* **Version** is a static badge aligned with the repo **`VERSION`** file (next release target). **GitHub release** shows the latest published **tag** on GitHub; it can lag the **`VERSION`** file until a release is cut. **Go** matches **`go.mod`**. **License** points at this repository’s license file. **Ask DeepWiki** links to [DeepWiki](https://deepwiki.com/) AI-generated docs for this repository (see also [badge maker](https://deepwiki.com/badge-maker)). **CI**, **Security**, and **CodeQL** reflect [GitHub Actions](https://github.com/hrodrig/kzero/actions) workflows. **codecov** tracks coverage uploaded from CI. **pkg.go.dev** and **deps.dev** summarize the Go module and dependencies. **gghstats clones** shows Git clone traffic for this repo (see [gghstats](https://github.com/hrodrig/gghstats)).
+**The problem:** Platform maintenance often needs an **ordered** teardown and bring-up (scale down → wipe data → Helm uninstall → restore) — not continuous GitOps reconcile, not ad-hoc shell. When the API or data plane is unhealthy, recovery **inside** the same cluster shares the failure domain you are trying to fix: Jobs stall, logs vanish with the Pod, and alerts never leave the sick path.
+
+**How kzero solves it:** A **bastion-first** CLI runs declarative YAML **`down` / `up` / `reset`** pipelines **out-of-band** — from a host you trust more than the cluster you are resetting. Config owns the playbook (order, hooks, dry-run / analyze); the engine provides fail-fast, optional API watchdog, and notify so maintenance stays repeatable without hardcoded product scripts in Go.
+
+Where to run: [docs/deployment-models.md](docs/deployment-models.md). Scope vs alternatives: [docs/scope-and-alternatives.md](docs/scope-and-alternatives.md).
 
 ![kzero — out-of-band bastion-first declarative workload reset (down / up / reset from YAML)](docs/kzero-hero-oss.png)
 
@@ -45,6 +49,7 @@ Behavior and acceptance: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:*
 
 ## Table of contents
 
+- [README badges](docs/readme-badges.md)
 - [Terminal demo](#terminal-demo)
 - [Features](#features)
 - [Requirements](#requirements)
