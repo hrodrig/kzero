@@ -92,10 +92,11 @@ func (r *LiveRunner) runPipelineStepHook(ctx context.Context, cfg *config.Config
 	label := pipelineStepHookLabel(phase, index, hookKind)
 	r.logLive("hook %s: %s", label, scriptPath)
 	env := r.stepHookEnv(cfg, phase, index, hookKind, step)
-	out, err := r.runProcess(opCtx, "/bin/sh", []string{scriptPath}, env, ".")
+	sh := executor.ShellPath(cfg)
+	out, err := r.runProcess(opCtx, sh, []string{scriptPath}, env, ".")
 	r.writeOutput(out)
 	if err != nil {
-		return fmt.Errorf("%s: %w", label, executor.WrapSubprocess("/bin/sh", []string{scriptPath}, out, err))
+		return fmt.Errorf("%s: %w", label, executor.WrapSubprocess(sh, []string{scriptPath}, out, err))
 	}
 	return nil
 }
@@ -137,10 +138,11 @@ func (r *LiveRunner) execScriptWithEnv(ctx context.Context, cfg *config.Config, 
 	defer cancel()
 
 	r.logLive("hook %s: %s", label, scriptPath)
-	out, err := r.runProcess(opCtx, "/bin/sh", []string{scriptPath}, env, ".")
+	sh := executor.ShellPath(cfg)
+	out, err := r.runProcess(opCtx, sh, []string{scriptPath}, env, ".")
 	r.writeOutput(out)
 	if err != nil {
-		return fmt.Errorf("%s: %w", label, executor.WrapSubprocess("/bin/sh", []string{scriptPath}, out, err))
+		return fmt.Errorf("%s: %w", label, executor.WrapSubprocess(sh, []string{scriptPath}, out, err))
 	}
 	return nil
 }

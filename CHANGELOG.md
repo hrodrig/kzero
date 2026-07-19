@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`command.shell` (#56):** opt-in interpreter for phase hooks, per-step **`pre`/`post`**, **`custom:`**, and shell-path **`release.*`** `.sh` scripts (default **`/bin/sh`**; shebang still ignored). Env **`KZERO_COMMAND_SHELL`**. **`kzero doctor`** checks the interpreter when hooks/scripts are configured.
+
 ### Changed
 
 - **Dependencies:** bump transitive `golang.org/x/crypto` to **v0.54.0** (and related `golang.org/x/*`) — Grype hygiene for **GO-2026-5932** (Helm `openpgp`); same approach as groot.
@@ -19,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - **README:** drop retired Go Report Card badge (service retired).
+- **README:** badge meanings moved to [docs/readme-badges.md](docs/readme-badges.md); intro states problem/solution.
 
 [↑ Back to top](#top)
 

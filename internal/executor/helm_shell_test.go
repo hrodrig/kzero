@@ -67,6 +67,38 @@ func TestShellHelm_UpgradeInstall(t *testing.T) {
 	}
 }
 
+func TestShellHelm_UpgradeInstall_commandShell(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	script := filepath.Join(dir, "prom.sh")
+	if err := os.WriteFile(script, []byte("echo up\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	var argv0 string
+	h := NewShellHelm(HelmDeps{
+		Cfg: &config.Config{
+			Helm:    config.HelmConfig{Workspace: dir},
+			Command: config.CommandConfig{Shell: "/usr/bin/bash"},
+		},
+		Run: func(ctx context.Context, a0 string, args, env []string, d string) ([]byte, error) {
+			argv0 = a0
+			if a0 != "/usr/bin/bash" || args[0] != script || args[1] != "up" {
+				t.Fatalf("unexpected exec: %s %v", a0, args)
+			}
+			return nil, nil
+		},
+	})
+	step := config.PipelineStep{Name: "prom", Namespace: "mon", Ref: "release.mon/prom", Type: "release"}
+	if err := h.UpgradeInstall(context.Background(), step); err != nil {
+		t.Fatal(err)
+	}
+	if argv0 != "/usr/bin/bash" {
+		t.Fatalf("got %q", argv0)
+	}
+}
+
 func TestShellHelm_UpgradeInstall_scriptOverride(t *testing.T) {
 	t.Parallel()
 

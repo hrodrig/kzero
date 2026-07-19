@@ -51,7 +51,11 @@
       "additionalProperties": true,
       "properties": {
         "helm": { "type": "string", "description": "Absolute path to helm (empty → PATH)." },
-        "kubectl": { "type": "string", "description": "Absolute path to kubectl (empty → PATH)." }
+        "kubectl": { "type": "string", "description": "Absolute path to kubectl (empty → PATH)." },
+        "shell": {
+          "type": "string",
+          "description": "Interpreter for hooks, custom:, and shell release .sh scripts (empty → /bin/sh). Shebang ignored."
+        }
       }
     },
     "hooks": {

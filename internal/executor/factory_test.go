@@ -41,6 +41,23 @@ func TestKubectlPath(t *testing.T) {
 	}
 }
 
+func TestShellPath(t *testing.T) {
+	t.Parallel()
+
+	if ShellPath(nil) != "/bin/sh" {
+		t.Fatal("nil cfg")
+	}
+	if ShellPath(&config.Config{}) != "/bin/sh" {
+		t.Fatal("empty shell")
+	}
+	if ShellPath(&config.Config{Command: config.CommandConfig{Shell: "/bin/bash"}}) != "/bin/bash" {
+		t.Fatal("custom shell")
+	}
+	if ShellPath(&config.Config{Command: config.CommandConfig{Shell: "  bash  "}}) != "bash" {
+		t.Fatal("trim")
+	}
+}
+
 func TestNewWorkload_shell(t *testing.T) {
 	t.Parallel()
 

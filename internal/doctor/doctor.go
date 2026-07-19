@@ -113,50 +113,99 @@ func checkBinaries(cfg *config.Config, look LookPathFunc) []Finding {
 		execMode = "shell"
 	}
 	needKubectl := execMode == "shell" || execMode == "auto"
-	if !needKubectl {
-		return []Finding{{
-			Check: "binaries.kubectl", Severity: SeverityOK,
-			Message: fmt.Sprintf("skipped (run.execution=%s)", execMode),
-		}}
-	}
 
 	var out []Finding
-	kubectl := strings.TrimSpace(cfg.Command.Kubectl)
-	if kubectl == "" {
-		kubectl = "kubectl"
-	}
-	if path, err := look(kubectl); err != nil {
+	if !needKubectl {
 		out = append(out, Finding{
-			Check: "binaries.kubectl", Severity: SeverityError,
-			Message: fmt.Sprintf("%q not found on PATH: %v", kubectl, err),
+			Check: "binaries.kubectl", Severity: SeverityOK,
+			Message: fmt.Sprintf("skipped (run.execution=%s)", execMode),
 		})
 	} else {
-		out = append(out, Finding{
-			Check: "binaries.kubectl", Severity: SeverityOK, Message: path,
-		})
-	}
-
-	if pipelineHasRelease(cfg) && (execMode == "shell" || execMode == "auto") {
-		helm := strings.TrimSpace(cfg.Command.Helm)
-		if helm == "" {
-			helm = "helm"
+		kubectl := strings.TrimSpace(cfg.Command.Kubectl)
+		if kubectl == "" {
+			kubectl = "kubectl"
 		}
-		if path, err := look(helm); err != nil {
-			sev := SeverityWarn
-			if execMode == "shell" {
-				sev = SeverityError
-			}
+		if path, err := look(kubectl); err != nil {
 			out = append(out, Finding{
-				Check: "binaries.helm", Severity: sev,
-				Message: fmt.Sprintf("%q not found on PATH (release.* steps): %v", helm, err),
+				Check: "binaries.kubectl", Severity: SeverityError,
+				Message: fmt.Sprintf("%q not found on PATH: %v", kubectl, err),
 			})
 		} else {
 			out = append(out, Finding{
-				Check: "binaries.helm", Severity: SeverityOK, Message: path,
+				Check: "binaries.kubectl", Severity: SeverityOK, Message: path,
 			})
 		}
+
+		if pipelineHasRelease(cfg) && (execMode == "shell" || execMode == "auto") {
+			helm := strings.TrimSpace(cfg.Command.Helm)
+			if helm == "" {
+				helm = "helm"
+			}
+			if path, err := look(helm); err != nil {
+				sev := SeverityWarn
+				if execMode == "shell" {
+					sev = SeverityError
+				}
+				out = append(out, Finding{
+					Check: "binaries.helm", Severity: sev,
+					Message: fmt.Sprintf("%q not found on PATH (release.* steps): %v", helm, err),
+				})
+			} else {
+				out = append(out, Finding{
+					Check: "binaries.helm", Severity: SeverityOK, Message: path,
+				})
+			}
+		}
+	}
+
+	if usesShellScripts(cfg) {
+		out = append(out, checkShellBinary(cfg, look)...)
 	}
 	return out
+}
+
+func checkShellBinary(cfg *config.Config, look LookPathFunc) []Finding {
+	sh := strings.TrimSpace(cfg.Command.Shell)
+	if sh == "" {
+		sh = "/bin/sh"
+	}
+	if path, err := look(sh); err != nil {
+		return []Finding{{
+			Check: "binaries.shell", Severity: SeverityError,
+			Message: fmt.Sprintf("%q not found (hooks/custom/release scripts): %v", sh, err),
+		}}
+	} else {
+		return []Finding{{
+			Check: "binaries.shell", Severity: SeverityOK, Message: path,
+		}}
+	}
+}
+
+func usesShellScripts(cfg *config.Config) bool {
+	if cfg == nil {
+		return false
+	}
+	h := cfg.Hooks
+	if strings.TrimSpace(h.PreDown) != "" || strings.TrimSpace(h.PostDown) != "" ||
+		strings.TrimSpace(h.PreUp) != "" || strings.TrimSpace(h.PostUp) != "" ||
+		strings.TrimSpace(h.OnError) != "" {
+		return true
+	}
+	for _, s := range append(append([]config.PipelineStep{}, cfg.Pipelines.Down...), cfg.Pipelines.Up...) {
+		if strings.TrimSpace(s.Custom) != "" || strings.TrimSpace(s.PreStep) != "" || strings.TrimSpace(s.PostStep) != "" {
+			return true
+		}
+		if s.Type == "release" {
+			execMode := strings.TrimSpace(cfg.Run.Execution)
+			if execMode == "" {
+				execMode = "native"
+			}
+			if execMode == "shell" {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func pipelineHasRelease(cfg *config.Config) bool {

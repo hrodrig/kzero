@@ -75,9 +75,12 @@ notify POST fails the pipeline.
 .PP
 kzero is not self-contained: hooks and
 .B custom:
-steps run
+steps run via
+.B command.shell
+(default
 .BR /bin/sh ;
-some profiles still require host
+shebang ignored).
+Some profiles still require host
 .BR kubectl
 and
 .BR helm .

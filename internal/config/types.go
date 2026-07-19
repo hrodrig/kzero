@@ -76,6 +76,9 @@ type ClientConfig struct {
 type CommandConfig struct {
 	Helm    string `mapstructure:"helm"`
 	Kubectl string `mapstructure:"kubectl"`
+	// Shell is the interpreter for phase hooks, per-step pre/post, custom: scripts,
+	// and shell-path release .sh scripts. Empty means /bin/sh (POSIX). Shebang is ignored.
+	Shell string `mapstructure:"shell"`
 }
 
 type HooksConfig struct {
