@@ -11,7 +11,6 @@
 [![codecov](https://codecov.io/gh/hrodrig/kzero/graph/badge.svg)](https://codecov.io/gh/hrodrig/kzero)
 [![gghstats clones](https://gghstats.hermesrodriguez.com/api/v1/badge/hrodrig/kzero?metric=clones)](https://gghstats.hermesrodriguez.com/hrodrig/kzero)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/kzero)](https://pkg.go.dev/github.com/hrodrig/kzero)
-[![Go Report Card](https://goreportcard.com/badge/github.com/hrodrig/kzero)](https://goreportcard.com/report/github.com/hrodrig/kzero)
 [![deps.dev](https://img.shields.io/badge/deps.dev-go%20module-blue)](https://deps.dev/go/github.com%2Fhrodrig%2Fkzero)
 [![Security](https://github.com/hrodrig/kzero/actions/workflows/security.yml/badge.svg)](https://github.com/hrodrig/kzero/actions/workflows/security.yml)
 [![CodeQL](https://github.com/hrodrig/kzero/actions/workflows/codeql.yml/badge.svg)](https://github.com/hrodrig/kzero/actions/workflows/codeql.yml)
@@ -19,7 +18,7 @@
 
 **Repo:** [github.com/hrodrig/kzero](https://github.com/hrodrig/kzero) · **Releases:** [Releases](https://github.com/hrodrig/kzero/releases) · **DeepWiki:** [hrodrig/kzero](https://deepwiki.com/hrodrig/kzero)
 
-*Badges:* **Version** is a static badge aligned with the repo **`VERSION`** file (next release target). **GitHub release** shows the latest published **tag** on GitHub; it can lag the **`VERSION`** file until a release is cut. **Go** matches **`go.mod`**. **License** points at this repository’s license file. **Ask DeepWiki** links to [DeepWiki](https://deepwiki.com/) AI-generated docs for this repository (see also [badge maker](https://deepwiki.com/badge-maker)). **CI**, **Security**, and **CodeQL** reflect [GitHub Actions](https://github.com/hrodrig/kzero/actions) workflows. **codecov** tracks coverage uploaded from CI. **pkg.go.dev**, **Go Report Card**, and **deps.dev** summarize the Go module and dependencies. **gghstats clones** shows Git clone traffic for this repo (see [gghstats](https://github.com/hrodrig/gghstats)).
+*Badges:* **Version** is a static badge aligned with the repo **`VERSION`** file (next release target). **GitHub release** shows the latest published **tag** on GitHub; it can lag the **`VERSION`** file until a release is cut. **Go** matches **`go.mod`**. **License** points at this repository’s license file. **Ask DeepWiki** links to [DeepWiki](https://deepwiki.com/) AI-generated docs for this repository (see also [badge maker](https://deepwiki.com/badge-maker)). **CI**, **Security**, and **CodeQL** reflect [GitHub Actions](https://github.com/hrodrig/kzero/actions) workflows. **codecov** tracks coverage uploaded from CI. **pkg.go.dev** and **deps.dev** summarize the Go module and dependencies. **gghstats clones** shows Git clone traffic for this repo (see [gghstats](https://github.com/hrodrig/gghstats)).
 
 ![kzero — out-of-band bastion-first declarative workload reset (down / up / reset from YAML)](docs/kzero-hero-oss.png)
 

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Dependencies:** bump transitive `golang.org/x/crypto` to **v0.54.0** (and related `golang.org/x/*`) — Grype hygiene for **GO-2026-5932** (Helm `openpgp`); same approach as groot.
+- **Grype:** `.grype.yaml` ignore rules for containerd v2-only advisories (**GO-2026-5064**, **GO-2026-5338**, **GO-2026-5622**) and **GO-2026-5932** until Helm SDK v4 (#59); mirrors `.govulncheck-ignore.yaml`.
+
+### Removed
+
+- **README:** drop retired Go Report Card badge (service retired).
+
 ## [1.0.1] - 2026-07-15
 
 ### Fixed
