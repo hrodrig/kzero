@@ -93,8 +93,8 @@ func TestRun_missingShellFailsWhenHooks(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Run:   config.RunConfig{Mode: "dry-run", Execution: "native"},
-		Hooks: config.HooksConfig{PreDown: "./hooks/pre-down.sh"},
+		Run:     config.RunConfig{Mode: "dry-run", Execution: "native"},
+		Hooks:   config.HooksConfig{PreDown: "./hooks/pre-down.sh"},
 		Command: config.CommandConfig{Shell: "/opt/no-such-shell"},
 	}
 	client := fake.NewSimpleClientset()
