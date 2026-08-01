@@ -5,9 +5,8 @@
 #   GHSA-rgh6-rfwx-v388 (GO-2026-5622)
 #   GO-2026-5064 (CDI annotation smuggling, v2-only)
 #
-# golang.org/x/crypto/openpgp (GO-2026-5932): unmaintained package pulled by
-# helm.sh/helm/v3 for chart provenance verification. kzero does not call
-# openpgp directly; no upstream Helm fix yet.
+# GO-2026-5932 (x/crypto openpgp) cleared after helm.sh/helm/v4 (#59): Helm uses
+# ProtonMail/go-crypto; govulncheck reports no call path into openpgp.
 ignored:
   - id: "GO-2026-5622"
     reason: "containerd v2-only CRI checkpoint symlink — does not affect containerd v1"
@@ -18,6 +17,3 @@ ignored:
   - id: "GO-2026-5064"
     reason: "containerd v2-only CRI checkpoint CDI smuggling — does not affect containerd v1"
     reference: "https://pkg.go.dev/vuln/GO-2026-5064"
-  - id: "GO-2026-5932"
-    reason: "Helm SDK transitive golang.org/x/crypto/openpgp (chart provenance) — unmaintained per Go vulndb; await helm.sh/helm/v3 upstream"
-    reference: "https://pkg.go.dev/vuln/GO-2026-5932"

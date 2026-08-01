@@ -184,7 +184,7 @@ security:
 		echo "$$output"; \
 		echo ""; \
 		echo "=== security: PASS (known false positives only) ==="; \
-		echo "govulncheck reported $$matching advisories filtered — see .govulncheck-ignore.yaml (containerd v2-only CRI, Helm openpgp)."; \
+		echo "govulncheck reported $$matching advisories filtered — see .govulncheck-ignore.yaml (containerd v2-only CRI)."; \
 		echo "Pending upstream: Go vulndb module-path correction; no kzero release action until vulndb or helm/containerd graph changes."; \
 		echo "Policy: .govulncheck-ignore.yaml"; \
 	else \

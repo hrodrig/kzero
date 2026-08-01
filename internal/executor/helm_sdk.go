@@ -4,27 +4,28 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/hrodrig/kzero/internal/config"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/cli"
-	"helm.sh/helm/v3/pkg/cli/values"
-	"helm.sh/helm/v3/pkg/registry"
-	helmrelease "helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage/driver"
+	"helm.sh/helm/v4/pkg/action"
+	chart "helm.sh/helm/v4/pkg/chart/v2"
+	"helm.sh/helm/v4/pkg/chart/v2/loader"
+	"helm.sh/helm/v4/pkg/cli"
+	"helm.sh/helm/v4/pkg/cli/values"
+	"helm.sh/helm/v4/pkg/kube"
+	"helm.sh/helm/v4/pkg/registry"
+	helmrelease "helm.sh/helm/v4/pkg/release"
+	releasecommon "helm.sh/helm/v4/pkg/release/common"
+	"helm.sh/helm/v4/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// SDKHelm runs release steps via helm.sh/helm/v3 (no host helm binary or .sh).
+// SDKHelm runs release steps via helm.sh/helm/v4 (no host helm binary or .sh).
 type SDKHelm struct {
 	cfg      *config.Config
 	settings *cli.EnvSettings
@@ -55,7 +56,7 @@ func (h *SDKHelm) Uninstall(ctx context.Context, step config.PipelineStep) error
 		return err
 	}
 	client := action.NewUninstall(actionConfig)
-	client.Wait = true
+	client.WaitStrategy = kube.StatusWatcherStrategy
 	client.IgnoreNotFound = true
 	client.Timeout = h.opTimeout(step)
 	_, err = client.Run(step.Name)
@@ -85,7 +86,7 @@ func (h *SDKHelm) UpgradeInstall(ctx context.Context, step config.PipelineStep) 
 
 	client := action.NewUpgrade(actionConfig)
 	client.Install = true
-	client.Wait = spec.Wait
+	client.WaitStrategy = waitStrategy(spec.Wait)
 	client.Timeout = spec.Timeout
 	client.Namespace = step.Namespace
 	client.ChartPathOptions.Version = spec.Version
@@ -135,7 +136,7 @@ func (h *SDKHelm) runInstallOrUpgrade(
 	step config.PipelineStep,
 	spec ChartSpec,
 	ch *chart.Chart,
-	vals map[string]interface{},
+	vals map[string]any,
 	regClient *registry.Client,
 ) error {
 	needsInstall, err := releaseNeedsInstall(actionConfig, step.Name)
@@ -158,14 +159,14 @@ func (h *SDKHelm) helmInstall(
 	step config.PipelineStep,
 	spec ChartSpec,
 	ch *chart.Chart,
-	vals map[string]interface{},
+	vals map[string]any,
 	regClient *registry.Client,
 	chartPathOpts action.ChartPathOptions,
 ) error {
 	inst := action.NewInstall(actionConfig)
 	inst.ReleaseName = step.Name
 	inst.CreateNamespace = spec.CreateNamespace
-	inst.Wait = spec.Wait
+	inst.WaitStrategy = waitStrategy(spec.Wait)
 	inst.Timeout = spec.Timeout
 	inst.Namespace = step.Namespace
 	inst.ChartPathOptions = chartPathOpts
@@ -191,15 +192,24 @@ func releaseNeedsInstall(actionConfig *action.Configuration, name string) (bool,
 	if len(versions) == 0 {
 		return true, nil
 	}
-	return versions[0].Info.Status == helmrelease.StatusUninstalled, nil
+	acc, err := helmrelease.NewAccessor(versions[0])
+	if err != nil {
+		return false, err
+	}
+	return acc.Status() == releasecommon.StatusUninstalled.String(), nil
+}
+
+func waitStrategy(wait bool) kube.WaitStrategy {
+	if wait {
+		return kube.StatusWatcherStrategy
+	}
+	// Helm v4 requires an explicit strategy; HookOnly skips waiting on chart resources.
+	return kube.HookOnlyStrategy
 }
 
 func (h *SDKHelm) actionConfig(namespace string) (*action.Configuration, error) {
 	actionConfig := new(action.Configuration)
-	debug := func(format string, v ...interface{}) {
-		_, _ = fmt.Fprintf(io.Discard, format, v...)
-	}
-	if err := actionConfig.Init(h.settings.RESTClientGetter(), namespace, "secret", debug); err != nil {
+	if err := actionConfig.Init(h.settings.RESTClientGetter(), namespace, "secret"); err != nil {
 		return nil, fmt.Errorf("helm sdk init: %w", err)
 	}
 	return actionConfig, nil

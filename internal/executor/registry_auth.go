@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/hrodrig/kzero/internal/config"
-	"helm.sh/helm/v3/pkg/registry"
+	"helm.sh/helm/v4/pkg/registry"
 )
 
 // NewHelmRegistryClient builds the registry client Helm SDK needs for oci:// charts.

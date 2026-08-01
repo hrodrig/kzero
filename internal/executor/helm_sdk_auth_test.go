@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/hrodrig/kzero/internal/config"
-	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v4/pkg/action"
 )
 
 func TestSDKHelm_prepareOCIRegistry_nonOCI(t *testing.T) {

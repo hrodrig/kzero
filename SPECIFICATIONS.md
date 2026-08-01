@@ -153,7 +153,7 @@ When `run.mode` is `live`, `deployment` and `statefulset` steps use a **Workload
 | Value | Behavior |
 |-------|----------|
 | `shell` | `kubectl scale` and `kubectl rollout status` (subprocess; honors `command.kubectl` and `KUBECONFIG` from `run.kubeconfig`). **Opt-in** after **1.0.0**. |
-| `native` | `k8s.io/client-go`: update workload replica count and poll readiness (no `kubectl` for scale/wait). Requires a valid kubeconfig / in-cluster config. **`release.*`** steps use **Helm SDK** (`helm.sh/helm/v3`) instead of shell **`helm`** / **`.sh`** scripts. **`pvc.*`** steps delete claims via the API (always native; ignores `run.execution`). **`exec.*`** steps run commands in a pod/container via **remotecommand** (always native). **Default** when `run.execution` is omitted. |
+| `native` | `k8s.io/client-go`: update workload replica count and poll readiness (no `kubectl` for scale/wait). Requires a valid kubeconfig / in-cluster config. **`release.*`** steps use **Helm SDK** (`helm.sh/helm/v4`) instead of shell **`helm`** / **`.sh`** scripts. **`pvc.*`** steps delete claims via the API (always native; ignores `run.execution`). **`exec.*`** steps run commands in a pod/container via **remotecommand** (always native). **Default** when `run.execution` is omitted. |
 | `auto` | Try **native** (workloads + Helm SDK for releases); on client init failure, fall back to **shell** and print a one-line notice on the run output stream. |
 
 Hooks, `custom:` steps, and per-step `pre`/`post` use **`command.shell`** (default **`/bin/sh`**) regardless of `run.execution`. Shell-path **`release.*`** install scripts use the same interpreter.

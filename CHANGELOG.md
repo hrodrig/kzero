@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Helm SDK (#59):** migrate **`helm.sh/helm/v3`** → **`helm.sh/helm/v4` v4.2.3**; align **`k8s.io/{api,apimachinery,client-go}`** to **v0.36.x**. Wait semantics use Helm **`WaitStrategy`** (`StatusWatcher` when chart wait is enabled). Host **`helm` CLI v3** remains fine for **`run.execution: shell`**.
+- **Security:** drop **GO-2026-5932** from **`.govulncheck-ignore.yaml`** / **`.grype.yaml`** (Helm v4 uses **ProtonMail/go-crypto**; no openpgp call path).
+
 [↑ Back to top](#top)
 
 ## [1.0.2] - 2026-07-31
