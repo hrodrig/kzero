@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dependencies:** bump transitive **`google.golang.org/grpc`** to **v1.82.1** (Dependabot [#8](https://github.com/hrodrig/kzero/security/dependabot/8) / [GHSA-hrxh-6v49-42gf](https://github.com/advisories/GHSA-hrxh-6v49-42gf); via Helm → distribution → OTel).
 - **Helm SDK (#59):** migrate **`helm.sh/helm/v3`** → **`helm.sh/helm/v4` v4.2.3**; align **`k8s.io/{api,apimachinery,client-go}`** to **v0.36.x**. Wait semantics use Helm **`WaitStrategy`** (`StatusWatcher` when chart wait is enabled). Host **`helm` CLI v3** remains fine for **`run.execution: shell`**.
 - **Security:** drop **GO-2026-5932** from **`.govulncheck-ignore.yaml`** / **`.grype.yaml`** (Helm v4 uses **ProtonMail/go-crypto**; no openpgp call path).
 
