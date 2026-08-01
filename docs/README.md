@@ -17,6 +17,7 @@
 | [demo.tape](demo.tape) | VHS tape to record [demo.gif](demo.gif) |
 | [examples/pipeline-order-and-integrity.md](examples/pipeline-order-and-integrity.md) | Ordered `down` steps, `wait_for_ready` limits, per-step `post` examples |
 | [examples/pvc-statefulset-data-strategy.md](examples/pvc-statefulset-data-strategy.md) | PVC / StatefulSet data patterns: scale→wait→delete, wipe, snapshot/`custom:`, init |
+| [examples/diff.md](examples/diff.md) | **`kzero diff --phase up|down`** — plan vs live, drift exit codes, gate reset |
 | [examples/notifications.md](examples/notifications.md) | **notify** channels, `kzero notify test`, env overrides, live vs dry-run |
 | [examples/pipeline-network-loss.md](examples/pipeline-network-loss.md) | Long live **`reset`** on bastions: two-phase outage pattern, **v0.8.0** engine features + supplemental mitigations |
 | [examples/infra-probe.md](examples/infra-probe.md) | **`infra_probe`** schema, checks, gate (`kzero probe`) |

@@ -9,7 +9,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-08-01 (**1.1.0** queue: **#59** Helm v4 done → **#29** job/cronjob MVP done → **#58**; **#29b** CRD patch follow-up; **#57** deferred; **#55** parked; **#56** shipped in **v1.0.2**)
+**Last reviewed:** 2026-08-01 (**1.1.0** queue: **#59** Helm v4 done → **#29** job/cronjob MVP done → **#58** `diff` done on develop; **#29b** CRD patch follow-up; **#57** deferred; **#55** parked; **#56** shipped in **v1.0.2**)
 
 ### Versioning note
 
@@ -39,7 +39,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.8.x** | **Closed** — API watchdog, notify delivery, stalled event (**#35–#41**) in **v0.8.0**. |
 | **0.9.x** | **Closed** stretch — **v0.9.0** core (**#43–#47**); **v0.9.1** security; **v0.9.2** doctor/completion/plugin/jitter/JSON Schema/docs (**#48–#53**). |
 | **1.0.0** | **Closed** — default **native** (**#32**), PVC cookbook (**#33**), kind CI (**#34**), exit codes **0–4** (**#42**) in **v1.0.0**. |
-| **1.1.0** | **#59** Helm SDK **v4** (done) → **#29** job/cronjob MVP (done on develop) → **#58** diff; **#29b** CRD patch follow-up; **#57** deferred; **#55** parked — [plan-1.1.0.md](docs/plan-1.1.0.md). (**#56** shipped in **v1.0.2**.) |
+| **1.1.0** | **#59** Helm SDK **v4** (done) → **#29** job/cronjob MVP (done) → **#58** `diff` (done on develop); **#29b** CRD patch follow-up; **#57** deferred; **#55** parked — [plan-1.1.0.md](docs/plan-1.1.0.md). (**#56** shipped in **v1.0.2**.) |
 
 **Shell path:** **`run.execution: shell`** (opt-in) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native** (default) / **auto** use the Helm SDK and API primitives above.
 
@@ -251,7 +251,7 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 | 59 | **Helm SDK v4.2.3+** — drop **GO-2026-5932**; bump `k8s.io/*` with Helm; see plan spike. | **Done** (on develop; Unreleased → **1.1.0**) |
 | 29 | **`job` / `cronjob`** (suspend) MVP — native Job delete/create+wait; CronJob suspend/resume. | **Done (MVP)** on develop |
 | 29b | Safe generic **patch** / scale for CRDs (dynamic client / GVK). Until then **`custom:`**. | Pending |
-| 58 | **`kzero diff`** — live plan vs cluster. | Pending (after **#29**) |
+| 58 | **`kzero diff`** — live plan vs cluster (`--phase up|down`). | **Done (MVP)** on develop |
 | 57 | **Resume / restart from step** — Phase A: restart from index N; Phase B optional state file. | **Deferred** (complexity) |
 | 55 | **Post-pipeline log upload** — wrappers/selfhosted remain default. | **Parked** |
 

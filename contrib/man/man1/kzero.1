@@ -96,6 +96,15 @@ Full schema:
 .B analyze
 Validate config and print a normalized execution plan (no cluster mutations).
 .TP
+.B diff
+Compare pipeline desired state to the live cluster (read-only).
+.B \-\-phase
+.I up|down
+(default
+.BR up ).
+Exit 2 on drift. See
+.IR docs/examples/diff.md .
+.TP
 .B doctor
 Operator preflight without mutations: config, binaries, API reachability, workload refs, RBAC hints.
 Optional
@@ -237,6 +246,16 @@ kzero \-\-print\-sample\-config > ./kzero.yaml
 Validate and print plan:
 .RS
 kzero analyze \-\-config ./kzero.yaml
+.RE
+.TP
+Compare plan to live cluster (phase up):
+.RS
+kzero diff \-\-config ./kzero.yaml \-\-phase up
+.RE
+.TP
+Confirm drained state after down:
+.RS
+kzero diff \-\-config ./kzero.yaml \-\-phase down
 .RE
 .TP
 Dry-run shutdown pipeline:

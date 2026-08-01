@@ -75,7 +75,7 @@ Behavior and acceptance: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:*
 ## Features
 
 - **Configuration-first** (`schema_version: "1.0"`): pipelines and hooks live in config, not hardcoded playbooks.
-- **Commands**: `analyze`, `doctor`, `target`, `notify test`, `verify`, `probe`, `down`, `up`, `reset`, `completion`, `version` — global **`--log-format text|json`** and **`--log-level`** on pipeline output (see SPEC). (`reset` = full `down` then `up`; if `down` fails, `up` does not run). Every pipeline command prints a **`Kubernetes target:`** block (`started_at`, optional `client_id`, context, cluster, API server, kubeconfig path) before work starts. **`kzero notify test`** verifies outbound **`notify.*`** channels without running a pipeline. **`analyze`** optionally checks the API that each `deployment` / `statefulset` / **`pvc`** / **`exec`** in the plan exists when kubeconfig loads.
+- **Commands**: `analyze`, **`diff`**, `doctor`, `target`, `notify test`, `verify`, `probe`, `down`, `up`, `reset`, `completion`, `version` — global **`--log-format text|json`** and **`--log-level`** on pipeline output (see SPEC). (`reset` = full `down` then `up`; if `down` fails, `up` does not run). Every pipeline command prints a **`Kubernetes target:`** block (`started_at`, optional `client_id`, context, cluster, API server, kubeconfig path) before work starts. **`kzero notify test`** verifies outbound **`notify.*`** channels without running a pipeline. **`analyze`** optionally checks the API that each `deployment` / `statefulset` / **`pvc`** / **`exec`** in the plan exists when kubeconfig loads. **`diff --phase up|down`** compares desired pipeline state to live replicas / suspend / present-absent (exit **2** on drift) — [docs/examples/diff.md](docs/examples/diff.md).
 - **Exit codes (stable for wrappers):** **0** success; **1** config; **2** Kubernetes; **3** executor / pipeline abort; **4** notify delivery (`require_delivery` or **`notify test`** POST fail) — [SPEC §5](SPECIFICATIONS.md#process-exit-codes-42).
 - **Phase hooks**: `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error` (shell script paths).
 - **Per-step hooks** (`pre` / `post`): optional shell scripts for a **single** pipeline step—run immediately before and after that step’s main action; **`post` runs only if the main action succeeds**.
@@ -265,6 +265,7 @@ For **bastion**, **cron**, **CI**, and **live** patterns: **[kzero-selfhosted](h
 |------|------------|
 | **Full platform reset** (truncate, PVC, Helm SDK, probe) | [kzero-selfhosted/run/examples/full-reset-example/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/full-reset-example) · [validation runbook](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/full-reset-validation.md) |
 | **PVC / StatefulSet data patterns** | [pvc-statefulset-data-strategy.md](docs/examples/pvc-statefulset-data-strategy.md) — scale→wait→`pvc.*`, wipe, snapshot/`custom:`, init |
+| **Plan vs live (`kzero diff`)** | [diff.md](docs/examples/diff.md) — `--phase up|down`, drift exit **2**, gate reset |
 | **Bastion / cron / systemd** | [kzero-selfhosted/run/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run) — [standalone](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/standalone/README.md), [automation & CI](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/automation-and-pipelines.md) |
 | **Network loss during live reset** | [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md) — **`run.api_watchdog`**, notify **`[ERR]`** / **`require_delivery`**, phase-boundary preflight; supplemental mitigations |
 | **`docker run`** (analyze / version; live limits) | [run/docker/README.md](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docker/README.md) |
@@ -288,6 +289,21 @@ kzero down --config ./kzero.yaml
 ```
 
 `**analyze`** validates the profile and prints the normalized plan on stdout: run metadata, phase hooks, indexed **`[down]`** / **`[up]`** steps (including release script paths and per-step options), and a **Deferred** block when unimplemented schema fields are set. See [SPECIFICATIONS.md](SPECIFICATIONS.md) → **`kzero analyze`**.
+
+### Plan vs live cluster (`diff`)
+
+```bash
+# Expect pipelines.up desired state (default --phase up)
+kzero diff --config ./kzero.yaml
+
+# After down — expect scale 0 / suspend / PVC&Job absent
+kzero diff --config ./kzero.yaml --phase down
+
+# Gate a reset on matching "up" state
+kzero diff -c ./kzero.yaml --phase up && kzero reset -c ./kzero.yaml
+```
+
+Read-only comparison of replicas, CronJob suspend, PVC/Job/release presence. Exit **2** on drift. Cookbook: [docs/examples/diff.md](docs/examples/diff.md). See [SPECIFICATIONS.md](SPECIFICATIONS.md) → **`kzero diff`**.
 
 ### Test notifications (no pipeline)
 

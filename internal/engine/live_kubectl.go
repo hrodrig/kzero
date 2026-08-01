@@ -342,7 +342,9 @@ func withOpTimeout(ctx context.Context, cfg *config.Config) (context.Context, co
 	return ctx, func() {}
 }
 
-func scaleReplicas(phase Phase, step config.PipelineStep) int {
+// DesiredReplicas returns the replica count the engine would apply for phase.
+// Down always yields 0; up uses step.Replicas or default 1.
+func DesiredReplicas(phase Phase, step config.PipelineStep) int {
 	if phase == PhaseDown {
 		return 0
 	}
@@ -350,6 +352,10 @@ func scaleReplicas(phase Phase, step config.PipelineStep) int {
 		return *step.Replicas
 	}
 	return 1
+}
+
+func scaleReplicas(phase Phase, step config.PipelineStep) int {
+	return DesiredReplicas(phase, step)
 }
 
 func rolloutTimeout(cfg *config.Config, step config.PipelineStep) time.Duration {

@@ -445,6 +445,77 @@ In order (omit lines when the corresponding config value is empty):
 
 [↑ Back to top](#top)
 
+## `kzero diff`
+
+Compare **desired** state for one pipeline phase against the **live** cluster (read-only). Complements **`analyze`** (plan + existence checks) and **`doctor`** (binaries / RBAC): **`diff`** answers “does the cluster already match what this phase expects?”
+
+### Flag
+
+| Flag | Default | Values |
+|------|---------|--------|
+| **`--phase`** | **`up`** | **`up`** or **`down`** — compare only `pipelines.<phase>` |
+
+### Desired semantics (MVP)
+
+| Kind | Desired **`--phase up`** | Desired **`--phase down`** | Live source |
+|------|--------------------------|----------------------------|-------------|
+| `deployment` / `statefulset` | `replicas` from YAML or **1** | **0** | `spec.replicas` |
+| `pvc` | **absent** (step always deletes) | **absent** | Get claim |
+| `release` | Helm release **present** | **absent** | Secrets with labels `owner=helm,name=<release>` (Helm v3 default secret storage) |
+| `cronjob` | `spec.suspend` false/nil | `spec.suspend` true | Get CronJob |
+| `job` | Job **present** | Job **absent** | Get Job |
+| `exec` / `custom` | skipped | skipped | — (no comparable cluster state) |
+
+### Output
+
+1. **`Kubernetes target:`** block (same as other commands).
+2. Heading **`Diff (phase=up):`** or **`Diff (phase=down):`**.
+3. One line per pipeline step: **`OK`**, **`DRIFT`**, or **`SKIP`**, with ref and detail (e.g. `replicas=2 (live=0)`).
+
+### Exit codes
+
+| Code | When |
+|------|------|
+| **0** | Every comparable step matches (skips allowed). |
+| **1** | Config load / invalid **`--phase`**. |
+| **2** | Drift, missing object when expected, or kubeconfig/API failure. |
+
+Unlike **`analyze`** cluster validation (skip + exit 0 when kubeconfig cannot load), **`diff`** requires a usable client and exits **2** if it cannot talk to the API.
+
+### Examples
+
+```bash
+# Default: compare pipelines.up to live (expect apps scaled up, CronJobs resumed)
+kzero diff --config ./kzero.yaml
+
+# Explicit phase
+kzero diff --phase up
+kzero diff --phase down
+
+# Gate a reset: only run reset when cluster already matches "up" desired state
+kzero diff -c /etc/kzero/kzero.yaml --phase up && kzero reset -c /etc/kzero/kzero.yaml
+
+# After maintenance down — confirm drained / suspended / claims gone
+kzero down --config ./kzero.yaml
+kzero diff --phase down --config ./kzero.yaml
+```
+
+Example stdout (truncated):
+
+```text
+Kubernetes target:
+  …
+Diff (phase=up):
+  OK     deployment.app/api  replicas=2 (live=2)
+  DRIFT  statefulset.db/pg   replicas=1 (live=0)
+  OK     cronjob.batch/nightly  suspend=false (live=false)
+  SKIP   custom: ./hooks/x.sh  skipped (no cluster state)
+```
+
+Cookbook: [docs/examples/diff.md](docs/examples/diff.md).
+
+[↑ Back to top](#top)
+
 ## `kzero doctor`
 
 Operator **preflight without mutations** (ROADMAP **#49**). Complements **`analyze`** (plan + optional cluster **Get** validation) by also checking host binaries and RBAC **can-i** hints before a live run.
@@ -473,6 +544,7 @@ Operator **preflight without mutations** (ROADMAP **#49**). Complements **`analy
 | Command | Mutations | Plan | API | Binaries | RBAC SAR |
 |---------|-----------|------|-----|----------|----------|
 | **`analyze`** | No | Yes | Optional cluster **Get** | No | No |
+| **`diff`** | No | No | Required desired-vs-live compare | No | No |
 | **`doctor`** | No | No | Required API ping + workloads + SAR | Yes (shell/auto) | Yes |
 | **`down`/`up`/`reset` live** | Yes | Via engine logs | Preflight + steps | Used by shell executor | Enforced by API |
 
@@ -706,7 +778,7 @@ Scripts that only test **non-zero** remain compatible. Codes **2–4** are set o
 
 ## E. CLI surface
 - `TestRootCommand_HasExpectedSubcommands`
-  - analyze/doctor/down/up/reset are present.
+  - analyze/diff/doctor/down/up/reset are present.
 - `TestAnalyze_InvalidConfigExitCode`
   - Analyze returns non-zero on invalid config.
 - `TestDoctor_okJSON` / doctor package tests

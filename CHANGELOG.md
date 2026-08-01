@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`kzero diff` (#58):** compare `pipelines.up` or `pipelines.down` desired state to the live cluster (`--phase up|down`, default **up**). Replicas, CronJob suspend, PVC/Job/release presence; exit **2** on drift. Cookbook: [docs/examples/diff.md](docs/examples/diff.md).
 - **`job` / `cronjob` steps (#29 MVP):** always-native compact refs — **`cronjob.<ns>/<name>`** suspends on **down** / resumes on **up**; **`job.<ns>/<name>`** deletes on **down** and creates from **`manifest:`** on **up** (optional **`wait_for_complete`**, default true). Doctor SelfSubjectAccessReview covers batch Job/CronJob verbs. Generic CRD patch deferred (**#29b**).
 
 ### Changed
