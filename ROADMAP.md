@@ -9,7 +9,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-07-31 (**v1.0.2** shipped — **`command.shell`** #56 + `x/crypto` pin; **1.1.0** remains **#29** / **#57** + stretch **#59**)
+**Last reviewed:** 2026-08-01 (**v1.1.0** shipped on develop: **#59** Helm v4, **#29** job/cronjob MVP, **#58** `diff`, grpc **v1.82.1**; next: tag **`v1.1.0`**; follow-ups **#29b** / **#57** deferred / **#55** parked)
 
 ### Versioning note
 
@@ -39,7 +39,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.8.x** | **Closed** — API watchdog, notify delivery, stalled event (**#35–#41**) in **v0.8.0**. |
 | **0.9.x** | **Closed** stretch — **v0.9.0** core (**#43–#47**); **v0.9.1** security; **v0.9.2** doctor/completion/plugin/jitter/JSON Schema/docs (**#48–#53**). |
 | **1.0.0** | **Closed** — default **native** (**#32**), PVC cookbook (**#33**), kind CI (**#34**), exit codes **0–4** (**#42**) in **v1.0.0**. |
-| **1.1.0** | **#29** job/cronjob/CRD; resume-from-step (**#57**); stretch Helm SDK **v4** (**#59**, GO-2026-5932) — [plan-1.1.0.md](docs/plan-1.1.0.md). (**#56** shipped in **v1.0.2**.) |
+| **1.1.0** | **Closed** — Helm SDK **v4** (**#59**), **`job`/`cronjob`** MVP (**#29**), **`kzero diff`** (**#58**), grpc **v1.82.1**. Follow-ups: **#29b** CRD patch; **#57** deferred; **#55** parked. (**#56** shipped in **v1.0.2**.) |
 
 **Shell path:** **`run.execution: shell`** (opt-in) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native** (default) / **auto** use the Helm SDK and API primitives above.
 
@@ -77,6 +77,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **1.0.0** | **Stable contract:** default **`run.execution: native`** (**#32**); exit codes **0–4** (**#42**); product kind CI (**#34**); PVC/StatefulSet cookbook (**#33**); README out-of-band hero; POSIX `/bin/sh` hook contract. |
 | **1.0.1** | **Retry:** classify **`connection lost`** / **`http2: client connection lost`** as transient for live step retry and shell **`ErrTransient`**. |
 | **1.0.2** | **`command.shell`** (#56) opt-in hook/script interpreter; pin **`golang.org/x/crypto` v0.54.0** + Grype ignore hygiene (GO-2026-5932 until Helm v4 #59); README badge/docs hygiene. |
+| **1.1.0** | **Helm SDK v4** (#59); native **`job`/`cronjob`** (#29 MVP); **`kzero diff --phase`** (#58); **`google.golang.org/grpc` v1.82.1** (Dependabot #8). |
 
 ---
 
@@ -167,7 +168,7 @@ Broader pipeline primitives via **client-go** and **helm.sh/helm/v3**, keeping a
 | 26 | **Infra probe (native checks)**: PVC **Bound** wait, optional in-volume write/read, and probe teardown using built-in step types (extends **0.6.x #22** for distroless/single-binary runs). | **Done** (develop, PR6 — native Redis sample + docs) |
 | 27 | **Scheduling / affinity sanity** (optional probe or **`verify`** check): detect pods **Pending** due to node selectors, affinity, or taints after maintenance—separate from storage probe. | **Done** (**0.7.2** — **`pods_schedulable`**) |
 | 28 | **Cosign signing** and **SBOM** (e.g. Syft) in the GoReleaser pipeline. | **Done** (**v0.7.0**) |
-| 29 | **Additional step types**: `job`, `cronjob` (suspend), safe generic **patch** / scale patterns for CRDs. Prefer native executor; shell fallback where needed. Until then use **`custom:`**. | Deferred → **1.1.0** ([plan-1.1.0.md](docs/plan-1.1.0.md)) |
+| 29 | **Additional step types**: `job`, `cronjob` (suspend). Prefer native executor. Until then use **`custom:`**. | **Done (MVP)** on develop — Job delete/create+wait; CronJob suspend. Generic CRD patch → **#29b** |
 | 30 | **`custom:` parity**: pass `KZERO_PHASE` and step metadata to the main custom script (same as per-step hooks / release scripts). | **Done** (**0.7.2**) |
 | 31 | **Release script ergonomics**: optional non-flat paths under `helm.workspace` (e.g. `monitoring/kube-prometheus-stack.sh`) without breaking flat `name.sh` convention. | **Done** (**0.7.2** — step **`script:`**) |
 
@@ -248,11 +249,12 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 | # | Item | Status |
 |---|------|--------|
 | 56 | **Configurable hook interpreter** — default **`/bin/sh`**; opt-in **`command.shell`** for hooks / **`custom:`** / shell release scripts (no magic shebang). | **Done** (**v1.0.2**) |
-| 29 | **`job` / `cronjob`** (suspend) and safe generic **patch** / scale for CRDs — prefer native; until then **`custom:`**. | Pending (moved from open-ended post-1.x) |
-| 57 | **Resume / restart from step** — Phase A: restart from index N; Phase B optional state file. | Pending |
-| 59 | *(Stretch / recommended)* **Helm SDK v4.2.3+** — drop **GO-2026-5932**; bump `k8s.io/*` with Helm; see plan spike. | Optional |
-| 58 | *(Stretch)* **`kzero diff`** — live plan vs cluster. | Optional |
-| 55 | *(Stretch)* **Post-pipeline log upload** — see **1.0.0** optional; still not a tag gate. | Optional |
+| 59 | **Helm SDK v4.2.3+** — drop **GO-2026-5932**; bump `k8s.io/*` with Helm; see plan spike. | **Done** (**v1.1.0**) |
+| 29 | **`job` / `cronjob`** (suspend) MVP — native Job delete/create+wait; CronJob suspend/resume. | **Done (MVP)** (**v1.1.0**) |
+| 29b | Safe generic **patch** / scale for CRDs (dynamic client / GVK). Until then **`custom:`**. | Pending |
+| 58 | **`kzero diff`** — live plan vs cluster (`--phase up|down`). | **Done** (**v1.1.0**) |
+| 57 | **Resume / restart from step** — Phase A: restart from index N; Phase B optional state file. | **Deferred** (complexity) |
+| 55 | **Post-pipeline log upload** — wrappers/selfhosted remain default. | **Parked** |
 
 **Parked (not 1.1):** parallel waves, webhook/schedule daemon, SSH bastion tunnel, multi-cluster YAML, approval gates, secret-manager plugins, OTel/Prometheus productization.
 

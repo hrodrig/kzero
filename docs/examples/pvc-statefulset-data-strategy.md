@@ -102,7 +102,22 @@ pipelines:
         wait_for_ready: true
 ```
 
-Or apply a Kubernetes Job via `custom:` (`kubectl apply -f migrate-job.yaml` + wait). First-class **`job`** steps are deferred to **1.1.0** ([plan-1.1.0.md](../plan-1.1.0.md) **#29**).
+Or apply a Kubernetes Job with a first-class **`job.*`** step (`manifest:` + wait for Complete). Suspend/resume batch CronJobs with **`cronjob.*`**.
+
+```yaml
+pipelines:
+  down:
+    - cronjob.batch/nightly
+    - job.batch/migrate-db
+  up:
+    - job.batch/migrate-db:
+        manifest: ./jobs/migrate-db.yaml
+        wait_for_complete: true
+        timeout: 15m
+    - cronjob.batch/nightly
+```
+
+Generic CRD patch/scale remains **`custom:`** until follow-up **#29b**.
 
 ---
 

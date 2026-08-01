@@ -8,7 +8,7 @@
 | [../SPECIFICATIONS.md](../SPECIFICATIONS.md) | Behavior contract, config shape, and TDD baseline |
 | [../ROADMAP.md](../ROADMAP.md) | Prioritized planned work and known gaps (in-repo source of truth) |
 | [plan-1.0.0.md](plan-1.0.0.md) | **Gates complete** — **#32–#34**, **#42**; await validate → tag |
-| [plan-1.1.0.md](plan-1.1.0.md) | **Draft** — post-1.0 bounded: hook interpreter, **#29**, resume-from-step |
+| [plan-1.1.0.md](plan-1.1.0.md) | **Shipped (v1.1.0)** — **#59** hooks, **#29** job/cronjob MVP, **#58** diff; **#29b** follow-up |
 | [plan-0.9.x.md](plan-0.9.x.md) | **Done** — **v0.9.0**–**v0.9.2** bastion-first + stretch (**#43–#53**) |
 | [plan-0.6.0.md](plan-0.6.0.md) | Implementation plan for **v0.6.0** (notify, preflight, verify, infra probe, slog) |
 | [plan-0.8.x.md](plan-0.8.x.md) | **Done** — **0.8.x** band shipped in **v0.8.0** (API watchdog, notify delivery visibility, reset phase-boundary preflight) |
@@ -17,6 +17,7 @@
 | [demo.tape](demo.tape) | VHS tape to record [demo.gif](demo.gif) |
 | [examples/pipeline-order-and-integrity.md](examples/pipeline-order-and-integrity.md) | Ordered `down` steps, `wait_for_ready` limits, per-step `post` examples |
 | [examples/pvc-statefulset-data-strategy.md](examples/pvc-statefulset-data-strategy.md) | PVC / StatefulSet data patterns: scale→wait→delete, wipe, snapshot/`custom:`, init |
+| [examples/diff.md](examples/diff.md) | **`kzero diff --phase up|down`** — plan vs live, drift exit codes, gate reset |
 | [examples/notifications.md](examples/notifications.md) | **notify** channels, `kzero notify test`, env overrides, live vs dry-run |
 | [examples/pipeline-network-loss.md](examples/pipeline-network-loss.md) | Long live **`reset`** on bastions: two-phase outage pattern, **v0.8.0** engine features + supplemental mitigations |
 | [examples/infra-probe.md](examples/infra-probe.md) | **`infra_probe`** schema, checks, gate (`kzero probe`) |

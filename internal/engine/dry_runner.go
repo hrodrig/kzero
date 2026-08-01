@@ -12,9 +12,12 @@ import (
 // DryRunner logs planned invocations without executing scripts or mutating the cluster.
 // When nativeWL is set (native/auto execution + kubeconfig), deployment/statefulset
 // steps are validated with server-side dry-run (DryRun=All) instead of plan-only text.
+// CronJob/Job clients (when set) similarly validate suspend/create with DryRun=All.
 type DryRunner struct {
 	Log      *log.Emitter
 	nativeWL executor.Workload
+	cronJob  executor.CronJobSuspender
+	job      executor.JobRunner
 }
 
 // RunHook implements Runner.
@@ -43,38 +46,43 @@ func (r *DryRunner) RunPipelineStep(ctx context.Context, cfg *config.Config, pha
 		return fmt.Errorf("step %s[%d]: %w", phase, index, ctx.Err())
 	default:
 	}
-	if step.Type == "deployment" || step.Type == "statefulset" {
+	if err := r.runMainDryRunStep(ctx, cfg, phase, index, step); err != nil {
+		return err
+	}
+	return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
+}
+
+func (r *DryRunner) runMainDryRunStep(ctx context.Context, cfg *config.Config, phase Phase, index int, step config.PipelineStep) error {
+	switch step.Type {
+	case "deployment", "statefulset":
 		if err := r.runNativeDryRunScale(ctx, cfg, phase, index, step); err != nil {
 			return err
 		}
 		if r.nativeWL != nil {
-			return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
+			return nil
 		}
-	}
-
-	if step.Type == "pvc" {
+	case "pvc":
 		if r.Log != nil {
 			r.Log.DryRun(cfg, fmt.Sprintf("delete pvc %s/%s (background propagation, ignore-not-found)", step.Namespace, step.Name))
 		}
-		return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
-	}
-
-	if step.Type == "exec" {
+		return nil
+	case "cronjob":
+		return r.runCronJobDryRun(ctx, cfg, phase, step)
+	case "job":
+		return r.runJobDryRun(ctx, cfg, phase, step)
+	case "exec":
 		if r.Log != nil {
 			r.Log.DryRun(cfg, executor.FormatExecPlan(step))
 		}
-		return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
+		return nil
 	}
-
 	if r.releaseDryRunHandled(cfg, phase, step) {
-		return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
+		return nil
 	}
-
-	desc := DescribeStep(step)
 	if r.Log != nil {
-		r.Log.DryRun(cfg, fmt.Sprintf("pipeline %s step %d: %s", phase, index, desc))
+		r.Log.DryRun(cfg, fmt.Sprintf("pipeline %s step %d: %s", phase, index, DescribeStep(step)))
 	}
-	return r.RunHook(ctx, cfg, pipelineStepHookLabel(phase, index, "post"), step.PostStep)
+	return nil
 }
 
 func (r *DryRunner) releaseDryRunHandled(cfg *config.Config, phase Phase, step config.PipelineStep) bool {

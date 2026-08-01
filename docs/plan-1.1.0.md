@@ -1,6 +1,6 @@
 # Plan 1.1.0 — post-1.0 operator ergonomics (bounded)
 
-**Status:** **Draft** — planning only (2026-07-15). Starts **after** [plan-1.0.0.md](plan-1.0.0.md) ships (**#32–#34**, **#42**).
+**Status:** **Closed for tag** — **v1.1.0** prep on develop (2026-08-01): **#59** / **#29** MVP / **#58** / grpc **v1.82.1**. Follow-ups: **#29b**; **#55** parked; **#57** deferred. **#56** shipped in **v1.0.2**.
 
 **Motivation:** Close the highest-value gaps that **do not** turn kzero into a daemon, multi-cluster control plane, or secret broker. Stay **bastion-first**, **config-first**, sequential by default.
 
@@ -13,16 +13,21 @@ For shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMA
 | # / ID | Item | Summary |
 |--------|------|---------|
 | **56** | **Configurable hook interpreter** | **Shipped in v1.0.2.** Opt-in **`command.shell`** for hook / **`custom:`** / shell **`release.*`** scripts (default **`/bin/sh`**). Fixes Ubuntu **dash** vs bashisms without magic shebang. SPEC: [Hook and script interpreter](../SPECIFICATIONS.md#hook-and-script-interpreter-commandshell). |
-| **29** | **`job` / `cronjob` + safe CRD patch** | Built-in steps: Job lifecycle, CronJob suspend/resume (or equivalent), and a **narrow** patch/scale pattern for CRDs — prefer **native**; shell fallback where needed. Until then: **`custom:`**. |
-| **57** | **Resume / restart from step** | **Phase A (preferred first):** document and/or CLI aid to re-run a pipeline **from step index N** (YAML slice / flag) so operators avoid full replay after mid-reset failure. **Phase B (optional):** on-disk run state + resume — only if Phase A proves insufficient; requires clear idempotency rules. |
+| **59** | **Helm SDK → v4.2.3+** | **Done on develop.** Migrated to **`helm.sh/helm/v4` v4.2.3**; dropped **GO-2026-5932** ignores; **`k8s.io/*` v0.36.x**. See [Helm v4 spike](#helm-v4-spike-2026-07-16). |
+| **29** | **`job` / `cronjob` + safe CRD patch** | **MVP done on develop:** Job lifecycle + CronJob suspend/resume (native). **#29b:** narrow patch/scale for CRDs (dynamic client) — until then **`custom:`**. |
+
+## Deferred (not in immediate queue)
+
+| # / ID | Item | Notes |
+|--------|------|--------|
+| **57** | **Resume / restart from step** | Deferred (complexity). Phase A / Phase B remain documented for a later band if needed. |
 
 ## Stretch (not required for v1.1.0)
 
 | # / ID | Item | Notes |
 |--------|------|--------|
-| **59** | **Helm SDK → v4.2.3+** | **Viable / recommended.** Migrate `helm.sh/helm/v3` → **`helm.sh/helm/v4`** (pin **v4.2.3** or newer). Drops **GO-2026-5932** (`x/crypto/openpgp` → ProtonMail fork). Ahead of Helm **v3** security EOL (**2026-11-11**). See [Helm v4 spike](#helm-v4-spike-2026-07-16). Prefer early optional PR if capacity; not a hard tag gate. |
-| **58** | **`kzero diff`** | Live cluster vs plan (replicas, Helm, PVC deletes). Complements **`analyze`** / **`doctor`**. Ship only if cheap after gates above. |
-| **55** | **Post-pipeline log upload** | Parked unless operators insist; wrappers / selfhosted remain default. |
+| **58** | **`kzero diff`** | **Done (MVP)** on develop — `--phase up|down`; replicas / suspend / presence. Cookbook [examples/diff.md](examples/diff.md). |
+| **55** | **Post-pipeline log upload** | **Parked** unless operators insist; wrappers / selfhosted remain default. |
 
 ---
 
@@ -30,12 +35,13 @@ For shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMA
 
 | PR | Item | Why |
 |----|------|-----|
-| PR0 | *(Optional)* **#59** Helm SDK v4 | Deps/security before feature work; clears govulncheck ignore; bumps `k8s.io/*` with Helm. |
-| PR1 | **#56** hook interpreter | **Done (v1.0.2)** — `command.shell`; cures Ubuntu dash vs bashisms. |
-| PR2 | **#29** job / cronjob / CRD patch | Largest remaining step-type gap. |
-| PR3 | **#57** Phase A (restart from step) | Operational resume without full state machine. |
-| PR4 | *(Optional)* **#57** Phase B or **#58** diff | Only with design note + tests. |
-| PR5 | Tag **`v1.1.0`** | Release checklist ([release-tests](../.cursor/rules/release-tests.mdc)). |
+| PR0 | **#56** hook interpreter | **Done (v1.0.2)** — `command.shell`. |
+| PR1 | **#59** Helm SDK v4 | **Done on develop** — clears govulncheck ignore; bumps `k8s.io/*`. |
+| PR2 | **#29** job / cronjob MVP | **Done** on develop (CRD patch → **#29b**). |
+| PR3 | **#58** `kzero diff` | **Done** on develop. |
+| PR4 | Tag **`v1.1.0`** | Release checklist in progress on develop. |
+
+**Deferred:** **#57** (resume-from-step). **Parked:** **#55** (log upload).
 
 ---
 
@@ -52,7 +58,7 @@ For shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMA
 | **k8s clients** | Helm **v4.2.3** pulls **`k8s.io/client-go v0.36.1`** (kzero today **v0.35.1**) — expect coordinated bump of **`k8s.io/api` / `apimachinery` / `client-go`**. |
 | **Operator charts** | Chart format remains compatible per Helm docs; no YAML schema change for kzero pipelines. Host **`helm` CLI v3** still fine for **`run.execution: shell`**. |
 | **Effort** | Medium: one focused PR (imports + compile fix + unit tests + `make release-check` / Grype). Remove **GO-2026-5932** from `.govulncheck-ignore.yaml` when graph is clean. |
-| **Verdict** | **Viable.** Track as stretch **#59**; ship early in 1.1 if capacity (PR0). Do **not** block **#56/#29/#57** on it. |
+| **Verdict** | **Viable.** Ship as **PR1** in 1.1 queue (**#59** before **#29**). |
 
 **Out of spike scope:** rewriting release scripts, requiring host Helm v4 CLI, Helm plugins / Wasm.
 
@@ -62,10 +68,12 @@ For shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMA
 
 | # | Criterion | Verify |
 |---|-----------|--------|
-| 1 | Default interpreter still **`/bin/sh`**; opt-in bash (or path) documented + tested | Unit + SPEC |
-| 2 | At least one of **`job`** / **`cronjob`** (or documented patch step) usable in live/dry-run | Tests + sample + SPEC |
-| 3 | Operator can restart a failed run from a later step without rewriting the whole YAML by hand | Docs and/or flag + test |
+| 1 | Default interpreter still **`/bin/sh`**; opt-in bash (or path) documented + tested | Unit + SPEC (**#56** done) |
+| 2 | Helm SDK on **`helm.sh/helm/v4`**; **GO-2026-5932** cleared from ignore lists when graph is clean | `make security` / Grype (**#59**) |
+| 3 | At least one of **`job`** / **`cronjob`** (or documented patch step) usable in live/dry-run | **Met** — tests + SPEC (**#29** MVP) |
 | 4 | **`make release-check`** green | CI |
+
+(**#57** resume-from-step deferred — not a 1.1 tag gate.)
 
 ---
 
@@ -87,4 +95,4 @@ Hooks as systemd/cron remains **kzero-selfhosted**.
 
 **1.0.0** locks the stable contract (defaults, exit codes, kind CI, PVC patterns). **1.1.0** adds ergonomics and step types **without** breaking that promise. Prefer additive schema keys; any breaking change needs a migration note.
 
-**Last reviewed:** 2026-07-19 (**#56** `command.shell` on develop)
+**Last reviewed:** 2026-08-01 (queue **#59** done → **#29** MVP done → **#58**; **#29b** CRD follow-up; **#57** deferred; **#55** parked)

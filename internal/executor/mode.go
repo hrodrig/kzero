@@ -39,7 +39,7 @@ func WantNative(cfg *config.Config) bool {
 	}
 }
 
-// WantHelmSDK reports whether release steps should use helm.sh/helm/v3 instead of shell helm/.sh.
+// WantHelmSDK reports whether release steps should use helm.sh/helm/v4 instead of shell helm/.sh.
 func WantHelmSDK(cfg *config.Config) bool {
 	return WantNative(cfg)
 }

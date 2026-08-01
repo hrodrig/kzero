@@ -115,6 +115,56 @@ func (r *LiveRunner) runPVCDelete(ctx context.Context, cfg *config.Config, step 
 	return pvc.Delete(opCtx, step.Namespace, step.Name)
 }
 
+func (r *LiveRunner) runCronJobSuspend(ctx context.Context, cfg *config.Config, phase Phase, step config.PipelineStep) error {
+	cj, err := r.cronJobFor(cfg)
+	if err != nil {
+		return err
+	}
+	opCtx, cancel := withOpTimeout(ctx, cfg)
+	defer cancel()
+	if step.Timeout > 0 {
+		var cancelTimeout context.CancelFunc
+		opCtx, cancelTimeout = context.WithTimeout(opCtx, step.Timeout)
+		defer cancelTimeout()
+	}
+
+	suspend := phase == PhaseDown
+	r.logLive("%s %s", executor.FormatCronJobPlan(suspend), step.Ref)
+	return cj.Suspend(opCtx, step.Namespace, step.Name, suspend)
+}
+
+func (r *LiveRunner) runJobStep(ctx context.Context, cfg *config.Config, phase Phase, step config.PipelineStep) error {
+	job, err := r.jobFor(cfg)
+	if err != nil {
+		return err
+	}
+	opCtx, cancel := withOpTimeout(ctx, cfg)
+	defer cancel()
+	if step.Timeout > 0 {
+		var cancelTimeout context.CancelFunc
+		opCtx, cancelTimeout = context.WithTimeout(opCtx, step.Timeout)
+		defer cancelTimeout()
+	}
+
+	if phase == PhaseDown {
+		r.logLive("delete job %s/%s (background propagation, ignore-not-found)", step.Namespace, step.Name)
+		return job.Delete(opCtx, step.Namespace, step.Name)
+	}
+
+	r.logLive("%s", executor.FormatJobPlan(false, step.Manifest, step.JobWaitForComplete()))
+	if err := job.CreateFromManifest(opCtx, step.Namespace, step.Name, step.Manifest); err != nil {
+		return err
+	}
+	if !step.JobWaitForComplete() {
+		return nil
+	}
+	timeout := rolloutTimeout(cfg, step)
+	r.logLive("wait job complete %s (timeout %s)", step.Ref, timeout)
+	return r.withThrottledProgress(ctx, step, "waiting job complete", func(_ context.Context) error {
+		return job.WaitComplete(opCtx, step.Namespace, step.Name, timeout)
+	})
+}
+
 func (r *LiveRunner) pvcFor(cfg *config.Config) (executor.PVCDeleter, error) {
 	if r.PVC != nil {
 		return r.PVC, nil
@@ -132,6 +182,44 @@ func (r *LiveRunner) pvcFor(cfg *config.Config) (executor.PVCDeleter, error) {
 	r.cachedPVC = pvc
 	r.cachedPVCKey = key
 	return pvc, nil
+}
+
+func (r *LiveRunner) cronJobFor(cfg *config.Config) (executor.CronJobSuspender, error) {
+	if r.CronJob != nil {
+		return r.CronJob, nil
+	}
+	key := cfg.Run.Kubeconfig
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.cachedCronJob != nil && r.cachedCronJobKey == key {
+		return r.cachedCronJob, nil
+	}
+	cj, err := executor.NewCronJob(cfg.Run.Kubeconfig)
+	if err != nil {
+		return nil, fmt.Errorf("cronjob: %w", err)
+	}
+	r.cachedCronJob = cj
+	r.cachedCronJobKey = key
+	return cj, nil
+}
+
+func (r *LiveRunner) jobFor(cfg *config.Config) (executor.JobRunner, error) {
+	if r.Job != nil {
+		return r.Job, nil
+	}
+	key := cfg.Run.Kubeconfig
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.cachedJob != nil && r.cachedJobKey == key {
+		return r.cachedJob, nil
+	}
+	j, err := executor.NewJob(cfg.Run.Kubeconfig)
+	if err != nil {
+		return nil, fmt.Errorf("job: %w", err)
+	}
+	r.cachedJob = j
+	r.cachedJobKey = key
+	return j, nil
 }
 
 func (r *LiveRunner) runPodExec(ctx context.Context, cfg *config.Config, step config.PipelineStep) error {
@@ -254,7 +342,9 @@ func withOpTimeout(ctx context.Context, cfg *config.Config) (context.Context, co
 	return ctx, func() {}
 }
 
-func scaleReplicas(phase Phase, step config.PipelineStep) int {
+// DesiredReplicas returns the replica count the engine would apply for phase.
+// Down always yields 0; up uses step.Replicas or default 1.
+func DesiredReplicas(phase Phase, step config.PipelineStep) int {
 	if phase == PhaseDown {
 		return 0
 	}
@@ -262,6 +352,10 @@ func scaleReplicas(phase Phase, step config.PipelineStep) int {
 		return *step.Replicas
 	}
 	return 1
+}
+
+func scaleReplicas(phase Phase, step config.PipelineStep) int {
+	return DesiredReplicas(phase, step)
 }
 
 func rolloutTimeout(cfg *config.Config, step config.PipelineStep) time.Duration {

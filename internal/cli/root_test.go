@@ -92,7 +92,7 @@ func TestRootCommand_HasExpectedSubcommands(t *testing.T) {
 	// Do not use t.Parallel: newRootCmd binds package-level cfgFile and
 	// registers cobra.OnInitialize, which races under go test -race.
 	cmd := newRootCmd()
-	expected := []string{"analyze", "target", "notify", "verify", "down", "up", "reset", "version"}
+	expected := []string{"analyze", "diff", "target", "notify", "verify", "down", "up", "reset", "version"}
 	for _, name := range expected {
 		if _, _, err := cmd.Find([]string{name}); err != nil {
 			t.Fatalf("expected subcommand %q to exist: %v", name, err)

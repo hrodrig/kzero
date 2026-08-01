@@ -107,4 +107,18 @@ func TestFormatStepPlanLine_releaseAndOptions(t *testing.T) {
 	if !strings.Contains(got, "exec database/postgresql-0 container=postgres") {
 		t.Fatalf("missing exec hint: %q", got)
 	}
+
+	cj := config.PipelineStep{Ref: "cronjob.batch/nightly", Type: "cronjob", Namespace: "batch", Name: "nightly"}
+	got = FormatStepPlanLine(shellCfg, cj, "", "down")
+	if !strings.Contains(got, "suspend=true") {
+		t.Fatalf("missing cronjob hint: %q", got)
+	}
+	job := config.PipelineStep{
+		Ref: "job.batch/migrate", Type: "job", Namespace: "batch", Name: "migrate",
+		Manifest: "./jobs/m.yaml",
+	}
+	got = FormatStepPlanLine(shellCfg, job, "", "up")
+	if !strings.Contains(got, "create job from manifest ./jobs/m.yaml") {
+		t.Fatalf("missing job hint: %q", got)
+	}
 }

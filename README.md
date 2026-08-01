@@ -2,7 +2,7 @@
 
 <a id="top"></a>
 
-[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](https://github.com/hrodrig/kzero/releases)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/hrodrig/kzero/releases)
 [![GitHub release](https://img.shields.io/github/v/release/hrodrig/kzero)](https://github.com/hrodrig/kzero/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.5-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -33,7 +33,7 @@ Where to run: [docs/deployment-models.md](docs/deployment-models.md). Scope vs a
 
 Regenerate from the repo root: **[docs/README.md — Terminal demo](docs/README.md#terminal-demo-vhs)**.
 
-Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (and **reset**) pipelines from YAML, with phase hooks, optional **per-step** `pre` / `post` scripts, workload scale steps, **Helm releases** (shell scripts or **Helm SDK** chart manifests under **`helm.workspace`**), **`pvc`** / **`exec`** API steps, **`custom:`** scripts, **API watchdog** with throttled progress logs and **`pipeline.stalled`** alerts.
+Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (and **reset**) pipelines from YAML, with phase hooks, optional **per-step** `pre` / `post` scripts, workload scale steps, **Helm releases** (shell scripts or **Helm SDK** chart manifests under **`helm.workspace`**), **`pvc`** / **`exec`** / **`job`** / **`cronjob`** API steps, **`custom:`** scripts, **API watchdog** with throttled progress logs and **`pipeline.stalled`** alerts.
 
 **Operator deployment (bastion-first, out-of-band):** see **[docs/deployment-models.md](docs/deployment-models.md)**. **Scope vs alternatives:** [docs/scope-and-alternatives.md](docs/scope-and-alternatives.md). Playbooks and annotated profiles: **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)** — this repo ships the CLI binary, packages, container image, and Homebrew cask only (same split as [pgwd](https://github.com/hrodrig/pgwd) / [pgwd-selfhosted](https://github.com/hrodrig/pgwd-selfhosted)).
 
@@ -45,7 +45,7 @@ Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (an
 
 **Releases** ([GitHub Releases](https://github.com/hrodrig/kzero/releases)) ship **binaries**, **`.deb`** / **`.rpm`**, **`ghcr.io/hrodrig/kzero`**, and **Homebrew**. **Supply chain (v0.7.0+):** SPDX / CycloneDX SBOMs + Cosign on **`checksums.txt`** and GHCR — see [verify Cosign](#verify-cosign-v070). No Helm charts as release artifacts.
 
-Behavior and acceptance: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:** **v1.0.0** — stable contract: default **`run.execution: native`** (**#32**), process exit codes **0–4** (**#42**), product kind CI (**#34**), PVC/StatefulSet cookbook (**#33**). Prior: **v0.9.2** (doctor, completion, **`kubectl-kzero`**, retry jitter, JSON Schema); **v0.9.0** (graceful shutdown, `require_delivery`, E2E smoke) — [CHANGELOG.md](CHANGELOG.md). Mitigations: [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). Diagrams: **[docs/diagrams.md](docs/diagrams.md)**.
+Behavior and acceptance: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:** **v1.1.0** — Helm SDK **v4** (**#59**), native **`job`/`cronjob`** (**#29**), **`kzero diff`** (**#58**). Prior: **v1.0.2** (`command.shell` **#56**); **v1.0.0** — stable contract: default **`run.execution: native`** (**#32**), exit codes **0–4** (**#42**), product kind CI (**#34**), PVC/StatefulSet cookbook (**#33**) — [CHANGELOG.md](CHANGELOG.md). Mitigations: [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). Diagrams: **[docs/diagrams.md](docs/diagrams.md)**.
 
 ## Table of contents
 
@@ -75,12 +75,12 @@ Behavior and acceptance: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:*
 ## Features
 
 - **Configuration-first** (`schema_version: "1.0"`): pipelines and hooks live in config, not hardcoded playbooks.
-- **Commands**: `analyze`, `doctor`, `target`, `notify test`, `verify`, `probe`, `down`, `up`, `reset`, `completion`, `version` — global **`--log-format text|json`** and **`--log-level`** on pipeline output (see SPEC). (`reset` = full `down` then `up`; if `down` fails, `up` does not run). Every pipeline command prints a **`Kubernetes target:`** block (`started_at`, optional `client_id`, context, cluster, API server, kubeconfig path) before work starts. **`kzero notify test`** verifies outbound **`notify.*`** channels without running a pipeline. **`analyze`** optionally checks the API that each `deployment` / `statefulset` / **`pvc`** / **`exec`** in the plan exists when kubeconfig loads.
+- **Commands**: `analyze`, **`diff`**, `doctor`, `target`, `notify test`, `verify`, `probe`, `down`, `up`, `reset`, `completion`, `version` — global **`--log-format text|json`** and **`--log-level`** on pipeline output (see SPEC). (`reset` = full `down` then `up`; if `down` fails, `up` does not run). Every pipeline command prints a **`Kubernetes target:`** block (`started_at`, optional `client_id`, context, cluster, API server, kubeconfig path) before work starts. **`kzero notify test`** verifies outbound **`notify.*`** channels without running a pipeline. **`analyze`** optionally checks the API that each `deployment` / `statefulset` / **`pvc`** / **`exec`** in the plan exists when kubeconfig loads. **`diff --phase up|down`** compares desired pipeline state to live replicas / suspend / present-absent (exit **2** on drift) — [docs/examples/diff.md](docs/examples/diff.md).
 - **Exit codes (stable for wrappers):** **0** success; **1** config; **2** Kubernetes; **3** executor / pipeline abort; **4** notify delivery (`require_delivery` or **`notify test`** POST fail) — [SPEC §5](SPECIFICATIONS.md#process-exit-codes-42).
 - **Phase hooks**: `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error` (shell script paths).
 - **Per-step hooks** (`pre` / `post`): optional shell scripts for a **single** pipeline step—run immediately before and after that step’s main action; **`post` runs only if the main action succeeds**.
-- **Step types**: compact refs (`deployment.ns/name`, `statefulset.ns/name`, `pvc.ns/claim`, `exec.ns/pod`), `release.ns/name` (**Helm SDK** chart manifest **`<release>.yaml`** or legacy **`<release>.sh`** under `helm.workspace`), and `custom: ./script.sh` (with optional sibling `pre` / `post` keys on the same YAML mapping). DaemonSet is **not** supported as a built-in kind because `kubectl scale` rejects it (no `/scale` subresource); use a `custom:` step with `kubectl patch` to set a `nodeSelector` that drains the pods.
-- **`run.execution`**: **`native`** (default when omitted — client-go scale + **Helm SDK** + API **`pvc`** / **`exec`**), **`shell`** (opt-in — **`kubectl`** / **`helm`** subprocesses), or **`auto`** (native with shell fallback). On a **bastion**, **`native`** avoids host **`kubectl`** / **`helm`** while staying out-of-band; in-cluster Jobs may use the distroless image — see [deployment-models.md](docs/deployment-models.md) and [SPEC — `run.execution`](SPECIFICATIONS.md#workload-execution-backend-runexecution).
+- **Step types**: compact refs (`deployment.ns/name`, `statefulset.ns/name`, `pvc.ns/claim`, `exec.ns/pod`, `job.ns/name`, `cronjob.ns/name`), `release.ns/name` (**Helm SDK** chart manifest **`<release>.yaml`** or legacy **`<release>.sh`** under `helm.workspace`), and `custom: ./script.sh` (with optional sibling `pre` / `post` keys on the same YAML mapping). DaemonSet is **not** supported as a built-in kind because `kubectl scale` rejects it (no `/scale` subresource); use a `custom:` step with `kubectl patch` to set a `nodeSelector` that drains the pods.
+- **`run.execution`**: **`native`** (default when omitted — client-go scale + **Helm SDK** + API **`pvc`** / **`exec`** / **`job`** / **`cronjob`**), **`shell`** (opt-in — **`kubectl`** / **`helm`** subprocesses), or **`auto`** (native with shell fallback). On a **bastion**, **`native`** avoids host **`kubectl`** / **`helm`** while staying out-of-band; in-cluster Jobs may use the distroless image — see [deployment-models.md](docs/deployment-models.md) and [SPEC — `run.execution`](SPECIFICATIONS.md#workload-execution-backend-runexecution).
 - **Run modes**: `dry-run` (plan only, no cluster mutations) and `live`.
 
 **Libraries** (see [`go.mod`](go.mod)): [Cobra](https://github.com/spf13/cobra) **v1.10.2**, [Viper](https://github.com/spf13/viper) **v1.21.0**.
@@ -265,6 +265,7 @@ For **bastion**, **cron**, **CI**, and **live** patterns: **[kzero-selfhosted](h
 |------|------------|
 | **Full platform reset** (truncate, PVC, Helm SDK, probe) | [kzero-selfhosted/run/examples/full-reset-example/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/full-reset-example) · [validation runbook](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/full-reset-validation.md) |
 | **PVC / StatefulSet data patterns** | [pvc-statefulset-data-strategy.md](docs/examples/pvc-statefulset-data-strategy.md) — scale→wait→`pvc.*`, wipe, snapshot/`custom:`, init |
+| **Plan vs live (`kzero diff`)** | [diff.md](docs/examples/diff.md) — `--phase up|down`, drift exit **2**, gate reset |
 | **Bastion / cron / systemd** | [kzero-selfhosted/run/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run) — [standalone](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/standalone/README.md), [automation & CI](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/automation-and-pipelines.md) |
 | **Network loss during live reset** | [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md) — **`run.api_watchdog`**, notify **`[ERR]`** / **`require_delivery`**, phase-boundary preflight; supplemental mitigations |
 | **`docker run`** (analyze / version; live limits) | [run/docker/README.md](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docker/README.md) |
@@ -288,6 +289,21 @@ kzero down --config ./kzero.yaml
 ```
 
 `**analyze`** validates the profile and prints the normalized plan on stdout: run metadata, phase hooks, indexed **`[down]`** / **`[up]`** steps (including release script paths and per-step options), and a **Deferred** block when unimplemented schema fields are set. See [SPECIFICATIONS.md](SPECIFICATIONS.md) → **`kzero analyze`**.
+
+### Plan vs live cluster (`diff`)
+
+```bash
+# Expect pipelines.up desired state (default --phase up)
+kzero diff --config ./kzero.yaml
+
+# After down — expect scale 0 / suspend / PVC&Job absent
+kzero diff --config ./kzero.yaml --phase down
+
+# Gate a reset on matching "up" state
+kzero diff -c ./kzero.yaml --phase up && kzero reset -c ./kzero.yaml
+```
+
+Read-only comparison of replicas, CronJob suspend, PVC/Job/release presence. Exit **2** on drift. Cookbook: [docs/examples/diff.md](docs/examples/diff.md). See [SPECIFICATIONS.md](SPECIFICATIONS.md) → **`kzero diff`**.
 
 ### Test notifications (no pipeline)
 
@@ -382,7 +398,7 @@ Retries rerun the whole step (per-step **pre**, main, **post**). Only **transien
 ### `pipelines`
 
 - **`down`** and **`up`** are ordered lists. Each item is either:
-  - a **string** step reference: **`deployment.ns/name`**, **`statefulset.ns/name`**, **`pvc.ns/claim`**, **`exec.ns/pod`**, **`release.ns/name`** (DaemonSet is not a built-in kind — see [Features](#features)); or
+  - a **string** step reference: **`deployment.ns/name`**, **`statefulset.ns/name`**, **`pvc.ns/claim`**, **`exec.ns/pod`**, **`job.ns/name`**, **`cronjob.ns/name`**, **`release.ns/name`** (DaemonSet is not a built-in kind — see [Features](#features)); or
   - a **single-key map** whose key is one of the above **or** **`custom`**, with optional fields beside that key (see below).
 - **`release.*`** steps require **`helm.workspace`**. With **`run.execution: native`** / **`auto`**, use **`<release>.yaml`** chart manifests (Helm SDK); with **`shell`**, use **`<release>.sh`** scripts (see SPEC and [full-reset-example](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/full-reset-example/helm)).
 

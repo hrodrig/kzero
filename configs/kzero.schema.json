@@ -272,7 +272,7 @@
     "stepRef": {
       "type": "string",
       "description": "Compact step ref: kind.namespace/name",
-      "pattern": "^(deployment|statefulset|release|pvc|exec)\\.[a-z0-9-]+/[a-zA-Z0-9._-]+$"
+      "pattern": "^(deployment|statefulset|release|pvc|exec|job|cronjob)\\.[a-z0-9-]+/[a-zA-Z0-9._-]+$"
     },
     "channelWebhook": {
       "type": "object",
@@ -342,6 +342,14 @@
         "stdin": {
           "type": "string",
           "description": "exec.* only: stdin payload."
+        },
+        "manifest": {
+          "type": "string",
+          "description": "job.* only: path to batch/v1 Job YAML (required on pipelines.up)."
+        },
+        "wait_for_complete": {
+          "type": "boolean",
+          "description": "job.* only: wait for Job Complete on up (default true)."
         }
       }
     },
@@ -365,7 +373,7 @@
       "maxProperties": 1,
       "additionalProperties": false,
       "patternProperties": {
-        "^(deployment|statefulset|release|pvc|exec)\\.[a-z0-9-]+/[a-zA-Z0-9._-]+$": {
+        "^(deployment|statefulset|release|pvc|exec|job|cronjob)\\.[a-z0-9-]+/[a-zA-Z0-9._-]+$": {
           "oneOf": [
             { "type": "null" },
             { "$ref": "#/$defs/stepOptions" }

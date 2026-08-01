@@ -233,7 +233,7 @@ func checkWorkloads(ctx context.Context, cfg *config.Config, factory validate.Cl
 	if len(lines) == 0 {
 		return []Finding{{
 			Check: "kubernetes.workloads", Severity: SeverityOK,
-			Message: "no deployment/statefulset/pvc/exec refs to check",
+			Message: "no deployment/statefulset/pvc/exec/job/cronjob refs to check",
 		}}
 	}
 	var out []Finding
@@ -325,6 +325,12 @@ func collectRBACNeeds(cfg *config.Config) []rbacNeed {
 		case "pvc":
 			resource, group = "persistentvolumeclaims", ""
 			verbs = []string{"get", "delete"}
+		case "cronjob":
+			resource, group = "cronjobs", "batch"
+			verbs = []string{"get", "update", "patch"}
+		case "job":
+			resource, group = "jobs", "batch"
+			verbs = []string{"get", "create", "delete"}
 		default:
 			return
 		}

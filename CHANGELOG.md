@@ -13,6 +13,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [↑ Back to top](#top)
 
+## [1.1.0] - 2026-08-01
+
+### Added
+
+- **`kzero diff` (#58):** compare `pipelines.up` or `pipelines.down` desired state to the live cluster (`--phase up|down`, default **up**). Replicas, CronJob suspend, PVC/Job/release presence; exit **2** on drift. Cookbook: [docs/examples/diff.md](docs/examples/diff.md).
+- **`job` / `cronjob` steps (#29 MVP):** always-native compact refs — **`cronjob.<ns>/<name>`** suspends on **down** / resumes on **up**; **`job.<ns>/<name>`** deletes on **down** and creates from **`manifest:`** on **up** (optional **`wait_for_complete`**, default true). Doctor SelfSubjectAccessReview covers batch Job/CronJob verbs. Generic CRD patch deferred (**#29b**).
+
+### Changed
+
+- **Dependencies:** bump transitive **`google.golang.org/grpc`** to **v1.82.1** (Dependabot [#8](https://github.com/hrodrig/kzero/security/dependabot/8) / [GHSA-hrxh-6v49-42gf](https://github.com/advisories/GHSA-hrxh-6v49-42gf); via Helm → distribution → OTel).
+- **Helm SDK (#59):** migrate **`helm.sh/helm/v3`** → **`helm.sh/helm/v4` v4.2.3**; align **`k8s.io/{api,apimachinery,client-go}`** to **v0.36.x**. Wait semantics use Helm **`WaitStrategy`** (`StatusWatcher` when chart wait is enabled). Host **`helm` CLI v3** remains fine for **`run.execution: shell`**.
+- **Security:** drop **GO-2026-5932** from **`.govulncheck-ignore.yaml`** / **`.grype.yaml`** (Helm v4 uses **ProtonMail/go-crypto**; no openpgp call path).
+
+[↑ Back to top](#top)
+
 ## [1.0.2] - 2026-07-31
 
 ### Added
@@ -457,7 +472,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 [↑ Back to top](#top)
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/hrodrig/kzero/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/hrodrig/kzero/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/hrodrig/kzero/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/hrodrig/kzero/compare/v0.9.2...v1.0.0
