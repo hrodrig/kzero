@@ -66,12 +66,13 @@ func (h *ShellHelm) UpgradeInstall(ctx context.Context, step config.PipelineStep
 		"KZERO_RELEASE_NAME="+step.Name,
 		"KZERO_RELEASE_NAMESPACE="+step.Namespace,
 	)
-	out, err := h.deps.Run(ctx, "/bin/sh", []string{script, "up"}, env, ws)
+	sh := ShellPath(h.deps.Cfg)
+	out, err := h.deps.Run(ctx, sh, []string{script, "up"}, env, ws)
 	if h.deps.WriteOut != nil && len(out) > 0 {
 		h.deps.WriteOut(out)
 	}
 	if err != nil {
-		return fmt.Errorf("release script %s: %w", script, WrapSubprocess("/bin/sh", []string{script, "up"}, out, err))
+		return fmt.Errorf("release script %s: %w", script, WrapSubprocess(sh, []string{script, "up"}, out, err))
 	}
 	return nil
 }

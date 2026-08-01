@@ -1,6 +1,6 @@
 .\" kzero(1) - declarative Kubernetes workload pipelines
 .\" Manual page for kzero
-.TH KZERO 1 "2026-07-15" "kzero v1.0.1" "User Commands"
+.TH KZERO 1 "2026-07-31" "kzero v1.0.2" "User Commands"
 .SH NAME
 kzero \- declarative Kubernetes workload shutdown and startup pipelines
 .SH SYNOPSIS
@@ -75,9 +75,12 @@ notify POST fails the pipeline.
 .PP
 kzero is not self-contained: hooks and
 .B custom:
-steps run
+steps run via
+.B command.shell
+(default
 .BR /bin/sh ;
-some profiles still require host
+shebang ignored).
+Some profiles still require host
 .BR kubectl
 and
 .BR helm .

@@ -125,3 +125,26 @@ run:
 		t.Fatalf("expected fail_after=3m, got %s", cfg.Run.APIWatchdog.FailAfter)
 	}
 }
+
+func TestEnvOverrideCommandShell(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "kzero.yaml")
+	if err := os.WriteFile(path, []byte(`schema_version: "1.0"
+pipelines:
+  down: []
+run:
+  mode: "dry-run"
+command:
+  shell: "/bin/sh"
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("KZERO_COMMAND_SHELL", "/bin/bash")
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Command.Shell != "/bin/bash" {
+		t.Fatalf("got command.shell %q, want /bin/bash", cfg.Command.Shell)
+	}
+}

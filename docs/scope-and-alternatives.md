@@ -1,5 +1,7 @@
 # Scope and alternatives
 
+<a id="top"></a>
+
 This page compares **kzero** to tools operators often consider for similar-sounding problems. Comparisons are **strictly by primary use case and scope** — not “which is better overall.”
 
 **kzero in one line:** declarative **`down` / `up` / `reset`** pipelines for **workloads already on a cluster**, run **out-of-band** from a bastion (recommended), with ordered steps, hooks, fail-fast, and maintenance-oriented safety (preflight, infra probe, API watchdog).
@@ -19,6 +21,8 @@ Full contract: [SPECIFICATIONS.md](../SPECIFICATIONS.md). Where to run: [deploym
 | Operator-owned hooks and scripts at phase or step boundaries | `hooks.*`, per-step `pre` / `post`, `custom:` |
 
 **kzero is not:** continuous GitOps, cluster provisioning, node drain/cordon, cloud control planes, multi-cluster IDP control planes, or backup/DR as a product.
+
+[↑ Back to top](#top)
 
 ---
 
@@ -41,11 +45,15 @@ They can coexist: k0rdent (or GitOps) may own steady-state platform composition;
 
 Docs: [k0rdent documentation](https://docs.k0rdent.io/latest/).
 
+[↑ Back to top](#top)
+
 ---
 
 ## Lighter overlap: [szero](https://github.com/jadolg/szero)
 
 [szero](https://github.com/jadolg/szero) shares the **`down` / `up`** verbs and namespace-scale mental model, but only **scales Deployments/StatefulSets/DaemonSets to zero and restores prior replica counts**. It does not install platform infra, Helm releases, PVC lifecycle, hooks, or a full **`reset`** contract. Useful for quick namespace hibernation; not a platform maintenance engine.
+
+[↑ Back to top](#top)
 
 ---
 
@@ -64,6 +72,8 @@ Docs: [k0rdent documentation](https://docs.k0rdent.io/latest/).
 | **Cost / scale-down utilities** (e.g. kube-downscaler patterns) | **Scale to zero** on schedule or label | `deployment` / `statefulset` down steps | No **`up`** pipeline, Helm releases, hooks, or full **reset** contract |
 | **In-cluster Job + scripts** | Run automation **inside** the cluster | Can call the same APIs | Shared fate with the cluster under maintenance; kzero recommends **out-of-band** for destructive **`reset`** ([deployment-models.md](deployment-models.md)) |
 
+[↑ Back to top](#top)
+
 ---
 
 ## Common patterns (not either/or)
@@ -74,6 +84,8 @@ Docs: [k0rdent documentation](https://docs.k0rdent.io/latest/).
 | **Helm per app + kzero orchestration** | Helm (or kzero `release.*`) still performs each release; kzero defines **order** and **phases** across many releases and workloads |
 | **Terraform / k0rdent cluster + kzero workloads** | Provisioning tool brings cluster (and optionally platform services); kzero operates **after** kubeconfig works |
 | **Velero + kzero** | Velero for backup/restore policy; kzero for **controlled** teardown and bring-up sequences you want scripted and reviewed in YAML |
+
+[↑ Back to top](#top)
 
 ---
 
@@ -88,6 +100,8 @@ Aligned with [SPECIFICATIONS.md §2 Out of scope](../SPECIFICATIONS.md):
 
 If your main problem is “compose and continuously manage IDPs / clusters at scale,” look at **[k0rdent](https://k0rdent.io/)** (or GitOps for app sync). If your main problem is “run a known maintenance reset safely from a bastion on Tuesday at 02:00,” that is kzero’s lane.
 
+[↑ Back to top](#top)
+
 ---
 
 ## Related docs
@@ -99,3 +113,5 @@ If your main problem is “compose and continuously manage IDPs / clusters at sc
 | [kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted) | Full platform reset example profiles |
 
 **Last reviewed:** 2026-06-30
+
+[↑ Back to top](#top)

@@ -63,3 +63,12 @@ func KubectlPath(cfg *config.Config) string {
 	}
 	return "kubectl"
 }
+
+// ShellPath returns the script interpreter for hooks, custom:, and shell release scripts.
+// Empty command.shell defaults to /bin/sh (shebang in the script file is ignored).
+func ShellPath(cfg *config.Config) string {
+	if cfg != nil && strings.TrimSpace(cfg.Command.Shell) != "" {
+		return strings.TrimSpace(cfg.Command.Shell)
+	}
+	return "/bin/sh"
+}

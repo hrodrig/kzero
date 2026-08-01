@@ -2,7 +2,7 @@
 
 <a id="top"></a>
 
-[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/hrodrig/kzero/releases)
+[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](https://github.com/hrodrig/kzero/releases)
 [![GitHub release](https://img.shields.io/github/v/release/hrodrig/kzero)](https://github.com/hrodrig/kzero/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.5-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -11,7 +11,6 @@
 [![codecov](https://codecov.io/gh/hrodrig/kzero/graph/badge.svg)](https://codecov.io/gh/hrodrig/kzero)
 [![gghstats clones](https://gghstats.hermesrodriguez.com/api/v1/badge/hrodrig/kzero?metric=clones)](https://gghstats.hermesrodriguez.com/hrodrig/kzero)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/kzero)](https://pkg.go.dev/github.com/hrodrig/kzero)
-[![Go Report Card](https://goreportcard.com/badge/github.com/hrodrig/kzero)](https://goreportcard.com/report/github.com/hrodrig/kzero)
 [![deps.dev](https://img.shields.io/badge/deps.dev-go%20module-blue)](https://deps.dev/go/github.com%2Fhrodrig%2Fkzero)
 [![Security](https://github.com/hrodrig/kzero/actions/workflows/security.yml/badge.svg)](https://github.com/hrodrig/kzero/actions/workflows/security.yml)
 [![CodeQL](https://github.com/hrodrig/kzero/actions/workflows/codeql.yml/badge.svg)](https://github.com/hrodrig/kzero/actions/workflows/codeql.yml)
@@ -19,7 +18,11 @@
 
 **Repo:** [github.com/hrodrig/kzero](https://github.com/hrodrig/kzero) · **Releases:** [Releases](https://github.com/hrodrig/kzero/releases) · **DeepWiki:** [hrodrig/kzero](https://deepwiki.com/hrodrig/kzero)
 
-*Badges:* **Version** is a static badge aligned with the repo **`VERSION`** file (next release target). **GitHub release** shows the latest published **tag** on GitHub; it can lag the **`VERSION`** file until a release is cut. **Go** matches **`go.mod`**. **License** points at this repository’s license file. **Ask DeepWiki** links to [DeepWiki](https://deepwiki.com/) AI-generated docs for this repository (see also [badge maker](https://deepwiki.com/badge-maker)). **CI**, **Security**, and **CodeQL** reflect [GitHub Actions](https://github.com/hrodrig/kzero/actions) workflows. **codecov** tracks coverage uploaded from CI. **pkg.go.dev**, **Go Report Card**, and **deps.dev** summarize the Go module and dependencies. **gghstats clones** shows Git clone traffic for this repo (see [gghstats](https://github.com/hrodrig/gghstats)).
+**The problem:** Platform maintenance often needs an **ordered** teardown and bring-up (scale down → wipe data → Helm uninstall → restore) — not continuous GitOps reconcile, not ad-hoc shell. When the API or data plane is unhealthy, recovery **inside** the same cluster shares the failure domain you are trying to fix: Jobs stall, logs vanish with the Pod, and alerts never leave the sick path.
+
+**How kzero solves it:** A **bastion-first** CLI runs declarative YAML **`down` / `up` / `reset`** pipelines **out-of-band** — from a host you trust more than the cluster you are resetting. Config owns the playbook (order, hooks, dry-run / analyze); the engine provides fail-fast, optional API watchdog, and notify so maintenance stays repeatable without hardcoded product scripts in Go.
+
+Where to run: [docs/deployment-models.md](docs/deployment-models.md). Scope vs alternatives: [docs/scope-and-alternatives.md](docs/scope-and-alternatives.md).
 
 ![kzero — out-of-band bastion-first declarative workload reset (down / up / reset from YAML)](docs/kzero-hero-oss.png)
 
@@ -34,12 +37,19 @@ Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (an
 
 **Operator deployment (bastion-first, out-of-band):** see **[docs/deployment-models.md](docs/deployment-models.md)**. **Scope vs alternatives:** [docs/scope-and-alternatives.md](docs/scope-and-alternatives.md). Playbooks and annotated profiles: **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)** — this repo ships the CLI binary, packages, container image, and Homebrew cask only (same split as [pgwd](https://github.com/hrodrig/pgwd) / [pgwd-selfhosted](https://github.com/hrodrig/pgwd-selfhosted)).
 
+**Related tools (same maintainer):**
+- **[pgwd](https://github.com/hrodrig/pgwd)** — PostgreSQL connection watchdog ([live traffic](https://gghstats.hermesrodriguez.com/hrodrig/pgwd); deploy: [pgwd-selfhosted](https://github.com/hrodrig/pgwd-selfhosted))
+- **[gghstats](https://github.com/hrodrig/gghstats)** — GitHub repo traffic beyond 14 days ([live demo](https://gghstats.hermesrodriguez.com); deploy: [gghstats-selfhosted](https://github.com/hrodrig/gghstats-selfhosted))
+- **[kzero](https://github.com/hrodrig/kzero)** — bastion-first declarative workload reset ([live traffic](https://gghstats.hermesrodriguez.com/hrodrig/kzero); deploy: [kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted))
+- **[groot](https://github.com/hrodrig/groot)** — Kubernetes diagnostics archive ([live traffic](https://gghstats.hermesrodriguez.com/hrodrig/groot); deploy: [groot-selfhosted](https://github.com/hrodrig/groot-selfhosted))
+
 **Releases** ([GitHub Releases](https://github.com/hrodrig/kzero/releases)) ship **binaries**, **`.deb`** / **`.rpm`**, **`ghcr.io/hrodrig/kzero`**, and **Homebrew**. **Supply chain (v0.7.0+):** SPDX / CycloneDX SBOMs + Cosign on **`checksums.txt`** and GHCR — see [verify Cosign](#verify-cosign-v070). No Helm charts as release artifacts.
 
 Behavior and acceptance: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:** **v1.0.0** — stable contract: default **`run.execution: native`** (**#32**), process exit codes **0–4** (**#42**), product kind CI (**#34**), PVC/StatefulSet cookbook (**#33**). Prior: **v0.9.2** (doctor, completion, **`kubectl-kzero`**, retry jitter, JSON Schema); **v0.9.0** (graceful shutdown, `require_delivery`, E2E smoke) — [CHANGELOG.md](CHANGELOG.md). Mitigations: [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). Diagrams: **[docs/diagrams.md](docs/diagrams.md)**.
 
 ## Table of contents
 
+- [README badges](docs/readme-badges.md)
 - [Terminal demo](#terminal-demo)
 - [Features](#features)
 - [Requirements](#requirements)
@@ -85,7 +95,7 @@ Host tooling depends on **`run.execution`** and your pipeline step types (see [S
 |------|------------|
 | **`run.execution: native`** (default) / **`auto`** | Valid **kubeconfig** (or in-cluster SA); **no host `kubectl`** for scale/wait/**`pvc`**/**`exec`**/**Helm SDK** **`release.*`** |
 | **`run.execution: shell`** (opt-in) | **`kubectl`** on `PATH` (or **`command.kubectl`**); **`helm`** when using **`release.*`** shell scripts |
-| Phase hooks, **`custom:`**, per-step **`pre`/`post`** | Always **`/bin/sh <script>`** (shebang ignored). Scripts must be **POSIX**/`/bin/sh`-safe — on Ubuntu **`/bin/sh`** is often **dash** (`pipefail` / `[[` fail). See [SPEC — Hook and script interpreter](SPECIFICATIONS.md#hook-and-script-interpreter-binsh). |
+| Phase hooks, **`custom:`**, per-step **`pre`/`post`**, shell **`release.*`** `.sh` | **`command.shell`** (default **`/bin/sh`**; shebang ignored). Scripts must match that interpreter — on Ubuntu default **`/bin/sh`** is often **dash** (`pipefail` / `[[` fail). Opt-in **`command.shell: /bin/bash`**. See [SPEC — Hook and script interpreter](SPECIFICATIONS.md#hook-and-script-interpreter-commandshell). |
 
 - **RBAC** sufficient for the operations in your pipelines (for example **`get`/`patch`/`scale`**, PVC delete, Helm releases, pod exec)
 - **Go 1.26.5+** if you [build from source](#quick-start) (`make build`) or use [`go install`](#install-with-go)

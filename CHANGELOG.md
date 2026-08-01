@@ -1,17 +1,43 @@
 # Changelog
 
+<a id="top"></a>
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+[↑ Back to top](#top)
+
 ## [Unreleased]
+
+[↑ Back to top](#top)
+
+## [1.0.2] - 2026-07-31
+
+### Added
+
+- **`command.shell` (#56):** opt-in interpreter for phase hooks, per-step **`pre`/`post`**, **`custom:`**, and shell-path **`release.*`** `.sh` scripts (default **`/bin/sh`**; shebang still ignored). Env **`KZERO_COMMAND_SHELL`**. **`kzero doctor`** checks the interpreter when hooks/scripts are configured.
+
+### Changed
+
+- **Dependencies:** bump transitive `golang.org/x/crypto` to **v0.54.0** (and related `golang.org/x/*`) — Grype hygiene for **GO-2026-5932** (Helm `openpgp`); same approach as groot.
+- **Grype:** `.grype.yaml` ignore rules for containerd v2-only advisories (**GO-2026-5064**, **GO-2026-5338**, **GO-2026-5622**) and **GO-2026-5932** until Helm SDK v4 (#59); mirrors `.govulncheck-ignore.yaml`.
+
+### Removed
+
+- **README:** drop retired Go Report Card badge (service retired).
+- **README:** badge meanings moved to [docs/readme-badges.md](docs/readme-badges.md); intro states problem/solution.
+
+[↑ Back to top](#top)
 
 ## [1.0.1] - 2026-07-15
 
 ### Fixed
 
 - **Retry / subprocess taxonomy:** treat **`connection lost`** and **`http2: client connection lost`** (client-go mid-stream drops on slow/remote APIs) as transient — live per-step **`retry`** and **`WrapSubprocess`** **`ErrTransient`** now match those strings.
+
+[↑ Back to top](#top)
 
 ## [1.0.0] - 2026-07-15
 
@@ -35,6 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **CLI tests:** drop `t.Parallel` from completion tests that call `newRootCmd` — global Viper/`cobra.OnInitialize` raced under CI `go test -race`.
 
+[↑ Back to top](#top)
+
 ## [0.9.2] - 2026-07-11
 
 ### Added
@@ -48,6 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Retry backoff (#50):** live per-step retry waits use **full jitter** uniformly in **`[0, exponential]`** (still capped at **2m**) so concurrent runs do not align on the same delay.
 - **Docs (#48):** README trim + Cosign verify examples; retry table documents full jitter.
+
+[↑ Back to top](#top)
 
 ## [0.9.1] - 2026-07-11
 
@@ -65,6 +95,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Validate client factory:** replace mutable **`DefaultClientFactory`** with thread-safe **`ClientFactoryDefault()`** / **`SwapDefaultClientFactory()`**.
 - **Engine preflight tests:** inject **`Engine.PreflightFactory`** so parallel live **`RunDown`** tests do not clobber the process-wide factory before the pipeline step starts.
+
+[↑ Back to top](#top)
 
 ## [0.9.0] - 2026-07-08
 
@@ -93,6 +125,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **API watchdog client:** probe `/healthz` via `rest.HTTPClientFor` and a direct GET (previously `rest.RESTClientFor` required `GroupVersion` / `NegotiatedSerializer` and disabled the watchdog silently with a normal kubeconfig).
 
+[↑ Back to top](#top)
+
 ## [0.8.1] - 2026-06-29
 
 ### Fixed
@@ -102,6 +136,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Docs:** post-**v0.8.0** sync for [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md), [docs/README.md](docs/README.md), and related operator cookbooks (no longer “until **0.8.0**”).
+
+[↑ Back to top](#top)
 
 ## [0.8.0] - 2026-06-29
 
@@ -116,6 +152,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Notify dispatch failures now logged**: `_ = notify.Dispatch(...)` replaced with error handling across all three call sites (CLI `EventStart`/`EventSuccess`, engine `EventError`). Failed notify POSTs produce `[ERR]` log lines with redacted webhook URLs (**#35**).
+
+[↑ Back to top](#top)
 
 ## [0.7.4] - 2026-06-16
 
@@ -133,6 +171,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Docker image build:** include **`configs/`** in build context so embedded sample YAML compiles in CI **`docker-scan`**.
 
+[↑ Back to top](#top)
+
 ## [0.7.3] - 2026-06-12
 
 ### Added
@@ -145,6 +185,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Helm SDK OCI:** registry login before chart pull; improved credential resolution for private OCI charts.
+
+[↑ Back to top](#top)
 
 ## [0.7.2] - 2026-06-10
 
@@ -165,6 +207,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **0.7.x band close** on **`develop`**: bundles PR3–PR7 (**Helm SDK**, **`pvc`**, **`exec`**, probe native, scheduling, OCI auth, helm path ergonomics, custom env parity). **`#29`** (`job`/`cronjob`) remains open on the roadmap.
 
+[↑ Back to top](#top)
+
 ## [0.7.1] - 2026-06-10
 
 ### Added
@@ -173,17 +217,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Secret redaction (#17):** `internal/redact` scrubs bearer tokens, webhook URLs, and common `*_TOKEN` / `*_KEY` env patterns in engine logs, notify error payloads, and subprocess output.
 - **`run.no_env_passthrough`** and **`--no-env-passthrough`** on pipeline commands — hooks and kubectl subprocesses receive only **`KZERO_*`**, optional **`KUBECONFIG`**, and correlation fields.
 
+[↑ Back to top](#top)
+
 ## [0.7.0] - 2026-06-10
 
 ### Added
 
 - **Supply chain (GoReleaser):** **Cosign** keyless signing for **`checksums.txt`** and **`ghcr.io/hrodrig/kzero`** images; **SPDX** and **CycloneDX** SBOMs per release (Syft, source catalog). Release workflow installs **cosign** and **syft** and grants **`id-token: write`** for OIDC signing (same pattern as [groot](https://github.com/hrodrig/groot)).
 
+[↑ Back to top](#top)
+
 ## [0.6.2] - 2026-06-10
 
 ### Changed
 
 - **Product vs operator split:** operator deployment docs (cron/CI, reference hook scripts, infra-probe assets) moved to **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)**; stubs and links remain in this repo. README adds **Operator deployment** table; new **[AGENTS.md](AGENTS.md)** documents scope (same pattern as pgwd / pgwd-selfhosted).
+
+[↑ Back to top](#top)
 
 ## [0.6.1] - 2026-06-07
 
@@ -196,6 +246,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Release **archives** and **`.deb`/`.rpm`** include **`share/man/man1/kzero.1`** (packages install **`/usr/share/man/man1/kzero.1.gz`**).
 - FreeBSD and OpenBSD port skeletons install the man page from distfiles.
+
+[↑ Back to top](#top)
 
 ## [0.6.0] - 2026-06-03
 
@@ -219,6 +271,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`make clean`**: removes **`coverage.out`** (artifact stays gitignored).
 - **Ports:** sync FreeBSD and OpenBSD port Makefiles to **0.6.0**.
 
+[↑ Back to top](#top)
+
 ## [0.5.7] - 2026-06-05
 
 ### Added
@@ -228,6 +282,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Shell path** (scale, rollout wait, helm uninstall, release scripts, hooks) returns classified errors instead of raw `exec` messages.
+
+[↑ Back to top](#top)
 
 ## [0.5.6] - 2026-06-05
 
@@ -240,6 +296,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Tests:** raise `internal/cli`, `internal/cluster`, and `internal/engine` coverage above 80%; total statement coverage **84%**.
 - **Ports:** sync FreeBSD and OpenBSD port Makefiles to **0.5.6**.
+
+[↑ Back to top](#top)
 
 ## [0.5.5] - 2026-06-05
 
@@ -260,6 +318,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **[wait-helm-release-ready.sh](docs/examples/hooks/wait-helm-release-ready.sh):** use `kubectl rollout status` / `kubectl wait` (`helm status` has no `--wait`).
 - **Docs:** CHANGELOG compare links for 0.5.2–0.5.4; SPEC `release` down documents `helm uninstall` (0.5.4 behavior).
 
+[↑ Back to top](#top)
+
 ## [0.5.4] - 2026-06-04
 
 ### Added
@@ -271,17 +331,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`release.*` on `down`:** live mode runs **`helm uninstall <release> -n <namespace> --wait --ignore-not-found`** instead of executing `<helm.workspace>/<release>.sh`. **`up`** still runs the install script. `kzero analyze` shows `helm uninstall` in the down plan.
 
+[↑ Back to top](#top)
+
 ## [0.5.3] - 2026-06-04
 
 ### Removed
 
 - **`run.worker_concurrency`** removed from the configuration contract. The engine always runs pipeline steps **sequentially** in YAML order. Legacy YAML keys are ignored; CLI warnings for `worker_concurrency` are dropped. Roadmap item **0.5.x #13** (pipeline parallelism) is **closed** as out of scope.
 
+[↑ Back to top](#top)
+
 ## [0.5.2] - 2026-06-04
 
 ### Added
 
 - **Per-step retry in live mode**: `retry.attempts` and `retry.delay` are honored for each pipeline step (pre + main + post). Transient failures (API timeout/conflict/429/503, rollout deadlines, common connection errors) retry with backoff **`delay × 2^(n−1)`** (max **2m**). Non-retriable: `NotFound`, `Forbidden`, `context.Canceled`. **`dry-run`** unchanged (no retries). Logs `[retry] pipeline …` before each wait.
+
+[↑ Back to top](#top)
 
 ## [0.5.1] - 2026-06-04
 
@@ -291,6 +357,8 @@ Pilot polish after **0.5.0**: stronger dry-run on the native path and configurab
 
 - **Server-side dry-run for native scale**: with `run.mode: dry-run` and `run.execution: native` or `auto`, `deployment` / `statefulset` steps call the API with `DryRun=All` (validates RBAC and object state without persisting replica changes). Shell execution and `release` / `custom` steps remain plan-only.
 - **Colored elapsed time** on command summary lines: green when the command succeeds, yellow when it fails. Controlled by **`run.color`** in YAML (`auto`, `always`, `never`; default `auto`), overridable with **`KZERO_RUN_COLOR`** / legacy **`KZERO_COLOR`** when `auto`, plus **`NO_COLOR`** and **`FORCE_COLOR`**. Summary is written to **stderr** so `kzero down | tee log` still shows colors on the terminal when `run.color: always`.
+
+[↑ Back to top](#top)
 
 ## [0.5.0] - 2026-06-04
 
@@ -303,11 +371,15 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 - **Elapsed time** on every command: final line `kzero <command> finished in …` or `failed after …`.
 - **`KZERO_*` env overrides** for `run.mode`, `run.kubeconfig`, and related keys now apply on config load (`BindEnv`).
 
+[↑ Back to top](#top)
+
 ## [0.4.1] - 2026-06-04
 
 ### Added
 
 - **`kzero analyze` cluster validation**: when kubeconfig loads, **Get** checks for each unique `deployment` / `statefulset` ref; **FAIL** lines and non-zero exit if missing or not scalable; **stderr** skip note when the API client cannot be built.
+
+[↑ Back to top](#top)
 
 ## [0.4.0] - 2026-06-04
 
@@ -320,6 +392,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Docs:** [docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md) documents workload execution backend; [docs/ROADMAP.md](docs/ROADMAP.md) marks 0.4.x items 5–9 shipped in **0.4.0**.
 - **Dependencies:** `k8s.io/client-go` and `k8s.io/api` for native execution; `golang.org/x/net` v0.55.0 (govulncheck clean with client-go).
+
+[↑ Back to top](#top)
 
 ## [0.2.3] - 2026-06-04
 
@@ -338,6 +412,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - Bump minimum Go version to **1.26.4** to address [GO-2026-5037](https://pkg.go.dev/vuln/GO-2026-5037) (`crypto/x509` hostname parsing) reported by `govulncheck` on Go 1.26.3.
 
+[↑ Back to top](#top)
+
 ## [0.2.2] - 2026-05-13
 
 ### Added
@@ -352,6 +428,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **`CHANGELOG.md`**: restore the **`[0.2.1]`** section (Removed / Changed) that had been folded under **`[Unreleased]`** by mistake, so published **0.2.1** release notes match the tagged release again.
 
+[↑ Back to top](#top)
+
 ## [0.2.1] - 2026-05-13
 
 ### Removed
@@ -361,6 +439,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 ### Changed
 
 - `pipelines.{down,up}` reject unsupported step kinds at config load time via an explicit allow-list (`deployment`, `statefulset`, `release`). Previously, refs such as `cronjob.<ns>/<name>`, `job.<ns>/<name>`, or `service.<ns>/<name>` passed validation and failed only later in live mode with `unsupported pipeline resource type`. `kzero analyze` now surfaces the problem before any cluster mutation.
+
+[↑ Back to top](#top)
 
 ## [0.2.0] - 2026-05-13
 
@@ -375,7 +455,10 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 - **Makefile** is a FreeBSD-friendly stub that forwards to **gmake** / **GNUmakefile** (same pattern as pgwd).
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.0.1...HEAD
+[↑ Back to top](#top)
+
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/hrodrig/kzero/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/hrodrig/kzero/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/hrodrig/kzero/compare/v0.9.2...v1.0.0
 [0.9.2]: https://github.com/hrodrig/kzero/compare/v0.9.1...v0.9.2

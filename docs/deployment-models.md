@@ -1,5 +1,7 @@
 # Deployment models — bastion-first (out-of-band control)
 
+<a id="top"></a>
+
 kzero **orchestrates** a Kubernetes cluster from **outside** the workloads it manages. The **recommended** production model is **out-of-band**: a host that can reach the API server even when application pods are unhealthy, scaled to zero, or the data plane is mid-reset.
 
 This document is the operator-facing source of truth for **where** to run kzero. It complements:
@@ -20,6 +22,8 @@ This document is the operator-facing source of truth for **where** to run kzero.
 | Non-critical scheduled scale-down | **Bastion** (preferred) | In-cluster Job (acceptable) |
 | Air-gapped / strict security | Bastion + **`run.execution: native`** | — |
 
+[↑ Back to top](#top)
+
 ---
 
 ## Why out-of-band
@@ -31,6 +35,8 @@ kzero is built for **maintenance and recovery**: ordered **`down`**, **`up`**, a
 - The **0.8.x** resilience band (API watchdog, **`pipeline.stalled`**, notify **`[ERR]`**, reset phase-boundary preflight) assumes a process that can still **log locally** and optionally **notify** when the API path fails — patterns documented from **bastion** incidents.
 
 **Rule of thumb:** run kzero on infrastructure you trust **more** than the cluster you are resetting, not **inside** the cluster you are tearing down.
+
+[↑ Back to top](#top)
 
 ---
 
@@ -61,6 +67,8 @@ flowchart LR
   K --> L
 ```
 
+[↑ Back to top](#top)
+
 ---
 
 ## Supported: CI and developer machines
@@ -71,6 +79,8 @@ Use for **`analyze`**, **`dry-run`**, **`notify test`**, and non-production **`u
 - Pipeline validation in CI before promoting YAML to a bastion profile
 
 CI validates **config and behavior**; it does not replace a bastion for production **`reset`**.
+
+[↑ Back to top](#top)
 
 ---
 
@@ -95,6 +105,8 @@ The engine supports **`rest.InClusterConfig()`** when **`run.kubeconfig`** is em
 
 Operator manifests (optional): [kzero-selfhosted `run/in-cluster/`](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/in-cluster).
 
+[↑ Back to top](#top)
+
 ---
 
 ## Choosing `run.execution` (any host)
@@ -106,6 +118,8 @@ Operator manifests (optional): [kzero-selfhosted `run/in-cluster/`](https://gith
 | **`auto`** | Mixed environments | Native with shell fallback |
 
 **Native on a bastion** is often the sweet spot: single static binary, full maintenance pipeline, **out-of-band** control.
+
+[↑ Back to top](#top)
 
 ---
 
@@ -128,6 +142,8 @@ Adjust paths, tags, and volume mounts for your environment. Live runs need netwo
 
 The image may also run as an optional in-cluster Job; that is **not** the recommended model for production **`reset`**. See [kzero-selfhosted/run/docker/](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docker/README.md).
 
+[↑ Back to top](#top)
+
 ---
 
 ## Decision flow
@@ -146,8 +162,12 @@ flowchart TD
   E -->|Static binary| NV[native / auto]
 ```
 
+[↑ Back to top](#top)
+
 ---
 
 ## Related roadmap
 
 **0.9.x** hardening (bastion-first docs, graceful shutdown on management hosts, E2E from selfhosted) is tracked in [ROADMAP.md](../ROADMAP.md). **1.0.0** remains the semver band for stable executor defaults and integration-test policy.
+
+[↑ Back to top](#top)

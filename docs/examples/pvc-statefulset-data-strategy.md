@@ -14,7 +14,7 @@ This cookbook shows **patterns** you compose in YAML for reset / maintenance. Co
 
 **Important:** Deleting a PVC while pods still mount it often **fails** or leaves odd states. Always **scale (and wait) first**, then delete claims.
 
-Shell scripts for hooks/`custom:` must be **POSIX `/bin/sh`**-safe (Ubuntu **dash**): see [SPEC — Hook and script interpreter](../../SPECIFICATIONS.md#hook-and-script-interpreter-binsh).
+Shell scripts for hooks/`custom:` use **`command.shell`** (default **`/bin/sh`**; Ubuntu **dash**): see [SPEC — Hook and script interpreter](../../SPECIFICATIONS.md#hook-and-script-interpreter-commandshell). Opt-in **`command.shell: /bin/bash`** for bashisms.
 
 ---
 
@@ -124,7 +124,7 @@ Uninstalling a chart (**`release.*`**) does **not** always delete StatefulSet PV
 2. **`infra_probe`** (optional) — storage/registry OK before destructive main pipeline.
 3. **Consumers before producers** — [pipeline-order-and-integrity.md](pipeline-order-and-integrity.md).
 4. **Scale + wait** before **`pvc.*`**.
-5. Hooks are **POSIX `/bin/sh`**.
+5. Hooks use **`command.shell`** (default **`/bin/sh`**).
 6. Prefer **bastion** for destructive resets ([deployment-models.md](../deployment-models.md)).
 
 ---

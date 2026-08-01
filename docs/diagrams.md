@@ -8,7 +8,7 @@ Visual complements to [SPECIFICATIONS.md](../SPECIFICATIONS.md). All diagrams de
 
 **Live** mode mutates the cluster (or validates via server-side dry-run on the native path). **Dry-run** records the plan without persisting changes.
 
-Workload and data steps use **`run.execution`**: **`shell`** (kubectl subprocess), **`native`** (client-go + Helm SDK + API delete/exec), or **`auto`** (native with shell fallback). Phase hooks and **`custom:`** steps always use **`/bin/sh`**.
+Workload and data steps use **`run.execution`**: **`shell`** (kubectl subprocess), **`native`** (client-go + Helm SDK + API delete/exec), or **`auto`** (native with shell fallback). Phase hooks and **`custom:`** steps use **`command.shell`** (default **`/bin/sh`**).
 
 ```mermaid
 flowchart LR

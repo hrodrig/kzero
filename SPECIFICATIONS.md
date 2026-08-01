@@ -1,5 +1,7 @@
 # kzero v1 Specifications (TDD Baseline)
 
+<a id="top"></a>
+
 ## 1. Purpose
 
 `kzero` is a Go CLI that executes declarative, ordered Kubernetes workload pipelines.
@@ -8,6 +10,8 @@ Version 1 focuses on workload orchestration only (Deployments, StatefulSets, Hel
 This document is the source of truth for behavior and test expectations.
 
 Visual overviews (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
+
+[↑ Back to top](#top)
 
 ## 2. Scope (v1)
 
@@ -36,8 +40,8 @@ Use this table with **`kzero analyze`** (stdout plan + optional **Deferred** sum
 |------|--------|-------|
 | **YAML schema `1.0`** (`schema_version`, `pipelines`, `run`) | **Implemented** | Required keys; unknown keys ignored with loader warnings. |
 | **Phases** `down` / `up` / `reset` | **Implemented** | `reset` = `down` then phase-boundary preflight then `up`. |
-| **Phase hooks** `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error` | **Implemented** | Always **`/bin/sh`**; POSIX-safe scripts (see § Hook and script interpreter). |
-| **Per-step hooks** `pre` / `post` on map steps | **Implemented** | Scoped to one pipeline step; same **`/bin/sh`** rules. |
+| **Phase hooks** `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error` | **Implemented** | Default **`/bin/sh`**; opt-in **`command.shell`** (see § Hook and script interpreter). |
+| **Per-step hooks** `pre` / `post` on map steps | **Implemented** | Scoped to one pipeline step; same interpreter rules as phase hooks. |
 | **Step types** `deployment`, `statefulset`, `release`, `pvc`, `exec`, `custom` | **Implemented** | Compact refs + Helm workspace scripts / Helm SDK (`run.execution`). |
 | **`run.mode`** `dry-run` / `live` | **Implemented** | Dry-run skips cluster mutations and notify POSTs. |
 | **`run.execution`** `shell` / `native` / `auto` | **Implemented** | Default **`native`** when omitted (**#32**); `pvc` / `exec` always native. |
@@ -80,12 +84,18 @@ kzero stays **generic** and **configuration-driven**: the engine interprets vali
 
 **Contract:** This document and the versioned YAML schema (`schema_version`) define observable behavior.
 
+[↑ Back to top](#top)
+
 ## 3. Configuration Contract
+
+[↑ Back to top](#top)
 
 ## Required top-level keys
 - `schema_version` (string; expected `"1.0"` in v1)
 - `pipelines`
 - `run`
+
+[↑ Back to top](#top)
 
 ## JSON Schema (editor aid)
 
@@ -97,11 +107,13 @@ Optional **[configs/kzero.schema.json](configs/kzero.schema.json)** for editor a
 
 or a relative path when editing beside the file (see [configs/kzero.sample.yml](configs/kzero.sample.yml)). **Runtime validation is the Go loader** (`internal/config`); the JSON Schema is not consulted by `kzero` at run time.
 
+[↑ Back to top](#top)
+
 ## Supported sections
 - `cluster` (metadata only)
 - `helm.workspace`
 - `client.id`
-- `command.helm`, `command.kubectl`
+- `command.helm`, `command.kubectl`, `command.shell` (script interpreter; default `/bin/sh`)
 - `hooks.pre-down`, `hooks.post-down`, `hooks.pre-up`, `hooks.post-up`, `hooks.on-error`
 - `pipelines.down` / `pipelines.up` list items; map-valued steps may include `pre` / `post` (per-step hook script paths), `replicas`, `wait_for_ready`, `timeout` where documented in §3
 - `notify` (optional; outbound HTTP in **live** mode — see § notify)
@@ -144,28 +156,32 @@ When `run.mode` is `live`, `deployment` and `statefulset` steps use a **Workload
 | `native` | `k8s.io/client-go`: update workload replica count and poll readiness (no `kubectl` for scale/wait). Requires a valid kubeconfig / in-cluster config. **`release.*`** steps use **Helm SDK** (`helm.sh/helm/v3`) instead of shell **`helm`** / **`.sh`** scripts. **`pvc.*`** steps delete claims via the API (always native; ignores `run.execution`). **`exec.*`** steps run commands in a pod/container via **remotecommand** (always native). **Default** when `run.execution` is omitted. |
 | `auto` | Try **native** (workloads + Helm SDK for releases); on client init failure, fall back to **shell** and print a one-line notice on the run output stream. |
 
-Hooks, `custom:` steps, and per-step `pre`/`post` always use `/bin/sh` regardless of `run.execution`.
+Hooks, `custom:` steps, and per-step `pre`/`post` use **`command.shell`** (default **`/bin/sh`**) regardless of `run.execution`. Shell-path **`release.*`** install scripts use the same interpreter.
 
-### Hook and script interpreter (`/bin/sh`)
+### Hook and script interpreter (`command.shell`)
 
 Phase hooks, per-step **`pre`/`post`**, **`custom:`** scripts, and **`release.*`** install scripts on the **shell** path are invoked as:
 
 ```text
-/bin/sh <script-path> [args…]
+<command.shell| /bin/sh> <script-path> [args…]
 ```
 
 (not as an executable that follows a shebang). A leading `#!/bin/bash` (or similar) in the file is **ignored**.
 
-**Operator contract:** scripts must be valid for the host’s **`/bin/sh`** (typically **POSIX**). On many Linux distros (notably **Ubuntu** / **Debian**) `/bin/sh` is **dash**, which rejects common bashisms such as:
+| Key | Default | Description |
+|-----|---------|-------------|
+| **`command.shell`** | **`/bin/sh`** when omitted or empty | Absolute path or `PATH` name of the interpreter (e.g. **`/bin/bash`**, **`bash`**). Env override: **`KZERO_COMMAND_SHELL`**. |
+
+**Operator contract (default `/bin/sh`):** scripts must be valid for the host’s **`/bin/sh`** (typically **POSIX**). On many Linux distros (notably **Ubuntu** / **Debian**) `/bin/sh` is **dash**, which rejects common bashisms such as:
 
 - `set -o pipefail`
 - `[[ … ]]` tests
 - bash arrays / `${name[0]}`
 - process substitution
 
-Prefer `set -eu` (without `pipefail`) and POSIX constructs. Validate with `/bin/sh -n <script>` or by running the script under `/bin/sh` on the target OS before a live pipeline.
+Prefer `set -eu` (without `pipefail`) and POSIX constructs, **or** set **`command.shell: /bin/bash`** (or another interpreter) when operators intentionally use bashisms. Validate with `<interpreter> -n <script>` on the target OS before a live pipeline.
 
-Configurable hook interpreters or shebang honor are **out of scope** for schema **1.0** (optional future opt-in; not required for **1.0.0**).
+Shebang honor (running the file as an executable) remains **out of scope**.
 
 ### API watchdog (`run.api_watchdog`)
 
@@ -222,6 +238,8 @@ kubectl -n kube-system patch daemonset fluent-bit --type=strategic \
 
 and `daemonset-enable.sh` removes that nodeSelector key. A future minor release may add a first-class `daemonset` step type built on top of this pattern.
 
+[↑ Back to top](#top)
+
 ## Pipeline syntax
 - String step: `<kind>.<namespace>/<name>`
   - Examples:
@@ -270,9 +288,9 @@ More examples (StatefulSet `pre` before scale, assert scripts): [docs/examples/p
 
 For each pipeline step, when `run.mode` is `live`:
 
-1. If `pre` is set, run `/bin/sh <pre>` before the step’s main action (same interpreter rules as [Hook and script interpreter](#hook-and-script-interpreter-binsh)).
+1. If `pre` is set, run **`command.shell`** (default `/bin/sh`) on `<pre>` before the step’s main action (same interpreter rules as [Hook and script interpreter](#hook-and-script-interpreter-commandshell)).
 2. Run the main action (workload scale / rollout wait per `run.execution`, or release script / custom script).
-3. If `post` is set, run `/bin/sh <post>` **only if** the main action succeeded.
+3. If `post` is set, run the same interpreter on `<post>` **only if** the main action succeeded.
 
 If `pre` fails, the main action and `post` for that step do not run; the phase fails and `hooks.on-error` applies per the global failure policy.
 
@@ -294,6 +312,8 @@ If `pre` fails, the main action and `post` for that step do not run; the phase f
 | `KZERO_RELEASE_NAME`, `KZERO_RELEASE_NAMESPACE` | Set for **`release`** steps (per-step `pre`/`post` and release `.sh` scripts) |
 
 Release `.sh` scripts also receive `KZERO_PHASE` on install (see engine implementation).
+
+[↑ Back to top](#top)
 
 ## Helm workspace contract (`helm.workspace`)
 
@@ -368,6 +388,8 @@ Per-step `pre` / `post` on `release.*` steps use the same hook env table (includ
 - **Infra probe** charts follow the same layout (see [docs/examples/infra-probe.md](docs/examples/infra-probe.md)); kzero does not ship mandatory probe charts.
 - **0.7.x** adds SDK-driven install without **`.sh`** when **`run.execution: native`**; configs that keep using **`.sh`** must continue to resolve `<helm.workspace>/<name>.sh` as today (**`run.execution: shell`**).
 
+[↑ Back to top](#top)
+
 ## Preflight (live `down` / `up` / `reset`)
 
 Before phase hooks in **live** mode, the engine calls the Kubernetes API (`Discovery().ServerVersion()`). Failure aborts with **`preflight: cannot reach Kubernetes API:`** (or kubeconfig load error). **Dry-run** prints a single plan line (`preflight: would verify Kubernetes API reachability`) and does not call the API. **`kzero analyze`** may emit a **warning** on stderr when preflight would fail in live mode (non-fatal).
@@ -386,7 +408,11 @@ For a single phase (e.g. `down`), the order is:
 
 Unknown step option keys (outside the documented set) or unknown step shapes must fail validation.
 
+[↑ Back to top](#top)
+
 ## 4. Command Behavior
+
+[↑ Back to top](#top)
 
 ## `kzero analyze`
 - Validates config and prints a **normalized execution plan** on **stdout**. Must not mutate cluster state.
@@ -407,6 +433,8 @@ In order (omit lines when the corresponding config value is empty):
 
 `analyze` does **not** invoke the execution engine; it does **not** mutate cluster state. For planned hook/script invocations in `dry-run` mode, use `kzero down` / `kzero up` with `run.mode: dry-run`.
 
+[↑ Back to top](#top)
+
 ## `kzero doctor`
 
 Operator **preflight without mutations** (ROADMAP **#49**). Complements **`analyze`** (plan + optional cluster **Get** validation) by also checking host binaries and RBAC **can-i** hints before a live run.
@@ -418,6 +446,7 @@ Operator **preflight without mutations** (ROADMAP **#49**). Complements **`analy
 | **config** | Always | Config file loads (`schema_version`, pipelines, `run`, …). Invalid YAML → command fails before other checks. |
 | **binaries.kubectl** | **`run.execution`** is **`shell`** or **`auto`** (default when omitted is **`native`**) | **`command.kubectl`** or **`kubectl`** on **`PATH`**. Skipped with OK note when **`native`**. |
 | **binaries.helm** | Same execution modes **and** at least one **`release.*`** step | **`command.helm`** or **`helm`** on **`PATH`**. Missing → **error** for **`shell`**, **warn** for **`auto`**. |
+| **binaries.shell** | Config uses phase hooks, per-step **`pre`/`post`**, **`custom:`**, or shell-path **`release.*`** | **`command.shell`** or **`/bin/sh`**. Missing → **error**. |
 | **kubernetes.api** | Always after config | Same handshake as live preflight (`Discovery().ServerVersion()` via **`run.kubeconfig`** / default rules). |
 | **kubernetes.workloads** | Pipeline lists **`deployment`** / **`statefulset`** / **`pvc`** / **`exec`** refs | Same read-only checks as **`analyze`** cluster validation (object exists; scalable workloads have **`spec.replicas`** set). |
 | **kubernetes.rbac** | Those refs need scale/delete verbs | **`SelfSubjectAccessReview`** for **`get`/`update`/`patch`** on **`deployments`/`statefulsets`** (apps) and **`get`/`delete`** on **`persistentvolumeclaims`**, scoped to each step namespace. Denied → **error**. SAR API errors → **warn** (non-fatal). |
@@ -438,6 +467,8 @@ Operator **preflight without mutations** (ROADMAP **#49**). Complements **`analy
 | **`down`/`up`/`reset` live** | Yes | Via engine logs | Preflight + steps | Used by shell executor | Enforced by API |
 
 Does **not** run phase hooks, notify, verify, or **`infra_probe`**.
+
+[↑ Back to top](#top)
 
 ## `kzero notify test`
 
@@ -485,6 +516,8 @@ Text lines follow operator maintenance conventions (timestamp, application name,
 
 **`--log-level debug`** adds **`DBG`** analyze metadata; default **`info`** still prints the full pipeline plan and operational lines.
 
+[↑ Back to top](#top)
+
 ## `kzero verify`
 
 Read-only readiness checks after **`up`** (no mutations).
@@ -498,6 +531,8 @@ Read-only readiness checks after **`up`** (no mutations).
 - **`run.verify: true`**: after a successful **`up`** or **`reset`** in **`live`** mode, run the same checks automatically (failure fails the command with **`post-up verify:`**).
 
 JSON report shape: `{ "outcome", "cluster_name", "client_id", "checks": [{ "name", "ok", "items": [{ "ref", "ok", "detail" }] }] }`.
+
+[↑ Back to top](#top)
 
 ## `kzero probe` / `infra_probe`
 
@@ -526,6 +561,8 @@ infra_probe:
 
 Cookbook: [docs/examples/infra-probe.md](docs/examples/infra-probe.md). Reference assets: [kzero-selfhosted/run/examples/infra-probe/](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/infra-probe).
 
+[↑ Back to top](#top)
+
 ## `kzero down`
 Execution order:
 0. **`infra_probe`** gate when configured (**`live`** only; see above)
@@ -534,12 +571,16 @@ Execution order:
 3. `pipelines.down` in strict list order; **each** step runs its optional `pre` script, then the step action, then its optional `post` script (see §3 Pipeline syntax).
 4. `hooks.post-down` (only if step execution succeeded)
 
+[↑ Back to top](#top)
+
 ## `kzero up`
 Execution order:
 1. **Preflight** (same as `down`)
 2. `hooks.pre-up` (if set)
 3. `pipelines.up` in strict list order; each step may run `pre` / `post` scripts as for `down`.
 4. `hooks.post-up` (only if step execution succeeded)
+
+[↑ Back to top](#top)
 
 ## `kzero reset`
 Execution order:
@@ -548,6 +589,8 @@ Execution order:
 2. full `up` sequence
 
 If `down` fails, `up` must not run.
+
+[↑ Back to top](#top)
 
 ## 5. Failure Policy (Fail-Fast)
 
@@ -572,6 +615,8 @@ Stable codes for wrappers and cron. Same pattern as [groot exitcode](https://git
 
 Scripts that only test **non-zero** remain compatible. Codes **2–4** are set only via explicit wraps where the failure class is unambiguous.
 
+[↑ Back to top](#top)
+
 ## 6. Dry-Run Policy
 
 - In `dry-run`, commands do not persist cluster mutations. Hook, `custom:`, and `release.*` steps are **plan-only** (logged, not executed).
@@ -581,13 +626,19 @@ Scripts that only test **non-zero** remain compatible. Codes **2–4** are set o
   - Per-step `pre` / `post` scripts follow the same rule; the engine prints their planned paths in step order (see §3).
   - future option can allow dry-run script execution, but not required in v1.
 
+[↑ Back to top](#top)
+
 ## 7. Logging and Output
 
 - Every phase start/end is logged.
 - Every step logs: phase, step index, step type, target, result.
 - Failures include wrapped error context (`%w`) for root-cause tracing.
 
+[↑ Back to top](#top)
+
 ## 8. TDD Plan and Acceptance Tests
+
+[↑ Back to top](#top)
 
 ## A. Config parsing and validation
 - `TestLoadConfig_MinimalValid`
@@ -605,6 +656,8 @@ Scripts that only test **non-zero** remain compatible. Codes **2–4** are set o
 - `TestLoadConfig_CustomStepInvalidExtraKey`
   - Unknown keys on a `custom` map (e.g. `replicas`) fail validation.
 
+[↑ Back to top](#top)
+
 ## B. Phase orchestration
 - `TestDownOrder_PreStepsPost`
   - `pre-down` -> steps in order -> `post-down`.
@@ -614,6 +667,8 @@ Scripts that only test **non-zero** remain compatible. Codes **2–4** are set o
   - `pre-up` -> steps in order -> `post-up`.
 - `TestResetOrder_DownThenUp`
   - Full down completes before up starts.
+
+[↑ Back to top](#top)
 
 ## C. Failure handling
 - `TestFailureInStep_TriggersOnErrorAndAbortsPhase`
@@ -629,11 +684,15 @@ Scripts that only test **non-zero** remain compatible. Codes **2–4** are set o
 - `TestFailureInMainStep_SkipsPerStepPostHook`
   - Failing main step does not run that step’s `post` hook.
 
+[↑ Back to top](#top)
+
 ## D. Dry-run behavior
 - `TestDryRun_DoesNotExecuteMutatingOperations`
   - Workload/release actions are planned, not executed.
 - `TestDryRun_CustomScriptIsPlannedOnly`
   - Custom scripts are not executed in default dry-run policy.
+
+[↑ Back to top](#top)
 
 ## E. CLI surface
 - `TestRootCommand_HasExpectedSubcommands`
@@ -642,9 +701,14 @@ Scripts that only test **non-zero** remain compatible. Codes **2–4** are set o
   - Analyze returns non-zero on invalid config.
 - `TestDoctor_okJSON` / doctor package tests
   - Doctor report OK with fake client; binary and RBAC failures exit non-zero.
+
+[↑ Back to top](#top)
+
 ## F. Live execution (per-step hooks)
 - `TestLiveRunner_PerStepPreRunsBeforeKubectlWithStepEnv`
   - Step `pre` runs before `kubectl scale`; hook process receives `KZERO_PHASE`, `KZERO_PIPELINE_STEP_INDEX`, `KZERO_STEP_HOOK=pre`, and `KZERO_STEP_REF` as documented.
+
+[↑ Back to top](#top)
 
 ## 9. Definition of Done (v1)
 
@@ -652,3 +716,5 @@ Scripts that only test **non-zero** remain compatible. Codes **2–4** are set o
 - `make lint` passes.
 - `configs/kzero.sample.yml` matches the supported schema and examples.
 - Command help text documents v1 scope and non-goals.
+
+[↑ Back to top](#top)

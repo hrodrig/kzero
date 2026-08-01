@@ -84,9 +84,35 @@ func TestRun_nativeSkipsKubectl(t *testing.T) {
 		LookPath: func(string) (string, error) { return "", errors.New("missing") },
 	})
 	if !rep.OK {
-		t.Fatalf("native should skip kubectl binary check, got %+v", rep.Findings)
+		t.Fatalf("expected OK when native skips kubectl, findings=%+v", rep.Findings)
 	}
 	assertHas(t, rep, "binaries.kubectl", SeverityOK)
+}
+
+func TestRun_missingShellFailsWhenHooks(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Config{
+		Run:     config.RunConfig{Mode: "dry-run", Execution: "native"},
+		Hooks:   config.HooksConfig{PreDown: "./hooks/pre-down.sh"},
+		Command: config.CommandConfig{Shell: "/opt/no-such-shell"},
+	}
+	client := fake.NewSimpleClientset()
+	allowAllSAR(client)
+
+	rep := Run(context.Background(), cfg, Options{
+		Factory: func(string) (kubernetes.Interface, error) { return client, nil },
+		LookPath: func(file string) (string, error) {
+			if file == "/opt/no-such-shell" {
+				return "", errors.New("missing")
+			}
+			return "/x/" + file, nil
+		},
+	})
+	if rep.OK {
+		t.Fatal("expected failure when command.shell missing")
+	}
+	assertHas(t, rep, "binaries.shell", SeverityError)
 }
 
 func TestRun_apiUnreachable(t *testing.T) {
@@ -213,6 +239,8 @@ func TestRun_helmBinaryOK(t *testing.T) {
 				return "/bin/kubectl", nil
 			case "helm3":
 				return "/bin/helm3", nil
+			case "/bin/sh":
+				return "/bin/sh", nil
 			default:
 				return "", errors.New("miss")
 			}

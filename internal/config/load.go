@@ -103,6 +103,7 @@ func bindConfigEnv(v *viper.Viper) {
 		"client.id",
 		"command.kubectl",
 		"command.helm",
+		"command.shell",
 		"run.verify",
 		"verify.enabled",
 		"verify.format",

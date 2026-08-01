@@ -512,6 +512,34 @@ func TestLiveRunner_RunHook_invokesSh(t *testing.T) {
 	}
 }
 
+func TestLiveRunner_RunHook_commandShell(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	script := filepath.Join(dir, "hook.sh")
+	if err := os.WriteFile(script, []byte("echo hi\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	var calls [][]string
+	r := &LiveRunner{
+		Exec: func(ctx context.Context, argv0 string, args, env []string, d string) ([]byte, error) {
+			calls = append(calls, append([]string{argv0}, args...))
+			return nil, nil
+		},
+	}
+	cfg := &config.Config{
+		Run:     config.RunConfig{Mode: "live", Execution: "shell"},
+		Command: config.CommandConfig{Shell: "/bin/bash"},
+	}
+	if err := r.RunHook(context.Background(), cfg, "pre-down", script); err != nil {
+		t.Fatal(err)
+	}
+	if len(calls) != 1 || calls[0][0] != "/bin/bash" || calls[0][1] != script {
+		t.Fatalf("expected /bin/bash %s, got %v", script, calls)
+	}
+}
+
 func TestLiveRunner_RunMainStep_customScript(t *testing.T) {
 	t.Parallel()
 

@@ -33,9 +33,11 @@ client:
   id: ""
 
 # Prefer absolute paths for non-interactive runs (cron, systemd). Empty values may fall back to PATH.
+# command.shell: interpreter for hooks / custom: / shell release .sh (default /bin/sh; set /bin/bash for bashisms).
 command:
   helm: "/usr/local/bin/helm"
   kubectl: "/usr/local/bin/kubectl"
+  # shell: "/bin/bash"
 
 hooks:
   pre-down: ./hooks/pre-down.sh

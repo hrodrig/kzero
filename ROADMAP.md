@@ -1,5 +1,7 @@
 # kzero roadmap
 
+<a id="top"></a>
+
 This file is the **in-repo** source of truth for **planned** work and known gaps. It complements:
 
 - **[SPECIFICATIONS.md](SPECIFICATIONS.md)** — behavior contract, schema, and what the engine does **today**
@@ -7,7 +9,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-07-15 (**v1.0.1** patch; **1.1.0** plan next)
+**Last reviewed:** 2026-07-31 (**v1.0.2** shipped — **`command.shell`** #56 + `x/crypto` pin; **1.1.0** remains **#29** / **#57** + stretch **#59**)
 
 ### Versioning note
 
@@ -37,11 +39,13 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.8.x** | **Closed** — API watchdog, notify delivery, stalled event (**#35–#41**) in **v0.8.0**. |
 | **0.9.x** | **Closed** stretch — **v0.9.0** core (**#43–#47**); **v0.9.1** security; **v0.9.2** doctor/completion/plugin/jitter/JSON Schema/docs (**#48–#53**). |
 | **1.0.0** | **Closed** — default **native** (**#32**), PVC cookbook (**#33**), kind CI (**#34**), exit codes **0–4** (**#42**) in **v1.0.0**. |
-| **1.1.0** | Hook interpreter opt-in (**#56**); **#29** job/cronjob/CRD patch; resume-from-step (**#57**) — [plan-1.1.0.md](docs/plan-1.1.0.md). |
+| **1.1.0** | **#29** job/cronjob/CRD; resume-from-step (**#57**); stretch Helm SDK **v4** (**#59**, GO-2026-5932) — [plan-1.1.0.md](docs/plan-1.1.0.md). (**#56** shipped in **v1.0.2**.) |
 
 **Shell path:** **`run.execution: shell`** (opt-in) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native** (default) / **auto** use the Helm SDK and API primitives above.
 
 ---
+
+[↑ Back to top](#top)
 
 ## Shipped
 
@@ -72,8 +76,11 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.9.2** | **0.9.x stretch:** shell completion (#53); **`kubectl-kzero`** (#52); **`kzero doctor`** (#49); retry full jitter (#50); JSON Schema (#51); docs Cosign/README (#48). |
 | **1.0.0** | **Stable contract:** default **`run.execution: native`** (**#32**); exit codes **0–4** (**#42**); product kind CI (**#34**); PVC/StatefulSet cookbook (**#33**); README out-of-band hero; POSIX `/bin/sh` hook contract. |
 | **1.0.1** | **Retry:** classify **`connection lost`** / **`http2: client connection lost`** as transient for live step retry and shell **`ErrTransient`**. |
+| **1.0.2** | **`command.shell`** (#56) opt-in hook/script interpreter; pin **`golang.org/x/crypto` v0.54.0** + Grype ignore hygiene (GO-2026-5932 until Helm v4 #59); README badge/docs hygiene. |
 
 ---
+
+[↑ Back to top](#top)
 
 ## 0.3.x — operator honesty (complete in 0.2.3)
 
@@ -87,6 +94,8 @@ Close the gap between **schema** and **engine** before larger execution changes.
 | 4 | **DaemonSet**: not a built-in scalable kind; document `custom:` workaround. | **Done** (0.2.1) |
 
 ---
+
+[↑ Back to top](#top)
 
 ## 0.4.x — native Kubernetes client (complete)
 
@@ -108,6 +117,8 @@ Introduced an **`Executor`** abstraction and workload steps against the API inst
 
 ---
 
+[↑ Back to top](#top)
+
 ## 0.5.x — execution engine (retries; sequential contract)
 
 Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subprocesses on the shell path; native API errors continue to use **`WrapAPIError`**.
@@ -120,6 +131,8 @@ Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subpr
 | 15 | **Subprocess error taxonomy** for shell path (exit codes, common stderr patterns) when native path is not used. | **Done** (0.5.7) |
 
 ---
+
+[↑ Back to top](#top)
 
 ## 0.6.x — observability, notifications, and preflight
 
@@ -137,6 +150,8 @@ Band **closed** in **v0.5.7** (item **#15**). Applies to kubectl/helm/hook subpr
 | 22bis | **Helm workspace contract in SPEC**: document flat **`<helm.workspace>/<release>.sh`** naming, env vars, and analyze/live resolution **before** **0.7.x #25** (Helm SDK) extends paths/OCI. | **Done** (develop, 0.6.x PR6) |
 
 ---
+
+[↑ Back to top](#top)
 
 ## 0.7.x — native cluster operations and Helm SDK
 
@@ -158,6 +173,8 @@ Broader pipeline primitives via **client-go** and **helm.sh/helm/v3**, keeping a
 
 ---
 
+[↑ Back to top](#top)
+
 ## 0.8.x — pipeline resilience (network loss and notify delivery)
 
 **Implementation plan:** [docs/plan-0.8.x.md](docs/plan-0.8.x.md) (target **`v0.8.0`**).
@@ -177,6 +194,8 @@ Motivation: live **`reset`** on a bastion lost API connectivity mid-run; process
 **Operator mitigations before 0.8 ships:** short **`run.operation_timeout`**, **`on-error`** hooks, external watchdog, wrapper log files on the **bastion** — documented in [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md).
 
 ---
+
+[↑ Back to top](#top)
 
 ## 0.9.x — bastion-first hardening (v0.9.0 shipped; stretch in 0.9.1)
 
@@ -204,6 +223,8 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 
 ---
 
+[↑ Back to top](#top)
+
 ## 1.0.0 — stable contract (shipped in v1.0.0)
 
 **Implementation plan:** [docs/plan-1.0.0.md](docs/plan-1.0.0.md) (**Done**).
@@ -218,21 +239,26 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 
 ---
 
+[↑ Back to top](#top)
+
 ## 1.1.0 (future) — post-1.0 ergonomics (bounded)
 
 **Implementation plan:** [docs/plan-1.1.0.md](docs/plan-1.1.0.md). Starts after **v1.0.0**.
 
 | # | Item | Status |
 |---|------|--------|
-| 56 | **Configurable hook interpreter** — default **`/bin/sh`**; opt-in bash/path for hooks / **`custom:`** / shell release scripts (no magic shebang). | Pending |
+| 56 | **Configurable hook interpreter** — default **`/bin/sh`**; opt-in **`command.shell`** for hooks / **`custom:`** / shell release scripts (no magic shebang). | **Done** (**v1.0.2**) |
 | 29 | **`job` / `cronjob`** (suspend) and safe generic **patch** / scale for CRDs — prefer native; until then **`custom:`**. | Pending (moved from open-ended post-1.x) |
 | 57 | **Resume / restart from step** — Phase A: restart from index N; Phase B optional state file. | Pending |
+| 59 | *(Stretch / recommended)* **Helm SDK v4.2.3+** — drop **GO-2026-5932**; bump `k8s.io/*` with Helm; see plan spike. | Optional |
 | 58 | *(Stretch)* **`kzero diff`** — live plan vs cluster. | Optional |
 | 55 | *(Stretch)* **Post-pipeline log upload** — see **1.0.0** optional; still not a tag gate. | Optional |
 
 **Parked (not 1.1):** parallel waves, webhook/schedule daemon, SSH bastion tunnel, multi-cluster YAML, approval gates, secret-manager plugins, OTel/Prometheus productization.
 
 ---
+
+[↑ Back to top](#top)
 
 ## Maintenance notes
 
@@ -241,3 +267,5 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 - **GoReleaser**: address `nfpms` deprecation warnings (`maintainer`, `builds` → `ids`) on the next housekeeping release.
 - **client-go version**: pin `k8s.io/*` modules to a supported Kubernetes minor; document minimum cluster version in README.
 - **Integration tests**: **0.4.x** fake-client coverage; **1.0.0 #34** product kind CI (`testing/kind/`, job **`integration-kind`**). Full lab remains in **kzero-selfhosted**.
+
+[↑ Back to top](#top)

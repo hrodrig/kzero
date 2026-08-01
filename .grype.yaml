@@ -1,5 +1,27 @@
 # Grype policy for `make docker-scan` / CI (default --fail-on high).
 #
 # oras-go GHSA-fxhp-mv3v-67qp: fixed in v2.6.2 (0.9.1) — no ignore needed.
-# govulncheck transitive findings (containerd v2-only, Helm openpgp): .govulncheck-ignore.yaml
-# Add `ignore:` entries here only for image-scan false positives Grype cannot resolve upstream.
+# govulncheck: same IDs in .govulncheck-ignore.yaml (make security).
+# Grype scans the image SBOM and does not honor govulncheck ignores — mirror here.
+#
+# containerd: vulndb flags v1.7.x for CRI-checkpoint issues that apply to v2 only.
+# x/crypto GO-2026-5932: openpgp via helm.sh/helm/v3; pin ≥v0.54.0 for scanner
+# hygiene (groot-style); keep ignore until Helm SDK v4 (#59) drops openpgp.
+
+ignore:
+  - vulnerability: GO-2026-5064
+    reason: "containerd v2-only CRI checkpoint CDI smuggling — does not affect containerd v1"
+    package:
+      name: github.com/containerd/containerd
+  - vulnerability: GO-2026-5338
+    reason: "containerd v2-only CRI checkpoint image tag poisoning — does not affect containerd v1"
+    package:
+      name: github.com/containerd/containerd
+  - vulnerability: GO-2026-5622
+    reason: "containerd v2-only CRI checkpoint symlink — does not affect containerd v1"
+    package:
+      name: github.com/containerd/containerd
+  - vulnerability: GO-2026-5932
+    reason: "Helm v3 transitive golang.org/x/crypto/openpgp (chart provenance); remove after helm.sh/helm/v4 (#59)"
+    package:
+      name: golang.org/x/crypto
