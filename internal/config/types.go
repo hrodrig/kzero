@@ -149,6 +149,18 @@ type PipelineStep struct {
 	Container string   `mapstructure:"container"`
 	Command   []string `mapstructure:"command"`
 	Stdin     string   `mapstructure:"stdin"`
+	// Job options (job steps only).
+	Manifest string `mapstructure:"manifest"` // path to Job YAML; required on pipelines.up
+	// WaitForComplete controls waiting for Job Complete on up (nil = true).
+	WaitForComplete *bool `mapstructure:"wait_for_complete"`
+}
+
+// JobWaitForComplete reports whether a job up step should wait for Complete (default true).
+func (s PipelineStep) JobWaitForComplete() bool {
+	if s.WaitForComplete == nil {
+		return true
+	}
+	return *s.WaitForComplete
 }
 
 type RetryConfig struct {

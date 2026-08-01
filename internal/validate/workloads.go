@@ -24,7 +24,7 @@ type Line struct {
 	Detail string
 }
 
-// CheckPipelineWorkloads verifies deployment/statefulset/pvc/exec steps against the API when a client is available.
+// CheckPipelineWorkloads verifies deployment/statefulset/pvc/exec/job/cronjob steps against the API when a client is available.
 // Returns lines in stable ref order, a skip reason (non-empty if checks were not run), and a combined error if any check failed.
 func CheckPipelineWorkloads(ctx context.Context, cfg *config.Config, factory ClientFactory) (lines []Line, skipped string, err error) {
 	if cfg == nil {
@@ -70,7 +70,7 @@ func collectPipelineResourceRefs(cfg *config.Config) []pipelineResourceRef {
 	var out []pipelineResourceRef
 	add := func(steps []config.PipelineStep) {
 		for _, s := range steps {
-			if s.Type != "deployment" && s.Type != "statefulset" && s.Type != "pvc" && s.Type != "exec" {
+			if s.Type != "deployment" && s.Type != "statefulset" && s.Type != "pvc" && s.Type != "exec" && s.Type != "job" && s.Type != "cronjob" {
 				continue
 			}
 			if s.Namespace == "" || s.Name == "" {
@@ -94,49 +94,85 @@ func collectWorkloadRefs(cfg *config.Config) []pipelineResourceRef {
 }
 
 func checkPipelineResource(ctx context.Context, client kubernetes.Interface, step config.PipelineStep) (okDetail string, err error) {
-	kind := step.Type
-	namespace := step.Namespace
-	name := step.Name
-	switch kind {
+	switch step.Type {
 	case "deployment":
-		dep, getErr := client.AppsV1().Deployments(namespace).Get(ctx, name, metav1.GetOptions{})
-		if getErr != nil {
-			return "", friendlyAPIError(kind, namespace, name, getErr)
-		}
-		if dep.Spec.Replicas == nil {
-			return "", fmt.Errorf("%s %s/%s: spec.replicas unset (cannot scale)", kind, namespace, name)
-		}
-		return "found", nil
+		return checkScalableDeployment(ctx, client, step)
 	case "statefulset":
-		sts, getErr := client.AppsV1().StatefulSets(namespace).Get(ctx, name, metav1.GetOptions{})
-		if getErr != nil {
-			return "", friendlyAPIError(kind, namespace, name, getErr)
-		}
-		if sts.Spec.Replicas == nil {
-			return "", fmt.Errorf("%s %s/%s: spec.replicas unset (cannot scale)", kind, namespace, name)
-		}
-		return "found", nil
+		return checkScalableStatefulSet(ctx, client, step)
 	case "pvc":
-		_, getErr := client.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, name, metav1.GetOptions{})
-		if getErr != nil {
-			if apierrors.IsNotFound(getErr) {
-				return "not found (delete no-op)", nil
-			}
-			return "", friendlyAPIError(kind, namespace, name, getErr)
-		}
-		return "found", nil
+		return checkPVC(ctx, client, step)
 	case "exec":
-		pod, getErr := client.CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
-		if getErr != nil {
-			return "", friendlyAPIError(kind, namespace, name, getErr)
-		}
-		if !podHasContainer(pod, step.Container) {
-			return "", fmt.Errorf("exec %s/%s: container %q not found in pod", namespace, name, step.Container)
-		}
-		return "pod found, container ok", nil
+		return checkExec(ctx, client, step)
+	case "cronjob":
+		return checkCronJob(ctx, client, step)
+	case "job":
+		return checkJob(ctx, client, step)
 	default:
-		return "", fmt.Errorf("unsupported kind %q", kind)
+		return "", fmt.Errorf("unsupported kind %q", step.Type)
 	}
+}
+
+func checkScalableDeployment(ctx context.Context, client kubernetes.Interface, step config.PipelineStep) (string, error) {
+	dep, getErr := client.AppsV1().Deployments(step.Namespace).Get(ctx, step.Name, metav1.GetOptions{})
+	if getErr != nil {
+		return "", friendlyAPIError(step.Type, step.Namespace, step.Name, getErr)
+	}
+	if dep.Spec.Replicas == nil {
+		return "", fmt.Errorf("%s %s/%s: spec.replicas unset (cannot scale)", step.Type, step.Namespace, step.Name)
+	}
+	return "found", nil
+}
+
+func checkScalableStatefulSet(ctx context.Context, client kubernetes.Interface, step config.PipelineStep) (string, error) {
+	sts, getErr := client.AppsV1().StatefulSets(step.Namespace).Get(ctx, step.Name, metav1.GetOptions{})
+	if getErr != nil {
+		return "", friendlyAPIError(step.Type, step.Namespace, step.Name, getErr)
+	}
+	if sts.Spec.Replicas == nil {
+		return "", fmt.Errorf("%s %s/%s: spec.replicas unset (cannot scale)", step.Type, step.Namespace, step.Name)
+	}
+	return "found", nil
+}
+
+func checkPVC(ctx context.Context, client kubernetes.Interface, step config.PipelineStep) (string, error) {
+	_, getErr := client.CoreV1().PersistentVolumeClaims(step.Namespace).Get(ctx, step.Name, metav1.GetOptions{})
+	if getErr != nil {
+		if apierrors.IsNotFound(getErr) {
+			return "not found (delete no-op)", nil
+		}
+		return "", friendlyAPIError(step.Type, step.Namespace, step.Name, getErr)
+	}
+	return "found", nil
+}
+
+func checkExec(ctx context.Context, client kubernetes.Interface, step config.PipelineStep) (string, error) {
+	pod, getErr := client.CoreV1().Pods(step.Namespace).Get(ctx, step.Name, metav1.GetOptions{})
+	if getErr != nil {
+		return "", friendlyAPIError(step.Type, step.Namespace, step.Name, getErr)
+	}
+	if !podHasContainer(pod, step.Container) {
+		return "", fmt.Errorf("exec %s/%s: container %q not found in pod", step.Namespace, step.Name, step.Container)
+	}
+	return "pod found, container ok", nil
+}
+
+func checkCronJob(ctx context.Context, client kubernetes.Interface, step config.PipelineStep) (string, error) {
+	_, getErr := client.BatchV1().CronJobs(step.Namespace).Get(ctx, step.Name, metav1.GetOptions{})
+	if getErr != nil {
+		return "", friendlyAPIError(step.Type, step.Namespace, step.Name, getErr)
+	}
+	return "found", nil
+}
+
+func checkJob(ctx context.Context, client kubernetes.Interface, step config.PipelineStep) (string, error) {
+	_, getErr := client.BatchV1().Jobs(step.Namespace).Get(ctx, step.Name, metav1.GetOptions{})
+	if getErr != nil {
+		if apierrors.IsNotFound(getErr) {
+			return "not found (create on up / delete no-op)", nil
+		}
+		return "", friendlyAPIError(step.Type, step.Namespace, step.Name, getErr)
+	}
+	return "found", nil
 }
 
 func podHasContainer(pod *corev1.Pod, name string) bool {

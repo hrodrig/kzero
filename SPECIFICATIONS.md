@@ -21,7 +21,7 @@ Visual overviews (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
 - Phase lifecycle hooks: `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error`.
 - Optional **per-step** hooks: `pre` and `post` (shell scripts) scoped to a single pipeline step, executed immediately before and after that step’s main action.
 - Pipeline step types:
-  - compact resource refs (`<kind>.<namespace>/<name>`) for **`deployment`**, **`statefulset`**, **`release`**, **`pvc`**, **`exec`**
+  - compact resource refs (`<kind>.<namespace>/<name>`) for **`deployment`**, **`statefulset`**, **`release`**, **`pvc`**, **`exec`**, **`job`**, **`cronjob`**
   - Helm release refs (`release.<namespace>/<name>`) — shell script (**`run.execution: shell`**) or Helm SDK chart manifest (**`native`** / **`auto`**)
   - custom script steps (`{ custom: ./path/script.sh }`, optionally with `pre` / `post` in the same mapping)
 - Run modes: `dry-run` and `live` (live can start as minimal implementation).
@@ -42,9 +42,9 @@ Use this table with **`kzero analyze`** (stdout plan + optional **Deferred** sum
 | **Phases** `down` / `up` / `reset` | **Implemented** | `reset` = `down` then phase-boundary preflight then `up`. |
 | **Phase hooks** `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error` | **Implemented** | Default **`/bin/sh`**; opt-in **`command.shell`** (see § Hook and script interpreter). |
 | **Per-step hooks** `pre` / `post` on map steps | **Implemented** | Scoped to one pipeline step; same interpreter rules as phase hooks. |
-| **Step types** `deployment`, `statefulset`, `release`, `pvc`, `exec`, `custom` | **Implemented** | Compact refs + Helm workspace scripts / Helm SDK (`run.execution`). |
+| **Step types** `deployment`, `statefulset`, `release`, `pvc`, `exec`, `job`, `cronjob`, `custom` | **Implemented** | Compact refs + Helm workspace scripts / Helm SDK (`run.execution`). |
 | **`run.mode`** `dry-run` / `live` | **Implemented** | Dry-run skips cluster mutations and notify POSTs. |
-| **`run.execution`** `shell` / `native` / `auto` | **Implemented** | Default **`native`** when omitted (**#32**); `pvc` / `exec` always native. |
+| **`run.execution`** `shell` / `native` / `auto` | **Implemented** | Default **`native`** when omitted (**#32**); `pvc` / `exec` / `job` / `cronjob` always native. |
 | **`retry`** block | **Implemented** | Live mode only; exponential backoff; transient errors only. |
 | **`notify.*`** channels + **`require_delivery`** | **Implemented** | Events: `pipeline.start`, `success`, `error`, `stalled`; `kzero notify test`. |
 | **`run.api_watchdog`** | **Implemented** | `/healthz` probes; trips → `pipeline.stalled` (not user interrupt). |
@@ -153,7 +153,7 @@ When `run.mode` is `live`, `deployment` and `statefulset` steps use a **Workload
 | Value | Behavior |
 |-------|----------|
 | `shell` | `kubectl scale` and `kubectl rollout status` (subprocess; honors `command.kubectl` and `KUBECONFIG` from `run.kubeconfig`). **Opt-in** after **1.0.0**. |
-| `native` | `k8s.io/client-go`: update workload replica count and poll readiness (no `kubectl` for scale/wait). Requires a valid kubeconfig / in-cluster config. **`release.*`** steps use **Helm SDK** (`helm.sh/helm/v4`) instead of shell **`helm`** / **`.sh`** scripts. **`pvc.*`** steps delete claims via the API (always native; ignores `run.execution`). **`exec.*`** steps run commands in a pod/container via **remotecommand** (always native). **Default** when `run.execution` is omitted. |
+| `native` | `k8s.io/client-go`: update workload replica count and poll readiness (no `kubectl` for scale/wait). Requires a valid kubeconfig / in-cluster config. **`release.*`** steps use **Helm SDK** (`helm.sh/helm/v4`) instead of shell **`helm`** / **`.sh`** scripts. **`pvc.*`** steps delete claims via the API (always native; ignores `run.execution`). **`exec.*`** steps run commands in a pod/container via **remotecommand** (always native). **`job.*`** / **`cronjob.*`** steps are always native (Job create/delete/wait; CronJob suspend). **Default** when `run.execution` is omitted. |
 | `auto` | Try **native** (workloads + Helm SDK for releases); on client init failure, fall back to **shell** and print a one-line notice on the run output stream. |
 
 Hooks, `custom:` steps, and per-step `pre`/`post` use **`command.shell`** (default **`/bin/sh`**) regardless of `run.execution`. Shell-path **`release.*`** install scripts use the same interpreter.
@@ -214,8 +214,17 @@ Compact step references (`<kind>.<namespace>/<name>`) in `pipelines.down` and `p
 | `release` | **Shell:** `helm uninstall` (live); dry-run logs the same. **Native/auto:** Helm SDK uninstall (wait, ignore-not-found). | **Shell:** `<helm.workspace>/<name>.sh` with arg `up`. **Native/auto:** Helm SDK `upgrade --install` from `<helm.workspace>/<name>.yaml` (or step overrides) |
 | `pvc` | delete claim via API (`DeletePropagationBackground`, ignore-not-found) | same (delete only; typically used on **`down`** after scale-down) |
 | `exec` | run `command` in pod container via API exec subresource | same |
+| `cronjob` | patch `spec.suspend: true` | patch `spec.suspend: false` |
+| `job` | delete Job (`DeletePropagationBackground`, ignore-not-found) | create from **`manifest`** YAML (single `batch/v1 Job`) + optional wait for Complete |
 
-**PVC / StatefulSet data reset** is composed from these primitives (scale → wait → `pvc.*`, in-place `exec`, snapshot/`custom:`, init after empty volumes). Patterns: [docs/examples/pvc-statefulset-data-strategy.md](docs/examples/pvc-statefulset-data-strategy.md). kzero does **not** add snapshot or CSI backup step kinds in v1.
+**Job options** (job steps only):
+
+| Option | Required | Default | Notes |
+|--------|----------|---------|-------|
+| `manifest` | on **`pipelines.up`** (and infra_probe up) | — | Path to Job YAML (cwd-relative or absolute). Step namespace/name override metadata when set. |
+| `wait_for_complete` | no | `true` | On up: poll until `Complete=True`; fail on `Failed=True` or timeout. Dry-run: plan + optional API DryRun create; no wait. |
+
+**PVC / StatefulSet data reset** is composed from these primitives (scale → wait → `pvc.*`, in-place `exec`, snapshot/`custom:`, init Job via **`job.*`**). Patterns: [docs/examples/pvc-statefulset-data-strategy.md](docs/examples/pvc-statefulset-data-strategy.md). Generic CRD patch/scale is **not** a built-in kind yet (use **`custom:`**; follow-up **#29b**).
 
 `daemonset` is **not** a built-in kind in v1 because the Kubernetes API server does not expose a `/scale` subresource for DaemonSet, so `kubectl scale daemonset/...` returns `Error from server (NotFound): the server could not find the requested resource`. Configs that reference `daemonset.<ns>/<name>` are rejected at parse time.
 
@@ -257,6 +266,7 @@ and `daemonset-enable.sh` removes that nodeSelector key. A future minor release 
     - Up / scale options: `replicas`, `wait_for_ready`, `timeout`
     - Per-step hooks: `pre`, `post` (non-empty string paths; see below)
     - **`exec.*`** options: `container` (required), `command` (required string list), optional `stdin`, `timeout`
+    - **`job.*`** options: `manifest` (required on up), optional `wait_for_complete` (default true), `timeout`
   - Example (per-step hooks on a StatefulSet):
     - `statefulset.database/postgresql: { pre: ./hooks/before-pg.sh, post: ./hooks/after-pg.sh }`
   - Example (custom step with hooks):
@@ -308,7 +318,7 @@ If `pre` fails, the main action and `post` for that step do not run; the phase f
 | `KZERO_STEP_HOOK` | `pre`, `post`, or **`main`** (custom pipeline step body) |
 | `KZERO_STEP_REF` | Set when the step has a compact ref (e.g. `deployment.ns/app`) |
 | `KZERO_STEP_CUSTOM` | Set when the step is a `custom` script path |
-| `KZERO_STEP_TYPE`, `KZERO_STEP_NAMESPACE`, `KZERO_STEP_NAME` | Set for `deployment`, `statefulset`, `release`, `pvc`, and `exec` steps |
+| `KZERO_STEP_TYPE`, `KZERO_STEP_NAMESPACE`, `KZERO_STEP_NAME` | Set for `deployment`, `statefulset`, `release`, `pvc`, `exec`, `job`, and `cronjob` steps |
 | `KZERO_RELEASE_NAME`, `KZERO_RELEASE_NAMESPACE` | Set for **`release`** steps (per-step `pre`/`post` and release `.sh` scripts) |
 
 Release `.sh` scripts also receive `KZERO_PHASE` on install (see engine implementation).
@@ -429,7 +439,7 @@ In order (omit lines when the corresponding config value is empty):
 4. **`[down]`** section: for each step, `  <index>: <normalized step>` where the label uses the compact ref (e.g. `deployment.ns/app`, `pvc.ns/claim`, `exec.ns/pod`) or `custom: <path>`. Optional parenthetical metadata: `pre`, `post`, `replicas`, `wait_for_ready`, `timeout`, `container`, `command`; for `release.*` on **down**, `helm uninstall --wait --ignore-not-found` (shell) or SDK equivalent; on **up**, `script: …` (shell) or `helm upgrade --install (sdk, …)` (native/auto).
 5. **`[up]`** section: same format as `[down]`.
 6. **`Deferred`** block (only if any deferred field is set): heading `Deferred (accepted by schema; not implemented by v1 engine):` followed by bullet lines summarizing the same messages as stderr warnings.
-7. **`Cluster validation`** (when the config lists at least one **`deployment`**, **`statefulset`**, **`pvc`**, or **`exec`** step **and** a Kubernetes client can be built): heading `Cluster validation:` followed by one line per unique ref (`  OK  <ref>` or `  FAIL  <ref> (<reason>)`). Workloads: read-only **Get**; **`pvc`**: claim exists; **`exec`**: pod exists and **`container`** is present. If any line is **FAIL**, `analyze` exits non-zero. If the client cannot be loaded, a **non-fatal** note is printed to **stderr** (`cluster validation skipped (...)`) and exit code stays **0** (plan-only mode).
+7. **`Cluster validation`** (when the config lists at least one **`deployment`**, **`statefulset`**, **`pvc`**, **`exec`**, **`job`**, or **`cronjob`** step **and** a Kubernetes client can be built): heading `Cluster validation:` followed by one line per unique ref (`  OK  <ref>` or `  FAIL  <ref> (<reason>)`). Workloads: read-only **Get**; **`pvc`**: claim exists (or not-found OK); **`exec`**: pod exists and **`container`** is present; **`cronjob`**: object exists; **`job`**: exists or not-found OK (create on up). If any line is **FAIL**, `analyze` exits non-zero. If the client cannot be loaded, a **non-fatal** note is printed to **stderr** (`cluster validation skipped (...)`) and exit code stays **0** (plan-only mode).
 
 `analyze` does **not** invoke the execution engine; it does **not** mutate cluster state. For planned hook/script invocations in `dry-run` mode, use `kzero down` / `kzero up` with `run.mode: dry-run`.
 
@@ -448,7 +458,7 @@ Operator **preflight without mutations** (ROADMAP **#49**). Complements **`analy
 | **binaries.helm** | Same execution modes **and** at least one **`release.*`** step | **`command.helm`** or **`helm`** on **`PATH`**. Missing → **error** for **`shell`**, **warn** for **`auto`**. |
 | **binaries.shell** | Config uses phase hooks, per-step **`pre`/`post`**, **`custom:`**, or shell-path **`release.*`** | **`command.shell`** or **`/bin/sh`**. Missing → **error**. |
 | **kubernetes.api** | Always after config | Same handshake as live preflight (`Discovery().ServerVersion()` via **`run.kubeconfig`** / default rules). |
-| **kubernetes.workloads** | Pipeline lists **`deployment`** / **`statefulset`** / **`pvc`** / **`exec`** refs | Same read-only checks as **`analyze`** cluster validation (object exists; scalable workloads have **`spec.replicas`** set). |
+| **kubernetes.workloads** | Pipeline lists **`deployment`** / **`statefulset`** / **`pvc`** / **`exec`** / **`job`** / **`cronjob`** refs | Same read-only checks as **`analyze`** cluster validation (object exists; scalable workloads have **`spec.replicas`** set). |
 | **kubernetes.rbac** | Those refs need scale/delete verbs | **`SelfSubjectAccessReview`** for **`get`/`update`/`patch`** on **`deployments`/`statefulsets`** (apps) and **`get`/`delete`** on **`persistentvolumeclaims`**, scoped to each step namespace. Denied → **error**. SAR API errors → **warn** (non-fatal). |
 
 ### Output and exit codes

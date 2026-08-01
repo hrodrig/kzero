@@ -514,6 +514,80 @@ run:
 	assertContains(t, err.Error(), "nodeSelector")
 }
 
+func TestLoadConfig_JobAndCronJobSteps(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - cronjob.batch/nightly
+    - job.batch/migrate-db
+  up:
+    - job.batch/migrate-db:
+        manifest: ./jobs/migrate-db.yaml
+        wait_for_complete: false
+        timeout: 15m
+    - cronjob.batch/nightly
+run:
+  mode: "dry-run"
+`)
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load() returned error: %v", err)
+	}
+	if len(cfg.Pipelines.Down) != 2 || cfg.Pipelines.Down[0].Type != "cronjob" {
+		t.Fatalf("down: %#v", cfg.Pipelines.Down)
+	}
+	upJob := cfg.Pipelines.Up[0]
+	if upJob.Type != "job" || upJob.Manifest != "./jobs/migrate-db.yaml" {
+		t.Fatalf("up job: %#v", upJob)
+	}
+	if upJob.JobWaitForComplete() {
+		t.Fatal("expected wait_for_complete false")
+	}
+	if upJob.Timeout != 15*time.Minute {
+		t.Fatalf("timeout: %s", upJob.Timeout)
+	}
+}
+
+func TestLoadConfig_JobUpRequiresManifest(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  up:
+    - job.batch/migrate-db
+run:
+  mode: "dry-run"
+`)
+	_, err := Load(path)
+	if err == nil {
+		t.Fatal("expected error for job up without manifest")
+	}
+	assertContains(t, err.Error(), "requires manifest")
+}
+
+func TestLoadConfig_JobOptionsRejectedOnOtherKinds(t *testing.T) {
+	t.Parallel()
+
+	path := writeTempConfig(t, `
+schema_version: "1.0"
+pipelines:
+  down:
+    - deployment.default/app:
+        manifest: ./x.yaml
+run:
+  mode: "dry-run"
+`)
+	_, err := Load(path)
+	if err == nil {
+		t.Fatal("expected error for manifest on deployment")
+	}
+	assertContains(t, err.Error(), "only valid on job steps")
+}
+
 func TestLoadConfig_UnsupportedKindRejected(t *testing.T) {
 	t.Parallel()
 
@@ -522,8 +596,6 @@ func TestLoadConfig_UnsupportedKindRejected(t *testing.T) {
 		ref  string
 		want string
 	}{
-		{name: "cronjob", ref: "cronjob.batch/nightly", want: `unsupported step kind "cronjob"`},
-		{name: "job", ref: "job.batch/migrate", want: `unsupported step kind "job"`},
 		{name: "service", ref: "service.default/api", want: `unsupported step kind "service"`},
 	}
 

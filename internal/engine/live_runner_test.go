@@ -593,7 +593,7 @@ func TestLiveRunner_RunMainStep_unsupportedType(t *testing.T) {
 
 	r := &LiveRunner{}
 	cfg := &config.Config{Run: config.RunConfig{Mode: "live", Execution: "shell"}}
-	step := config.PipelineStep{Ref: "job.batch/x", Type: "job", Namespace: "batch", Name: "x"}
+	step := config.PipelineStep{Ref: "service.batch/x", Type: "service", Namespace: "batch", Name: "x"}
 
 	err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step)
 	if err == nil || !strings.Contains(err.Error(), "unsupported pipeline resource type") {
@@ -697,12 +697,131 @@ func TestLiveRunner_PVCDelete(t *testing.T) {
 	}
 }
 
+func TestLiveRunner_CronJobSuspend(t *testing.T) {
+	t.Parallel()
+
+	var calls []bool
+	r := &LiveRunner{
+		CronJob: &stubCronJob{
+			suspendFn: func(_ context.Context, ns, name string, suspend bool) error {
+				if ns != "batch" || name != "nightly" {
+					t.Fatalf("unexpected %s/%s", ns, name)
+				}
+				calls = append(calls, suspend)
+				return nil
+			},
+		},
+	}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	step := config.PipelineStep{Ref: "cronjob.batch/nightly", Type: "cronjob", Namespace: "batch", Name: "nightly"}
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, step); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseUp, 0, step); err != nil {
+		t.Fatal(err)
+	}
+	if len(calls) != 2 || !calls[0] || calls[1] {
+		t.Fatalf("calls=%v want [true, false]", calls)
+	}
+}
+
+func TestLiveRunner_JobDeleteAndCreate(t *testing.T) {
+	t.Parallel()
+
+	var deleted, created, waited bool
+	r := &LiveRunner{
+		Job: &stubJob{
+			deleteFn: func(_ context.Context, ns, name string) error {
+				deleted = ns == "batch" && name == "migrate"
+				return nil
+			},
+			createFn: func(_ context.Context, ns, name, path string) error {
+				created = ns == "batch" && name == "migrate" && path == "./job.yaml"
+				return nil
+			},
+			waitFn: func(_ context.Context, ns, name string, _ time.Duration) error {
+				waited = ns == "batch" && name == "migrate"
+				return nil
+			},
+		},
+	}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live", OperationTimeout: time.Minute}}
+	down := config.PipelineStep{Ref: "job.batch/migrate", Type: "job", Namespace: "batch", Name: "migrate"}
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseDown, 0, down); err != nil {
+		t.Fatal(err)
+	}
+	up := config.PipelineStep{
+		Ref: "job.batch/migrate", Type: "job", Namespace: "batch", Name: "migrate",
+		Manifest: "./job.yaml",
+	}
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseUp, 0, up); err != nil {
+		t.Fatal(err)
+	}
+	if !deleted || !created || !waited {
+		t.Fatalf("deleted=%v created=%v waited=%v", deleted, created, waited)
+	}
+}
+
+func TestLiveRunner_JobCreateWithoutWait(t *testing.T) {
+	t.Parallel()
+
+	var waited bool
+	r := &LiveRunner{
+		Job: &stubJob{
+			deleteFn: func(context.Context, string, string) error { return nil },
+			createFn: func(context.Context, string, string, string) error { return nil },
+			waitFn: func(context.Context, string, string, time.Duration) error {
+				waited = true
+				return nil
+			},
+		},
+	}
+	cfg := &config.Config{Run: config.RunConfig{Mode: "live"}}
+	waitFalse := false
+	up := config.PipelineStep{
+		Ref: "job.batch/migrate", Type: "job", Namespace: "batch", Name: "migrate",
+		Manifest: "./job.yaml", WaitForComplete: &waitFalse,
+	}
+	if err := r.RunPipelineStep(context.Background(), cfg, PhaseUp, 0, up); err != nil {
+		t.Fatal(err)
+	}
+	if waited {
+		t.Fatal("expected no WaitComplete when wait_for_complete=false")
+	}
+}
+
 type stubPVCDeleter struct {
 	deleteFn func(context.Context, string, string) error
 }
 
 func (s *stubPVCDeleter) Delete(ctx context.Context, namespace, name string) error {
 	return s.deleteFn(ctx, namespace, name)
+}
+
+type stubCronJob struct {
+	suspendFn func(context.Context, string, string, bool) error
+}
+
+func (s *stubCronJob) Suspend(ctx context.Context, namespace, name string, suspend bool) error {
+	return s.suspendFn(ctx, namespace, name, suspend)
+}
+
+type stubJob struct {
+	deleteFn func(context.Context, string, string) error
+	createFn func(context.Context, string, string, string) error
+	waitFn   func(context.Context, string, string, time.Duration) error
+}
+
+func (s *stubJob) Delete(ctx context.Context, namespace, name string) error {
+	return s.deleteFn(ctx, namespace, name)
+}
+
+func (s *stubJob) CreateFromManifest(ctx context.Context, namespace, name, manifestPath string) error {
+	return s.createFn(ctx, namespace, name, manifestPath)
+}
+
+func (s *stubJob) WaitComplete(ctx context.Context, namespace, name string, timeout time.Duration) error {
+	return s.waitFn(ctx, namespace, name, timeout)
 }
 
 func TestLiveRunner_pvcFor_caches(t *testing.T) {

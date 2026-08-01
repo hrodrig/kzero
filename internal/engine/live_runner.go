@@ -25,6 +25,10 @@ type LiveRunner struct {
 	Helm executor.HelmReleases
 	// PVC overrides pvc delete backend (tests). When nil, resolved from cfg and cached under mu.
 	PVC executor.PVCDeleter
+	// CronJob overrides cronjob suspend backend (tests).
+	CronJob executor.CronJobSuspender
+	// Job overrides job delete/create/wait backend (tests).
+	Job executor.JobRunner
 	// PodExec overrides exec backend (tests). When nil, resolved from cfg and cached under mu.
 	PodExec executor.PodExec
 
@@ -35,6 +39,10 @@ type LiveRunner struct {
 	cachedHelmKey    string
 	cachedPVC        executor.PVCDeleter
 	cachedPVCKey     string
+	cachedCronJob    executor.CronJobSuspender
+	cachedCronJobKey string
+	cachedJob        executor.JobRunner
+	cachedJobKey     string
 	cachedPodExec    executor.PodExec
 	cachedPodExecKey string
 }
@@ -75,6 +83,10 @@ func (r *LiveRunner) runMainPipelineStep(ctx context.Context, cfg *config.Config
 		return r.runReleaseScript(ctx, cfg, phase, step)
 	case "pvc":
 		return r.runPVCDelete(ctx, cfg, step)
+	case "cronjob":
+		return r.runCronJobSuspend(ctx, cfg, phase, step)
+	case "job":
+		return r.runJobStep(ctx, cfg, phase, step)
 	case "exec":
 		return r.runPodExec(ctx, cfg, step)
 	default:
@@ -115,7 +127,7 @@ func (r *LiveRunner) stepHookEnv(cfg *config.Config, phase Phase, index int, hoo
 		env = append(env, "KZERO_STEP_CUSTOM="+step.Custom)
 	}
 	switch step.Type {
-	case "deployment", "statefulset", "release", "pvc", "exec":
+	case "deployment", "statefulset", "release", "pvc", "exec", "job", "cronjob":
 		env = append(env, "KZERO_STEP_TYPE="+step.Type)
 		env = append(env, "KZERO_STEP_NAMESPACE="+step.Namespace)
 		env = append(env, "KZERO_STEP_NAME="+step.Name)

@@ -33,7 +33,7 @@ Where to run: [docs/deployment-models.md](docs/deployment-models.md). Scope vs a
 
 Regenerate from the repo root: **[docs/README.md — Terminal demo](docs/README.md#terminal-demo-vhs)**.
 
-Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (and **reset**) pipelines from YAML, with phase hooks, optional **per-step** `pre` / `post` scripts, workload scale steps, **Helm releases** (shell scripts or **Helm SDK** chart manifests under **`helm.workspace`**), **`pvc`** / **`exec`** API steps, **`custom:`** scripts, **API watchdog** with throttled progress logs and **`pipeline.stalled`** alerts.
+Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (and **reset**) pipelines from YAML, with phase hooks, optional **per-step** `pre` / `post` scripts, workload scale steps, **Helm releases** (shell scripts or **Helm SDK** chart manifests under **`helm.workspace`**), **`pvc`** / **`exec`** / **`job`** / **`cronjob`** API steps, **`custom:`** scripts, **API watchdog** with throttled progress logs and **`pipeline.stalled`** alerts.
 
 **Operator deployment (bastion-first, out-of-band):** see **[docs/deployment-models.md](docs/deployment-models.md)**. **Scope vs alternatives:** [docs/scope-and-alternatives.md](docs/scope-and-alternatives.md). Playbooks and annotated profiles: **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)** — this repo ships the CLI binary, packages, container image, and Homebrew cask only (same split as [pgwd](https://github.com/hrodrig/pgwd) / [pgwd-selfhosted](https://github.com/hrodrig/pgwd-selfhosted)).
 
@@ -79,8 +79,8 @@ Behavior and acceptance: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:*
 - **Exit codes (stable for wrappers):** **0** success; **1** config; **2** Kubernetes; **3** executor / pipeline abort; **4** notify delivery (`require_delivery` or **`notify test`** POST fail) — [SPEC §5](SPECIFICATIONS.md#process-exit-codes-42).
 - **Phase hooks**: `pre-down`, `post-down`, `pre-up`, `post-up`, `on-error` (shell script paths).
 - **Per-step hooks** (`pre` / `post`): optional shell scripts for a **single** pipeline step—run immediately before and after that step’s main action; **`post` runs only if the main action succeeds**.
-- **Step types**: compact refs (`deployment.ns/name`, `statefulset.ns/name`, `pvc.ns/claim`, `exec.ns/pod`), `release.ns/name` (**Helm SDK** chart manifest **`<release>.yaml`** or legacy **`<release>.sh`** under `helm.workspace`), and `custom: ./script.sh` (with optional sibling `pre` / `post` keys on the same YAML mapping). DaemonSet is **not** supported as a built-in kind because `kubectl scale` rejects it (no `/scale` subresource); use a `custom:` step with `kubectl patch` to set a `nodeSelector` that drains the pods.
-- **`run.execution`**: **`native`** (default when omitted — client-go scale + **Helm SDK** + API **`pvc`** / **`exec`**), **`shell`** (opt-in — **`kubectl`** / **`helm`** subprocesses), or **`auto`** (native with shell fallback). On a **bastion**, **`native`** avoids host **`kubectl`** / **`helm`** while staying out-of-band; in-cluster Jobs may use the distroless image — see [deployment-models.md](docs/deployment-models.md) and [SPEC — `run.execution`](SPECIFICATIONS.md#workload-execution-backend-runexecution).
+- **Step types**: compact refs (`deployment.ns/name`, `statefulset.ns/name`, `pvc.ns/claim`, `exec.ns/pod`, `job.ns/name`, `cronjob.ns/name`), `release.ns/name` (**Helm SDK** chart manifest **`<release>.yaml`** or legacy **`<release>.sh`** under `helm.workspace`), and `custom: ./script.sh` (with optional sibling `pre` / `post` keys on the same YAML mapping). DaemonSet is **not** supported as a built-in kind because `kubectl scale` rejects it (no `/scale` subresource); use a `custom:` step with `kubectl patch` to set a `nodeSelector` that drains the pods.
+- **`run.execution`**: **`native`** (default when omitted — client-go scale + **Helm SDK** + API **`pvc`** / **`exec`** / **`job`** / **`cronjob`**), **`shell`** (opt-in — **`kubectl`** / **`helm`** subprocesses), or **`auto`** (native with shell fallback). On a **bastion**, **`native`** avoids host **`kubectl`** / **`helm`** while staying out-of-band; in-cluster Jobs may use the distroless image — see [deployment-models.md](docs/deployment-models.md) and [SPEC — `run.execution`](SPECIFICATIONS.md#workload-execution-backend-runexecution).
 - **Run modes**: `dry-run` (plan only, no cluster mutations) and `live`.
 
 **Libraries** (see [`go.mod`](go.mod)): [Cobra](https://github.com/spf13/cobra) **v1.10.2**, [Viper](https://github.com/spf13/viper) **v1.21.0**.
@@ -382,7 +382,7 @@ Retries rerun the whole step (per-step **pre**, main, **post**). Only **transien
 ### `pipelines`
 
 - **`down`** and **`up`** are ordered lists. Each item is either:
-  - a **string** step reference: **`deployment.ns/name`**, **`statefulset.ns/name`**, **`pvc.ns/claim`**, **`exec.ns/pod`**, **`release.ns/name`** (DaemonSet is not a built-in kind — see [Features](#features)); or
+  - a **string** step reference: **`deployment.ns/name`**, **`statefulset.ns/name`**, **`pvc.ns/claim`**, **`exec.ns/pod`**, **`job.ns/name`**, **`cronjob.ns/name`**, **`release.ns/name`** (DaemonSet is not a built-in kind — see [Features](#features)); or
   - a **single-key map** whose key is one of the above **or** **`custom`**, with optional fields beside that key (see below).
 - **`release.*`** steps require **`helm.workspace`**. With **`run.execution: native`** / **`auto`**, use **`<release>.yaml`** chart manifests (Helm SDK); with **`shell`**, use **`<release>.sh`** scripts (see SPEC and [full-reset-example](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/full-reset-example/helm)).
 

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`job` / `cronjob` steps (#29 MVP):** always-native compact refs — **`cronjob.<ns>/<name>`** suspends on **down** / resumes on **up**; **`job.<ns>/<name>`** deletes on **down** and creates from **`manifest:`** on **up** (optional **`wait_for_complete`**, default true). Doctor SelfSubjectAccessReview covers batch Job/CronJob verbs. Generic CRD patch deferred (**#29b**).
+
 ### Changed
 
 - **Helm SDK (#59):** migrate **`helm.sh/helm/v3`** → **`helm.sh/helm/v4` v4.2.3**; align **`k8s.io/{api,apimachinery,client-go}`** to **v0.36.x**. Wait semantics use Helm **`WaitStrategy`** (`StatusWatcher` when chart wait is enabled). Host **`helm` CLI v3** remains fine for **`run.execution: shell`**.

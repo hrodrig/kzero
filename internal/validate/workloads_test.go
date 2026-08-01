@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -247,5 +248,33 @@ func TestCheckPipelineWorkloads_execMissingContainer(t *testing.T) {
 	})
 	if err == nil || !strings.Contains(err.Error(), "container \"sidecar\" not found") {
 		t.Fatalf("got %v", err)
+	}
+}
+
+func TestCheckPipelineWorkloads_cronjobAndJob(t *testing.T) {
+	t.Parallel()
+
+	client := fake.NewSimpleClientset(&batchv1.CronJob{
+		ObjectMeta: metav1.ObjectMeta{Name: "nightly", Namespace: "batch"},
+	})
+	cfg := &config.Config{
+		Pipelines: config.PipelinesConfig{
+			Down: []config.PipelineStep{
+				{Ref: "cronjob.batch/nightly", Type: "cronjob", Namespace: "batch", Name: "nightly"},
+				{Ref: "job.batch/migrate", Type: "job", Namespace: "batch", Name: "migrate"},
+			},
+		},
+	}
+	lines, skipped, err := CheckPipelineWorkloads(context.Background(), cfg, func(string) (kubernetes.Interface, error) {
+		return client, nil
+	})
+	if err != nil || skipped != "" {
+		t.Fatalf("err=%v skipped=%q", err, skipped)
+	}
+	if len(lines) != 2 || !lines[0].OK || !lines[1].OK {
+		t.Fatalf("lines=%+v", lines)
+	}
+	if lines[1].Detail != "not found (create on up / delete no-op)" {
+		t.Fatalf("job detail=%q", lines[1].Detail)
 	}
 }

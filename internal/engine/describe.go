@@ -39,6 +39,10 @@ func stepTypePlanExtras(cfg *config.Config, step config.PipelineStep, helmWorksp
 		return []string{"delete pvc (background propagation, ignore-not-found)"}
 	case "exec":
 		return []string{executor.FormatExecPlan(step)}
+	case "cronjob":
+		return []string{executor.FormatCronJobPlan(phase == string(PhaseDown))}
+	case "job":
+		return []string{executor.FormatJobPlan(phase == string(PhaseDown), step.Manifest, step.JobWaitForComplete())}
 	default:
 		return nil
 	}

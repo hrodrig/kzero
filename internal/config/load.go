@@ -23,6 +23,8 @@ var supportedStepKinds = map[string]struct{}{
 	"release":     {},
 	"pvc":         {},
 	"exec":        {},
+	"job":         {},
+	"cronjob":     {},
 }
 
 type rawConfig struct {
@@ -194,7 +196,7 @@ func parseReferenceStep(ref string) (PipelineStep, error) {
 		if kind == "daemonset" {
 			return PipelineStep{}, fmt.Errorf(`unsupported step kind "daemonset" in %q: kubectl scale is not supported for DaemonSet; use a custom: step with kubectl patch to set a nodeSelector that drains the pods`, ref)
 		}
-		return PipelineStep{}, fmt.Errorf("unsupported step kind %q in %q (supported: deployment, statefulset, release, pvc, exec)", kind, ref)
+		return PipelineStep{}, fmt.Errorf("unsupported step kind %q in %q (supported: deployment, statefulset, release, pvc, exec, job, cronjob)", kind, ref)
 	}
 
 	return PipelineStep{
@@ -287,6 +289,8 @@ func applyOneStepOption(step *PipelineStep, k string, v interface{}) error {
 		return applyReleaseStepOption(step, k, v)
 	case "container", "command", "stdin":
 		return applyExecStepOption(step, k, v)
+	case "manifest", "wait_for_complete":
+		return applyJobStepOption(step, k, v)
 	default:
 		return fmt.Errorf("unsupported option %q", k)
 	}
@@ -408,6 +412,29 @@ func applyExecStepOption(step *PipelineStep, k string, v interface{}) error {
 	return nil
 }
 
+func applyJobStepOption(step *PipelineStep, k string, v interface{}) error {
+	if step.Type != "job" {
+		return fmt.Errorf("option %q is only valid on job steps", k)
+	}
+	switch k {
+	case "manifest":
+		s, ok := v.(string)
+		if !ok || strings.TrimSpace(s) == "" {
+			return errors.New("manifest must be a non-empty string")
+		}
+		step.Manifest = strings.TrimSpace(s)
+	case "wait_for_complete":
+		b, ok := v.(bool)
+		if !ok {
+			return errors.New("wait_for_complete must be boolean")
+		}
+		step.WaitForComplete = &b
+	default:
+		return fmt.Errorf("unsupported job option %q", k)
+	}
+	return nil
+}
+
 func parseReplicas(v interface{}) (int, error) {
 	switch n := v.(type) {
 	case int:
@@ -425,6 +452,31 @@ func parseReplicas(v interface{}) (int, error) {
 }
 
 func validate(cfg *Config) error {
+	if err := validateSchemaAndRun(cfg); err != nil {
+		return err
+	}
+	if cfg.Pipelines.Down == nil && cfg.Pipelines.Up == nil {
+		return errors.New("pipelines.down or pipelines.up is required")
+	}
+	if err := validateHelmWorkspaceForReleases(cfg); err != nil {
+		return err
+	}
+	if err := validateHelmRegistries(cfg); err != nil {
+		return err
+	}
+	if err := validateExecSteps(cfg); err != nil {
+		return err
+	}
+	if err := validateJobSteps(cfg); err != nil {
+		return err
+	}
+	if err := validateVerify(cfg); err != nil {
+		return err
+	}
+	return validateInfraProbe(cfg)
+}
+
+func validateSchemaAndRun(cfg *Config) error {
 	if strings.TrimSpace(cfg.SchemaVersion) == "" {
 		return errors.New("schema_version is required")
 	}
@@ -440,25 +492,7 @@ func validate(cfg *Config) error {
 	if err := validateRunExecution(cfg); err != nil {
 		return err
 	}
-	if err := validateRunColor(cfg); err != nil {
-		return err
-	}
-	if cfg.Pipelines.Down == nil && cfg.Pipelines.Up == nil {
-		return errors.New("pipelines.down or pipelines.up is required")
-	}
-	if err := validateHelmWorkspaceForReleases(cfg); err != nil {
-		return err
-	}
-	if err := validateHelmRegistries(cfg); err != nil {
-		return err
-	}
-	if err := validateExecSteps(cfg); err != nil {
-		return err
-	}
-	if err := validateVerify(cfg); err != nil {
-		return err
-	}
-	return validateInfraProbe(cfg)
+	return validateRunColor(cfg)
 }
 
 func parseInfraProbe(cfg *Config, raw map[string]interface{}) error {
@@ -788,6 +822,30 @@ func validateExecSteps(cfg *Config) error {
 		return err
 	}
 	return check("infra_probe.pipeline.up", cfg.InfraProbe.Pipeline.Up)
+}
+
+func validateJobSteps(cfg *Config) error {
+	check := func(label string, steps []PipelineStep, requireManifest bool) error {
+		for i, s := range steps {
+			if s.Type != "job" {
+				continue
+			}
+			if requireManifest && strings.TrimSpace(s.Manifest) == "" {
+				return fmt.Errorf("%s item %d: job step %q requires manifest", label, i, s.Ref)
+			}
+		}
+		return nil
+	}
+	if err := check("pipelines.down", cfg.Pipelines.Down, false); err != nil {
+		return err
+	}
+	if err := check("pipelines.up", cfg.Pipelines.Up, true); err != nil {
+		return err
+	}
+	if err := check("infra_probe.pipeline.down", cfg.InfraProbe.Pipeline.Down, false); err != nil {
+		return err
+	}
+	return check("infra_probe.pipeline.up", cfg.InfraProbe.Pipeline.Up, true)
 }
 
 func pipelinesContainRelease(steps []PipelineStep) bool {
