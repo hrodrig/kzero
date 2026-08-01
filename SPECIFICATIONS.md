@@ -34,7 +34,7 @@ Visual overviews (Mermaid): **[docs/diagrams.md](docs/diagrams.md)**.
 
 ### Contract index (operator-facing)
 
-Use this table with **`kzero analyze`** (stdout plan + optional **Deferred** summary) to see what the **1.0.0** contract engine honors today.
+Use this table with **`kzero analyze`** (stdout plan + optional **Deferred** summary) and **`kzero diff`** (desired vs live) to see what the engine honors today (**1.1.0** adds **`job`/`cronjob`** and **`diff`**).
 
 | Area | Status | Notes |
 |------|--------|-------|
@@ -51,6 +51,7 @@ Use this table with **`kzero analyze`** (stdout plan + optional **Deferred** sum
 | **`verify`**, **`infra_probe`**, **`kzero probe`** | **Implemented** | Post-up readiness and pre-destructive probe cache. |
 | **`kzero target --output slug`** | **Implemented** | Filesystem-safe cluster slug for wrapper logs. |
 | **`kzero doctor`** | **Implemented** | Config + binaries + API + workload refs + RBAC hints; no mutations (see § **`kzero doctor`**). |
+| **`kzero diff`** | **Implemented** | Desired (plan) vs live cluster for `--phase up|down` (**1.1.0**); see § **`kzero diff`**. |
 | **`kzero completion`** / **`kubectl-kzero`** | **Implemented** | Shell completion scripts; optional kubectl plugin binary on **`PATH`**. |
 | **Graceful shutdown** (SIGINT/SIGTERM) | **Implemented** | Cancels pipeline context; distinct from watchdog stall. |
 | **Pipeline parallelism** (`run.worker_concurrency`) | **Out of scope** | Removed from contract **0.5.3**; use step order + `custom:`. |

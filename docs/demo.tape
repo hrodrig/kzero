@@ -2,7 +2,7 @@
 #   make build && export PATH="$(pwd)/bin:$PATH" && bash -c "vhs docs/demo.tape"
 # Or: make install && bash -c "vhs docs/demo.tape"
 # Use bash -c (not bare `vhs` from zsh) so the recorder does not inherit zsh/Oh My Zsh prompts.
-# Re-record after VERSION changes if the tape shows `kzero version` output.
+# Re-record after EVERY VERSION bump — `kzero version` must show the release (e.g. v1.1.0).
 
 Output docs/demo.gif
 
@@ -11,7 +11,7 @@ Require kzero
 Set Shell "bash"
 Set FontSize 14
 Set Width 920
-Set Height 520
+Set Height 560
 Set Padding 20
 
 Enter
@@ -22,10 +22,15 @@ Type "kzero --help"
 Enter
 Sleep 2s
 
-# Version (ldflags when built via make build / make install)
+# Version (ldflags when built via make build / make install) — MUST match VERSION
 Type "kzero version"
 Enter
 Sleep 1s
+
+# New in 1.1.0: plan vs live cluster
+Type "kzero diff --help"
+Enter
+Sleep 2s
 
 # Analyze minimal demo config (no cluster mutations)
 Type "kzero analyze --config docs/demo-kzero.yaml"

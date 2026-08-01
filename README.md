@@ -2,7 +2,7 @@
 
 <a id="top"></a>
 
-[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](https://github.com/hrodrig/kzero/releases)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/hrodrig/kzero/releases)
 [![GitHub release](https://img.shields.io/github/v/release/hrodrig/kzero)](https://github.com/hrodrig/kzero/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.5-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
@@ -45,7 +45,7 @@ Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (an
 
 **Releases** ([GitHub Releases](https://github.com/hrodrig/kzero/releases)) ship **binaries**, **`.deb`** / **`.rpm`**, **`ghcr.io/hrodrig/kzero`**, and **Homebrew**. **Supply chain (v0.7.0+):** SPDX / CycloneDX SBOMs + Cosign on **`checksums.txt`** and GHCR — see [verify Cosign](#verify-cosign-v070). No Helm charts as release artifacts.
 
-Behavior and acceptance: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:** **v1.0.0** — stable contract: default **`run.execution: native`** (**#32**), process exit codes **0–4** (**#42**), product kind CI (**#34**), PVC/StatefulSet cookbook (**#33**). Prior: **v0.9.2** (doctor, completion, **`kubectl-kzero`**, retry jitter, JSON Schema); **v0.9.0** (graceful shutdown, `require_delivery`, E2E smoke) — [CHANGELOG.md](CHANGELOG.md). Mitigations: [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). Diagrams: **[docs/diagrams.md](docs/diagrams.md)**.
+Behavior and acceptance: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:** **v1.1.0** — Helm SDK **v4** (**#59**), native **`job`/`cronjob`** (**#29**), **`kzero diff`** (**#58**). Prior: **v1.0.2** (`command.shell` **#56**); **v1.0.0** — stable contract: default **`run.execution: native`** (**#32**), exit codes **0–4** (**#42**), product kind CI (**#34**), PVC/StatefulSet cookbook (**#33**) — [CHANGELOG.md](CHANGELOG.md). Mitigations: [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). Diagrams: **[docs/diagrams.md](docs/diagrams.md)**.
 
 ## Table of contents
 

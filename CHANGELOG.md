@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+[↑ Back to top](#top)
+
+## [1.1.0] - 2026-08-01
+
 ### Added
 
 - **`kzero diff` (#58):** compare `pipelines.up` or `pipelines.down` desired state to the live cluster (`--phase up|down`, default **up**). Replicas, CronJob suspend, PVC/Job/release presence; exit **2** on drift. Cookbook: [docs/examples/diff.md](docs/examples/diff.md).
@@ -468,7 +472,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 [↑ Back to top](#top)
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/hrodrig/kzero/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/hrodrig/kzero/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/hrodrig/kzero/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/hrodrig/kzero/compare/v0.9.2...v1.0.0

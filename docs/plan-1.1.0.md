@@ -1,6 +1,6 @@
 # Plan 1.1.0 — post-1.0 operator ergonomics (bounded)
 
-**Status:** **Active** — priority 2026-08-01: **#59** / **#29** / **#58** done on develop; **#29b** CRD patch follow-up; **#55** parked; **#57** deferred (complexity). **#56** shipped in **v1.0.2**.
+**Status:** **Closed for tag** — **v1.1.0** prep on develop (2026-08-01): **#59** / **#29** MVP / **#58** / grpc **v1.82.1**. Follow-ups: **#29b**; **#55** parked; **#57** deferred. **#56** shipped in **v1.0.2**.
 
 **Motivation:** Close the highest-value gaps that **do not** turn kzero into a daemon, multi-cluster control plane, or secret broker. Stay **bastion-first**, **config-first**, sequential by default.
 
@@ -39,7 +39,7 @@ For shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMA
 | PR1 | **#59** Helm SDK v4 | **Done on develop** — clears govulncheck ignore; bumps `k8s.io/*`. |
 | PR2 | **#29** job / cronjob MVP | **Done** on develop (CRD patch → **#29b**). |
 | PR3 | **#58** `kzero diff` | **Done** on develop. |
-| PR4 | Tag **`v1.1.0`** | Release checklist ([release-tests](../.cursor/rules/release-tests.mdc)). |
+| PR4 | Tag **`v1.1.0`** | Release checklist in progress on develop. |
 
 **Deferred:** **#57** (resume-from-step). **Parked:** **#55** (log upload).
 
