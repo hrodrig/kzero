@@ -9,7 +9,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-07-16 (**v1.0.1** shipped; **1.1.0** plan + Helm v4 spike **#59**)
+**Last reviewed:** 2026-07-31 (**v1.0.2** shipped — **`command.shell`** #56 + `x/crypto` pin; **1.1.0** remains **#29** / **#57** + stretch **#59**)
 
 ### Versioning note
 
@@ -39,7 +39,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.8.x** | **Closed** — API watchdog, notify delivery, stalled event (**#35–#41**) in **v0.8.0**. |
 | **0.9.x** | **Closed** stretch — **v0.9.0** core (**#43–#47**); **v0.9.1** security; **v0.9.2** doctor/completion/plugin/jitter/JSON Schema/docs (**#48–#53**). |
 | **1.0.0** | **Closed** — default **native** (**#32**), PVC cookbook (**#33**), kind CI (**#34**), exit codes **0–4** (**#42**) in **v1.0.0**. |
-| **1.1.0** | Hook interpreter (**#56** done on develop); **#29** job/cronjob/CRD; resume-from-step (**#57**); stretch Helm SDK **v4** (**#59**, GO-2026-5932) — [plan-1.1.0.md](docs/plan-1.1.0.md). |
+| **1.1.0** | **#29** job/cronjob/CRD; resume-from-step (**#57**); stretch Helm SDK **v4** (**#59**, GO-2026-5932) — [plan-1.1.0.md](docs/plan-1.1.0.md). (**#56** shipped in **v1.0.2**.) |
 
 **Shell path:** **`run.execution: shell`** (opt-in) still uses **`kubectl`** subprocesses and **`<helm.workspace>/<name>.sh`** for **`release.*` up**. **Native** (default) / **auto** use the Helm SDK and API primitives above.
 
@@ -76,6 +76,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **0.9.2** | **0.9.x stretch:** shell completion (#53); **`kubectl-kzero`** (#52); **`kzero doctor`** (#49); retry full jitter (#50); JSON Schema (#51); docs Cosign/README (#48). |
 | **1.0.0** | **Stable contract:** default **`run.execution: native`** (**#32**); exit codes **0–4** (**#42**); product kind CI (**#34**); PVC/StatefulSet cookbook (**#33**); README out-of-band hero; POSIX `/bin/sh` hook contract. |
 | **1.0.1** | **Retry:** classify **`connection lost`** / **`http2: client connection lost`** as transient for live step retry and shell **`ErrTransient`**. |
+| **1.0.2** | **`command.shell`** (#56) opt-in hook/script interpreter; pin **`golang.org/x/crypto` v0.54.0** + Grype ignore hygiene (GO-2026-5932 until Helm v4 #59); README badge/docs hygiene. |
 
 ---
 
@@ -246,7 +247,7 @@ Motivation: close **0.8.x** deferred contract gaps and operator posture after ex
 
 | # | Item | Status |
 |---|------|--------|
-| 56 | **Configurable hook interpreter** — default **`/bin/sh`**; opt-in **`command.shell`** for hooks / **`custom:`** / shell release scripts (no magic shebang). | **Done** (develop) |
+| 56 | **Configurable hook interpreter** — default **`/bin/sh`**; opt-in **`command.shell`** for hooks / **`custom:`** / shell release scripts (no magic shebang). | **Done** (**v1.0.2**) |
 | 29 | **`job` / `cronjob`** (suspend) and safe generic **patch** / scale for CRDs — prefer native; until then **`custom:`**. | Pending (moved from open-ended post-1.x) |
 | 57 | **Resume / restart from step** — Phase A: restart from index N; Phase B optional state file. | Pending |
 | 59 | *(Stretch / recommended)* **Helm SDK v4.2.3+** — drop **GO-2026-5932**; bump `k8s.io/*` with Helm; see plan spike. | Optional |

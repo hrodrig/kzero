@@ -12,7 +12,7 @@ For shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMA
 
 | # / ID | Item | Summary |
 |--------|------|---------|
-| **56** | **Configurable hook interpreter** | Opt-in **`command.shell`** for hook / **`custom:`** / shell **`release.*`** scripts (default **`/bin/sh`**). Fixes Ubuntu **dash** vs bashisms without magic shebang. SPEC: [Hook and script interpreter](../SPECIFICATIONS.md#hook-and-script-interpreter-commandshell). |
+| **56** | **Configurable hook interpreter** | **Shipped in v1.0.2.** Opt-in **`command.shell`** for hook / **`custom:`** / shell **`release.*`** scripts (default **`/bin/sh`**). Fixes Ubuntu **dash** vs bashisms without magic shebang. SPEC: [Hook and script interpreter](../SPECIFICATIONS.md#hook-and-script-interpreter-commandshell). |
 | **29** | **`job` / `cronjob` + safe CRD patch** | Built-in steps: Job lifecycle, CronJob suspend/resume (or equivalent), and a **narrow** patch/scale pattern for CRDs — prefer **native**; shell fallback where needed. Until then: **`custom:`**. |
 | **57** | **Resume / restart from step** | **Phase A (preferred first):** document and/or CLI aid to re-run a pipeline **from step index N** (YAML slice / flag) so operators avoid full replay after mid-reset failure. **Phase B (optional):** on-disk run state + resume — only if Phase A proves insufficient; requires clear idempotency rules. |
 
@@ -31,7 +31,7 @@ For shipped behavior see [CHANGELOG.md](../CHANGELOG.md), [ROADMAP.md](../ROADMA
 | PR | Item | Why |
 |----|------|-----|
 | PR0 | *(Optional)* **#59** Helm SDK v4 | Deps/security before feature work; clears govulncheck ignore; bumps `k8s.io/*` with Helm. |
-| PR1 | **#56** hook interpreter | **Done (develop)** — `command.shell`; cures Ubuntu dash vs bashisms. |
+| PR1 | **#56** hook interpreter | **Done (v1.0.2)** — `command.shell`; cures Ubuntu dash vs bashisms. |
 | PR2 | **#29** job / cronjob / CRD patch | Largest remaining step-type gap. |
 | PR3 | **#57** Phase A (restart from step) | Operational resume without full state machine. |
 | PR4 | *(Optional)* **#57** Phase B or **#58** diff | Only with design note + tests. |

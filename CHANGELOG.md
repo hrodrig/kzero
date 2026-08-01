@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+[↑ Back to top](#top)
+
+## [1.0.2] - 2026-07-31
+
 ### Added
 
 - **`command.shell` (#56):** opt-in interpreter for phase hooks, per-step **`pre`/`post`**, **`custom:`**, and shell-path **`release.*`** `.sh` scripts (default **`/bin/sh`**; shebang still ignored). Env **`KZERO_COMMAND_SHELL`**. **`kzero doctor`** checks the interpreter when hooks/scripts are configured.
@@ -453,7 +457,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 [↑ Back to top](#top)
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/hrodrig/kzero/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/hrodrig/kzero/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/hrodrig/kzero/compare/v0.9.2...v1.0.0
 [0.9.2]: https://github.com/hrodrig/kzero/compare/v0.9.1...v0.9.2
