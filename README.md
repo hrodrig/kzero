@@ -16,7 +16,7 @@
 [![CodeQL](https://github.com/hrodrig/kzero/actions/workflows/codeql.yml/badge.svg)](https://github.com/hrodrig/kzero/actions/workflows/codeql.yml)
 
 
-**Repo:** [github.com/hrodrig/kzero](https://github.com/hrodrig/kzero) · **Releases:** [Releases](https://github.com/hrodrig/kzero/releases) · **DeepWiki:** [hrodrig/kzero](https://deepwiki.com/hrodrig/kzero)
+**Repo:** [github.com/hrodrig/kzero](https://github.com/hrodrig/kzero) · **Releases:** [GitHub Releases](https://github.com/hrodrig/kzero/releases) · **Spec:** [SPECIFICATIONS.md](SPECIFICATIONS.md) · **Operator:** [kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted) · **Changelog:** [CHANGELOG.md](CHANGELOG.md) · **Roadmap:** [ROADMAP.md](ROADMAP.md) · **DeepWiki:** [hrodrig/kzero](https://deepwiki.com/hrodrig/kzero)
 
 **The problem:** Platform maintenance often needs an **ordered** teardown and bring-up (scale down → wipe data → Helm uninstall → restore) — not continuous GitOps reconcile, not ad-hoc shell. When the API or data plane is unhealthy, recovery **inside** the same cluster shares the failure domain you are trying to fix: Jobs stall, logs vanish with the Pod, and alerts never leave the sick path.
 
