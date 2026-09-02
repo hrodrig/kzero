@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Go toolchain:** bump minimum Go to **1.26.6** (`go.mod`, `Dockerfile`) — addresses Grype **High** stdlib findings on **1.26.5** images: [GO-2026-5026](https://pkg.go.dev/vuln/GO-2026-5026), [GO-2026-5972](https://pkg.go.dev/vuln/GO-2026-5972), [GO-2026-6088](https://pkg.go.dev/vuln/GO-2026-6088), [GO-2026-6090](https://pkg.go.dev/vuln/GO-2026-6090), [GO-2026-5942](https://pkg.go.dev/vuln/GO-2026-5942), and [GO-2026-6218](https://pkg.go.dev/vuln/GO-2026-6218) (**Medium**).
+
 [↑ Back to top](#top)
 
 ## [1.1.0] - 2026-08-01
