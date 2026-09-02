@@ -4,7 +4,7 @@
 
 [![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/hrodrig/kzero/releases)
 [![GitHub release](https://img.shields.io/github/v/release/hrodrig/kzero)](https://github.com/hrodrig/kzero/releases)
-[![Go](https://img.shields.io/badge/Go-1.26.5-00ADD8.svg)](https://go.dev/dl/)
+[![Go](https://img.shields.io/badge/Go-1.26.6-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hrodrig/kzero)
 [![CI](https://github.com/hrodrig/kzero/actions/workflows/ci.yml/badge.svg)](https://github.com/hrodrig/kzero/actions/workflows/ci.yml)
@@ -98,7 +98,7 @@ Host tooling depends on **`run.execution`** and your pipeline step types (see [S
 | Phase hooks, **`custom:`**, per-step **`pre`/`post`**, shell **`release.*`** `.sh` | **`command.shell`** (default **`/bin/sh`**; shebang ignored). Scripts must match that interpreter — on Ubuntu default **`/bin/sh`** is often **dash** (`pipefail` / `[[` fail). Opt-in **`command.shell: /bin/bash`**. See [SPEC — Hook and script interpreter](SPECIFICATIONS.md#hook-and-script-interpreter-commandshell). |
 
 - **RBAC** sufficient for the operations in your pipelines (for example **`get`/`patch`/`scale`**, PVC delete, Helm releases, pod exec)
-- **Go 1.26.5+** if you [build from source](#quick-start) (`make build`) or use [`go install`](#install-with-go)
+- **Go 1.26.6+** if you [build from source](#quick-start) (`make build`) or use [`go install`](#install-with-go)
 
 [↑ Back to top](#top)
 
@@ -225,7 +225,7 @@ If you installed from **[Releases](#install-or-update)** or **`go install`** (be
 
 ### Install with Go
 
-From any machine with Go **1.26.5+** (installs to `$(go env GOPATH)/bin`; ensure that directory is on your `PATH`):
+From any machine with Go **1.26.6+** (installs to `$(go env GOPATH)/bin`; ensure that directory is on your `PATH`):
 
 ```bash
 go install github.com/hrodrig/kzero/cmd/kzero@latest
