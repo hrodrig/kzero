@@ -13,6 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [↑ Back to top](#top)
 
+## [1.1.1] - 2026-09-02
+
+### Security
+
+- **Go toolchain:** bump minimum Go to **1.26.6** (`go.mod`, `Dockerfile`) — addresses Grype **High** stdlib findings on **1.26.5** images: [GO-2026-5026](https://pkg.go.dev/vuln/GO-2026-5026), [GO-2026-5972](https://pkg.go.dev/vuln/GO-2026-5972), [GO-2026-6088](https://pkg.go.dev/vuln/GO-2026-6088), [GO-2026-6090](https://pkg.go.dev/vuln/GO-2026-6090), [GO-2026-5942](https://pkg.go.dev/vuln/GO-2026-5942), and [GO-2026-6218](https://pkg.go.dev/vuln/GO-2026-6218) (**Medium**).
+
+[↑ Back to top](#top)
+
 ## [1.1.0] - 2026-08-01
 
 ### Added
@@ -472,7 +480,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 [↑ Back to top](#top)
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/hrodrig/kzero/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/hrodrig/kzero/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/hrodrig/kzero/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/hrodrig/kzero/compare/v1.0.0...v1.0.1

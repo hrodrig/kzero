@@ -2,9 +2,9 @@
 
 <a id="top"></a>
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/hrodrig/kzero/releases)
+[![Version](https://img.shields.io/badge/version-1.1.1-blue.svg)](https://github.com/hrodrig/kzero/releases)
 [![GitHub release](https://img.shields.io/github/v/release/hrodrig/kzero)](https://github.com/hrodrig/kzero/releases)
-[![Go](https://img.shields.io/badge/Go-1.26.5-00ADD8.svg)](https://go.dev/dl/)
+[![Go](https://img.shields.io/badge/Go-1.26.6-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hrodrig/kzero)
 [![CI](https://github.com/hrodrig/kzero/actions/workflows/ci.yml/badge.svg)](https://github.com/hrodrig/kzero/actions/workflows/ci.yml)
@@ -16,7 +16,7 @@
 [![CodeQL](https://github.com/hrodrig/kzero/actions/workflows/codeql.yml/badge.svg)](https://github.com/hrodrig/kzero/actions/workflows/codeql.yml)
 
 
-**Repo:** [github.com/hrodrig/kzero](https://github.com/hrodrig/kzero) · **Releases:** [Releases](https://github.com/hrodrig/kzero/releases) · **DeepWiki:** [hrodrig/kzero](https://deepwiki.com/hrodrig/kzero)
+**Repo:** [github.com/hrodrig/kzero](https://github.com/hrodrig/kzero) · **Releases:** [GitHub Releases](https://github.com/hrodrig/kzero/releases) · **Spec:** [SPECIFICATIONS.md](SPECIFICATIONS.md) · **Operator:** [kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted) · **Changelog:** [CHANGELOG.md](CHANGELOG.md) · **Roadmap:** [ROADMAP.md](ROADMAP.md) · **DeepWiki:** [hrodrig/kzero](https://deepwiki.com/hrodrig/kzero)
 
 **The problem:** Platform maintenance often needs an **ordered** teardown and bring-up (scale down → wipe data → Helm uninstall → restore) — not continuous GitOps reconcile, not ad-hoc shell. When the API or data plane is unhealthy, recovery **inside** the same cluster shares the failure domain you are trying to fix: Jobs stall, logs vanish with the Pod, and alerts never leave the sick path.
 
@@ -45,7 +45,7 @@ Declarative **Kubernetes workload** orchestration: ordered **down** / **up** (an
 
 **Releases** ([GitHub Releases](https://github.com/hrodrig/kzero/releases)) ship **binaries**, **`.deb`** / **`.rpm`**, **`ghcr.io/hrodrig/kzero`**, and **Homebrew**. **Supply chain (v0.7.0+):** SPDX / CycloneDX SBOMs + Cosign on **`checksums.txt`** and GHCR — see [verify Cosign](#verify-cosign-v070). No Helm charts as release artifacts.
 
-Behavior and acceptance: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:** **v1.1.0** — Helm SDK **v4** (**#59**), native **`job`/`cronjob`** (**#29**), **`kzero diff`** (**#58**). Prior: **v1.0.2** (`command.shell` **#56**); **v1.0.0** — stable contract: default **`run.execution: native`** (**#32**), exit codes **0–4** (**#42**), product kind CI (**#34**), PVC/StatefulSet cookbook (**#33**) — [CHANGELOG.md](CHANGELOG.md). Mitigations: [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). Diagrams: **[docs/diagrams.md](docs/diagrams.md)**.
+Behavior and acceptance: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. **Shipped:** **v1.1.1** — Go **1.26.6** security (stdlib Grype fixes). Prior: **v1.1.0** — Helm SDK **v4** (**#59**), native **`job`/`cronjob`** (**#29**), **`kzero diff`** (**#58**); **v1.0.2** (`command.shell` **#56**); **v1.0.0** — stable contract: default **`run.execution: native`** (**#32**), exit codes **0–4** (**#42**), product kind CI (**#34**), PVC/StatefulSet cookbook (**#33**) — [CHANGELOG.md](CHANGELOG.md). Mitigations: [pipeline-network-loss.md](docs/examples/pipeline-network-loss.md). Diagrams: **[docs/diagrams.md](docs/diagrams.md)**.
 
 ## Table of contents
 
@@ -98,7 +98,7 @@ Host tooling depends on **`run.execution`** and your pipeline step types (see [S
 | Phase hooks, **`custom:`**, per-step **`pre`/`post`**, shell **`release.*`** `.sh` | **`command.shell`** (default **`/bin/sh`**; shebang ignored). Scripts must match that interpreter — on Ubuntu default **`/bin/sh`** is often **dash** (`pipefail` / `[[` fail). Opt-in **`command.shell: /bin/bash`**. See [SPEC — Hook and script interpreter](SPECIFICATIONS.md#hook-and-script-interpreter-commandshell). |
 
 - **RBAC** sufficient for the operations in your pipelines (for example **`get`/`patch`/`scale`**, PVC delete, Helm releases, pod exec)
-- **Go 1.26.5+** if you [build from source](#quick-start) (`make build`) or use [`go install`](#install-with-go)
+- **Go 1.26.6+** if you [build from source](#quick-start) (`make build`) or use [`go install`](#install-with-go)
 
 [↑ Back to top](#top)
 
@@ -143,18 +143,18 @@ Paste the block **as a whole**, or chain with `&&`, so **`apt` does not run** af
 
 ### Fixed-tag examples (copy from the release page if you prefer)
 
-| Format | Example (tag **`v1.0.0`** in the URL path; artifact basename includes the same **`v1.0.0`**) |
+| Format | Example (tag **`v1.1.1`** in the URL path; artifact basename includes the same **`v1.1.1`**) |
 |--------|------------------------------------------------------------------|
-| **`.deb`** | `curl -fsSL -o /tmp/kzero_v1.0.0_linux_amd64.deb https://github.com/hrodrig/kzero/releases/download/v1.0.0/kzero_v1.0.0_linux_amd64.deb` then `sudo apt install /tmp/kzero_v1.0.0_linux_amd64.deb` |
-| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v1.0.0/kzero_v1.0.0_linux_amd64.rpm` then `sudo rpm -Uvh kzero_v1.0.0_linux_amd64.rpm` or `sudo dnf install ./kzero_v1.0.0_linux_amd64.rpm` |
-| **`.tar.gz` (Linux)** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v1.0.0/kzero_v1.0.0_linux_amd64.tar.gz` then `tar xzf kzero_v1.0.0_linux_amd64.tar.gz` and run **`./kzero`** from the extracted tree (see **`share/examples/kzero/kzero.sample.yml`**) |
-| **`.tar.gz` (macOS)** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v1.0.0/kzero_v1.0.0_darwin_amd64.tar.gz` (or **`…_darwin_arm64.tar.gz`** on Apple silicon) |
+| **`.deb`** | `curl -fsSL -o /tmp/kzero_v1.1.1_linux_amd64.deb https://github.com/hrodrig/kzero/releases/download/v1.1.1/kzero_v1.1.1_linux_amd64.deb` then `sudo apt install /tmp/kzero_v1.1.1_linux_amd64.deb` |
+| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v1.1.1/kzero_v1.1.1_linux_amd64.rpm` then `sudo rpm -Uvh kzero_v1.1.1_linux_amd64.rpm` or `sudo dnf install ./kzero_v1.1.1_linux_amd64.rpm` |
+| **`.tar.gz` (Linux)** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v1.1.1/kzero_v1.1.1_linux_amd64.tar.gz` then `tar xzf kzero_v1.1.1_linux_amd64.tar.gz` and run **`./kzero`** from the extracted tree (see **`share/examples/kzero/kzero.sample.yml`**) |
+| **`.tar.gz` (macOS)** | `curl -fsSLO https://github.com/hrodrig/kzero/releases/download/v1.1.1/kzero_v1.1.1_darwin_amd64.tar.gz` (or **`…_darwin_arm64.tar.gz`** on Apple silicon) |
 
 **Update:** download a newer release and run the same install command again (`rpm -Uvh`, `apt install` over the `.deb`, or replace the tarball tree).
 
-**Windows:** use the **`.zip`** asset for your arch (for example **`kzero_v1.0.0_windows_amd64.zip`**), unpack, run **`kzero.exe`** where **`kubectl`** is available.
+**Windows:** use the **`.zip`** asset for your arch (for example **`kzero_v1.1.1_windows_amd64.zip`**), unpack, run **`kzero.exe`** where **`kubectl`** is available.
 
-**Docker:** `docker pull ghcr.io/hrodrig/kzero:v1.0.0` (match the image tag to the **[release](https://github.com/hrodrig/kzero/releases)** you want). Published images use **`gcr.io/distroless/static-debian13:nonroot`** (static **`kzero`** binary only: no shell, no BusyBox/Alpine runtime). **`Dockerfile`** in this repo uses the same final stage. Package: [ghcr.io/hrodrig/kzero](https://github.com/hrodrig/kzero/pkgs/container/kzero).
+**Docker:** `docker pull ghcr.io/hrodrig/kzero:v1.1.1` (match the image tag to the **[release](https://github.com/hrodrig/kzero/releases)** you want). Published images use **`gcr.io/distroless/static-debian13:nonroot`** (static **`kzero`** binary only: no shell, no BusyBox/Alpine runtime). **`Dockerfile`** in this repo uses the same final stage. Package: [ghcr.io/hrodrig/kzero](https://github.com/hrodrig/kzero/pkgs/container/kzero).
 
 **Homebrew** and **BSD packaging** helpers: see **[Install or update](#install-or-update)** and **`contrib/README.md`**.
 
@@ -225,13 +225,13 @@ If you installed from **[Releases](#install-or-update)** or **`go install`** (be
 
 ### Install with Go
 
-From any machine with Go **1.26.5+** (installs to `$(go env GOPATH)/bin`; ensure that directory is on your `PATH`):
+From any machine with Go **1.26.6+** (installs to `$(go env GOPATH)/bin`; ensure that directory is on your `PATH`):
 
 ```bash
 go install github.com/hrodrig/kzero/cmd/kzero@latest
 ```
 
-Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v1.0.0`). Module reference: [pkg.go.dev/github.com/hrodrig/kzero](https://pkg.go.dev/github.com/hrodrig/kzero).
+Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v1.1.1`). Module reference: [pkg.go.dev/github.com/hrodrig/kzero](https://pkg.go.dev/github.com/hrodrig/kzero).
 
 **End-to-end operator profile** (maintenance reset: truncate, Helm infra, PVC wipe, **`infra_probe`**, notify): **[kzero-selfhosted — full-reset-example](https://github.com/hrodrig/kzero-selfhosted/tree/main/run/examples/full-reset-example)** with [validation runbook](https://github.com/hrodrig/kzero-selfhosted/blob/main/run/docs/full-reset-validation.md).
 
