@@ -9,7 +9,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-08-01 (**v1.1.0** shipped on develop: **#59** Helm v4, **#29** job/cronjob MVP, **#58** `diff`, grpc **v1.82.1**; next: tag **`v1.1.0`**; follow-ups **#29b** / **#57** deferred / **#55** parked)
+**Last reviewed:** 2026-09-02 (**v1.1.1** security: Go **1.26.6**; **v1.1.0** shipped **#59** Helm v4, **#29** job/cronjob MVP, **#58** `diff`; follow-ups **#29b** / **#57** deferred / **#55** parked; brainstorm backlog TBD)
 
 ### Versioning note
 
@@ -78,6 +78,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **1.0.1** | **Retry:** classify **`connection lost`** / **`http2: client connection lost`** as transient for live step retry and shell **`ErrTransient`**. |
 | **1.0.2** | **`command.shell`** (#56) opt-in hook/script interpreter; pin **`golang.org/x/crypto` v0.54.0** + Grype ignore hygiene (GO-2026-5932 until Helm v4 #59); README badge/docs hygiene. |
 | **1.1.0** | **Helm SDK v4** (#59); native **`job`/`cronjob`** (#29 MVP); **`kzero diff --phase`** (#58); **`google.golang.org/grpc` v1.82.1** (Dependabot #8). |
+| **1.1.1** | **Security patch:** Go **1.26.6** (stdlib Grype **High**/**Medium** on **1.26.5** images). |
 
 ---
 
