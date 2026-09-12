@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Branch policy matches pgwd / gghstats: topic branch → PR into `develop`; no direct push to `develop` or `main`. After `develop` → `main`, sync `main` into `develop` so the next release PR is not out-of-date.
+
 [↑ Back to top](#top)
 
 ## [1.1.1] - 2026-09-02
