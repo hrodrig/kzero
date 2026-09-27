@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+[↑ Back to top](#top)
+
+## [1.1.2] - 2026-09-26
+
 ### Added
 
 - Opt-in bastion pipeline log file: `run.log_dir` / `run.log_file`, env `KZERO_RUN_LOG_*`, flags `--log-dir` / `--log-file` (#10). Unset = stdout/stderr only.
@@ -25,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Homebrew cask: drop deprecated `url.verified` from GoReleaser `homebrew_casks` so the next tagged release republishes [homebrew-kzero](https://github.com/hrodrig/homebrew-kzero) without that warning (#9). `postflight` → `postflight_steps` still waits on upstream GoReleaser.
+- Homebrew cask: drop deprecated `url.verified` from GoReleaser `homebrew_casks` so this tagged release republishes [homebrew-kzero](https://github.com/hrodrig/homebrew-kzero) without that warning (#9). `postflight` → `postflight_steps` still waits on upstream GoReleaser.
 
 [↑ Back to top](#top)
 
@@ -496,7 +500,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 [↑ Back to top](#top)
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/hrodrig/kzero/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/hrodrig/kzero/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/hrodrig/kzero/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/hrodrig/kzero/compare/v1.0.1...v1.0.2
