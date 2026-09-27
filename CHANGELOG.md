@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Bump indirect **`google.golang.org/grpc`** `v1.83.1` → **`v1.83.2`** (Dependabot [#12](https://github.com/hrodrig/kzero/security/dependabot/12) / [GHSA-2v4p-qf9q-27wj](https://github.com/advisories/GHSA-2v4p-qf9q-27wj)): gRPC-Go xDS DoS when `:authority` / `Host` headers are missing.
+- Bump indirect **`go.opentelemetry.io/otel/sdk`** (and `otel` / `metric` / `trace`) `v1.44.0` → **`v1.45.0`** (Dependabot [#13](https://github.com/hrodrig/kzero/security/dependabot/13) / [GHSA-8wmf-6v46-5gfg](https://github.com/advisories/GHSA-8wmf-6v46-5gfg)): OpenTelemetry-Go exporter config logging may leak endpoint URLs.
+
 [↑ Back to top](#top)
 
 ## [1.1.2] - 2026-09-26
