@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Branch policy matches pgwd / gghstats: topic branch → PR into `develop`; no direct push to `develop` or `main`. After `develop` → `main`, sync `main` into `develop` so the next release PR is not out-of-date.
 
+### Fixed
+
+- Homebrew cask: drop deprecated `url.verified` from GoReleaser `homebrew_casks` so the next tagged release republishes [homebrew-kzero](https://github.com/hrodrig/homebrew-kzero) without that warning (#9). `postflight` → `postflight_steps` still waits on upstream GoReleaser.
+
 [↑ Back to top](#top)
 
 ## [1.1.1] - 2026-09-02
