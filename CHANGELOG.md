@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Bump indirect **`google.golang.org/grpc`** `v1.82.1` → **`v1.83.1`** (Dependabot [#9](https://github.com/hrodrig/kzero/security/dependabot/9)–[#11](https://github.com/hrodrig/kzero/security/dependabot/11)): [CVE-2026-84304](https://github.com/advisories/GHSA-vp52-pcj8-j9qc), [CVE-2026-84445](https://github.com/advisories/GHSA-2v4p-qf9q-27wj), [CVE-2026-84303](https://github.com/advisories/GHSA-qc2q-p7wx-3px3) (#14, #15, #16).
+
 ### Changed
 
 - Branch policy matches pgwd / gghstats: topic branch → PR into `develop`; no direct push to `develop` or `main`. After `develop` → `main`, sync `main` into `develop` so the next release PR is not out-of-date.
