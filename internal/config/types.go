@@ -182,6 +182,11 @@ type RunConfig struct {
 	Verify bool `mapstructure:"verify"`
 	// ProbeCacheDir stores infra probe cache files (empty = OS temp dir).
 	ProbeCacheDir string `mapstructure:"probe_cache_dir"`
+	// LogDir, when set and LogFile is empty, creates an opt-in pipeline log under that
+	// directory (kzero-<command>-<cluster-slug>-<timestamp>.log). Empty = no file.
+	LogDir string `mapstructure:"log_dir"`
+	// LogFile, when set, appends pipeline logs to this path (wins over LogDir). Empty = no file.
+	LogFile string `mapstructure:"log_file"`
 	// NoEnvPassthrough when true omits os.Environ from hook/release/kubectl subprocesses.
 	NoEnvPassthrough bool `mapstructure:"no_env_passthrough"`
 	// APIWatchdog configures the periodic API reachability check between

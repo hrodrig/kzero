@@ -41,6 +41,12 @@ Exit codes:
 			}
 			applyCLIRunOverrides(cfg)
 
+			endLog, err := beginRunLog(cmd, cfg, "doctor")
+			if err != nil {
+				return exitcode.New(exitcode.ConfigError, err)
+			}
+			defer endLog()
+
 			ctx, cancel := context.WithTimeout(cmd.Context(), 45*time.Second)
 			defer cancel()
 
