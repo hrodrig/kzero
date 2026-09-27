@@ -9,7 +9,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-09-02 (**v1.1.1** security: Go **1.26.6**; **v1.1.0** shipped **#59** Helm v4, **#29** job/cronjob MVP, **#58** `diff`; follow-ups **#29b** / **#57** deferred / **#55** parked; brainstorm backlog TBD)
+**Last reviewed:** 2026-09-26 (**v1.1.2** — opt-in `run.log_dir`/`--log-file` #10, grpc **v1.83.1**, Homebrew `url.verified` drop; **v1.1.1** Go **1.26.6**; **v1.1.0** shipped **#59** Helm v4, **#29** job/cronjob MVP, **#58** `diff`; follow-ups **#29b** / **#57** deferred / **#55** parked; brainstorm backlog TBD)
 
 ### Versioning note
 
@@ -25,7 +25,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 
 **1.0.0 (shipped):** PVC patterns (**#33**), exit codes (**#42**), kind CI (**#34**), default native (**#32**). **`release.*`** on the **shell** path still requires **`<helm.workspace>/<name>.sh`** and external **`helm`** on **`PATH`**.
 
-**Log capture** before or after pipelines is **out of scope** for the engine—invoke external tools via phase hooks when operators need archives. **Local stdout/stderr** (and wrapper tee to disk on the **management host**) is the audit trail when notify and API are both unavailable; see [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md).
+**Log capture:** phase-hook archives remain out of scope. **v1.1.2** adds opt-in **`run.log_dir` / `run.log_file`** (and CLI/env) for bastion-persisted stdout/stderr tees; unset keeps stdout-only. See [docs/examples/pipeline-network-loss.md](docs/examples/pipeline-network-loss.md).
 
 **Completed bands:** **0.3.x** (operator honesty), **0.4.x** (native client + analyze validation + server-side dry-run on native). **0.5.x** retry, **`client.id`**, live audit logs, and sequential-only contract shipped through **v0.5.6**. **0.6.x** notify, slog, verify, infra probe, preflight, OS audit, Helm workspace SPEC through **v0.6.0**. **0.7.x** Helm SDK, PVC/exec/schedulable primitives through **v0.7.2** (secret redaction in **v0.7.1**, text log levels in **v0.7.3**, sample-config in **v0.7.4**). **0.8.x** API watchdog, notify delivery visibility, reset phase-boundary preflight, progress logs, stalled event through **v0.8.0**. **0.9.0** bastion-first hardening: graceful shutdown, **`require_delivery`**, E2E smoke CI, watchdog tests, SPEC contract index (**#43–#47**).
 
@@ -79,6 +79,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **1.0.2** | **`command.shell`** (#56) opt-in hook/script interpreter; pin **`golang.org/x/crypto` v0.54.0** + Grype ignore hygiene (GO-2026-5932 until Helm v4 #59); README badge/docs hygiene. |
 | **1.1.0** | **Helm SDK v4** (#59); native **`job`/`cronjob`** (#29 MVP); **`kzero diff --phase`** (#58); **`google.golang.org/grpc` v1.82.1** (Dependabot #8). |
 | **1.1.1** | **Security patch:** Go **1.26.6** (stdlib Grype **High**/**Medium** on **1.26.5** images). |
+| **1.1.2** | Opt-in **`run.log_dir`/`--log-file`** (#10); **`google.golang.org/grpc` v1.83.1** (Dependabot #9–#11); GoReleaser drop deprecated Homebrew **`url.verified`** (#9 partial). |
 
 ---
 
