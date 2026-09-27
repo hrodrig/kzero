@@ -121,7 +121,25 @@ or a relative path when editing beside the file (see [configs/kzero.sample.yml](
 - `verify` (optional; post-up readiness — see § **`kzero verify`**)
 - `infra_probe` (optional; pre-destructive probe — see § **`kzero probe`**)
 - `retry.attempts`, `retry.delay` (loaded; engine behavior: see subsection below)
-- `run.kubeconfig`, `run.mode`, `run.execution`, `run.color`, `run.timeout`, `run.operation_timeout`, `run.no_env_passthrough`, `run.verify`, `run.probe_cache_dir`, `run.api_watchdog.{enabled,interval,fail_after}`
+- `run.kubeconfig`, `run.mode`, `run.execution`, `run.color`, `run.timeout`, `run.operation_timeout`, `run.no_env_passthrough`, `run.verify`, `run.probe_cache_dir`, `run.log_dir`, `run.log_file`, `run.api_watchdog.{enabled,interval,fail_after}`
+
+### Opt-in run log file (`run.log_dir` / `run.log_file`)
+
+By default kzero writes pipeline output to **stdout/stderr** only. Operators may enable a **durable file** without wrapping the process in `tee`:
+
+| Surface | Keys |
+|---------|------|
+| YAML | `run.log_dir`, `run.log_file` |
+| Env | `KZERO_RUN_LOG_DIR`, `KZERO_RUN_LOG_FILE` |
+| Flags | `--log-dir DIR`, `--log-file PATH` |
+
+**Precedence:** `--log-file` → `--log-dir` → `run.log_file` → `run.log_dir`. Unset / empty → **no file** (current behavior).
+
+When **`log_file`** is set, the process appends to that path. When only **`log_dir`** is set, kzero creates the directory if needed and writes:
+
+`kzero-<command>-<cluster-slug>-<YYYYMMDD-HHMMSS>.log`
+
+where **`<cluster-slug>`** is `cluster.SanitizeForFilename` of the resolved kubeconfig cluster name (same as **`kzero target --output slug`**), or **`unknown`** if the target cannot be resolved. At start, an **`[INF] log_file: …`** line prints the resolved path (also mirrored into the file). Stdout and stderr (including the command timing summary) are teed into the file. Secret redaction matches the stdout engine path.
 
 ### `run.kubeconfig` and in-cluster auth
 
@@ -576,6 +594,8 @@ Four severity levels, aligned with [Microsoft.Extensions.Logging.LogLevel](https
 **Filtering:** `--log-level` sets the **minimum** severity (same as .NET). At **`info`**, **`DBG`** lines are hidden; at **`warn`**, only **`WRN`** and **`ERR`** appear.
 
 Global flag on all commands: **`--log-level debug|info|warn|error`** (default **`info`**).
+
+Global flags **`--log-dir DIR`** and **`--log-file PATH`** enable opt-in file logging (see **Opt-in run log file** above). Empty / omitted = no file.
 
 Global flag on all commands: **`--print-sample-config`** — writes sample YAML to **stdout** and exits (same content as **`configs/kzero.sample.yml`**). Use **`kzero --print-sample-config > kzero.yaml`** when the sample file is not on disk (e.g. Homebrew cask).
 

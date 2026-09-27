@@ -46,6 +46,11 @@ pipeline.success, or pipeline.error payload formatting.`,
 			if err := applyLogLevel(); err != nil {
 				return err
 			}
+			endLog, err := beginRunLog(cmd, cfg, "notify-test")
+			if err != nil {
+				return exitcode.New(exitcode.ConfigError, err)
+			}
+			defer endLog()
 			return runTimed(cmd.ErrOrStderr(), "notify test", cfg.Run.Color, format, func() error {
 				if err := notify.DispatchTest(cmd.Context(), cfg, event, nil); err != nil {
 					return exitcode.New(exitcode.NotifyFailed, err)

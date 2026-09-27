@@ -239,6 +239,14 @@
           "type": "string",
           "description": "Directory for infra probe cache files."
         },
+        "log_dir": {
+          "type": "string",
+          "description": "Opt-in directory for pipeline log files (kzero-<cmd>-<slug>-<timestamp>.log). Empty = no file. Overridden by log_file / --log-file."
+        },
+        "log_file": {
+          "type": "string",
+          "description": "Opt-in path to append pipeline logs. Empty = no file. Wins over log_dir."
+        },
         "no_env_passthrough": {
           "type": "boolean",
           "description": "When true, omit os.Environ from hook/release/kubectl subprocesses."
