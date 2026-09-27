@@ -17,6 +17,8 @@ var (
 	cfgFile           string
 	logFormat         string
 	logLevel          string
+	logDirFlag        string
+	logFileFlag       string
 	noEnvPassthrough  bool
 	printSampleConfig bool
 )
@@ -56,6 +58,8 @@ so operators can scale workloads and Helm releases in a safe, repeatable way.`,
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file path (default: ./kzero.yaml)")
 	rootCmd.PersistentFlags().StringVar(&logFormat, "log-format", "text", "log output format: text or json")
 	rootCmd.PersistentFlags().StringVar(&logLevel, "log-level", "info", "minimum log level: debug, info, warn, or error")
+	rootCmd.PersistentFlags().StringVar(&logDirFlag, "log-dir", "", "opt-in directory for pipeline log files (empty = no file; see also run.log_dir)")
+	rootCmd.PersistentFlags().StringVar(&logFileFlag, "log-file", "", "opt-in path to append pipeline logs (empty = no file; wins over --log-dir / run.log_dir)")
 	rootCmd.PersistentFlags().BoolVar(&noEnvPassthrough, "no-env-passthrough", false, "omit host environment from hook and subprocess env (KZERO_* and KUBECONFIG only)")
 	rootCmd.PersistentFlags().BoolVar(&printSampleConfig, "print-sample-config", false, "print sample kzero.yaml to stdout and exit")
 	cobra.OnInitialize(initConfig)

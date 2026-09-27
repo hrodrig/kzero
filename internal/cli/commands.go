@@ -50,6 +50,11 @@ func runPipelineCommand(cmd *cobra.Command, command string, cfg *config.Config, 
 	if err := applyLogLevel(); err != nil {
 		return err
 	}
+	endLog, err := beginRunLog(cmd, cfg, command)
+	if err != nil {
+		return exitcode.New(exitcode.ConfigError, err)
+	}
+	defer endLog()
 	return runTimed(cmd.ErrOrStderr(), command, cfg.Run.Color, format, func() error {
 		started := time.Now()
 		if err := writeKubernetesTarget(cmd.OutOrStdout(), cfg); err != nil {
@@ -114,6 +119,11 @@ func newAnalyzeCmd() *cobra.Command {
 			if err := applyLogLevel(); err != nil {
 				return err
 			}
+			endLog, err := beginRunLog(cmd, cfg, "analyze")
+			if err != nil {
+				return exitcode.New(exitcode.ConfigError, err)
+			}
+			defer endLog()
 			return runTimed(cmd.ErrOrStderr(), "analyze", cfg.Run.Color, format, func() error {
 				return printAnalyzePlan(cmd.OutOrStdout(), cmd.ErrOrStderr(), cfg, configPath)
 			})

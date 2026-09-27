@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Opt-in bastion pipeline log file: `run.log_dir` / `run.log_file`, env `KZERO_RUN_LOG_*`, flags `--log-dir` / `--log-file` (#10). Unset = stdout/stderr only.
+
 ### Changed
 
 - Branch policy matches pgwd / gghstats: topic branch → PR into `develop`; no direct push to `develop` or `main`. After `develop` → `main`, sync `main` into `develop` so the next release PR is not out-of-date.

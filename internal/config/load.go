@@ -111,6 +111,8 @@ func bindConfigEnv(v *viper.Viper) {
 		"verify.format",
 		"infra_probe.enabled",
 		"run.probe_cache_dir",
+		"run.log_dir",
+		"run.log_file",
 		"run.no_env_passthrough",
 		"run.api_watchdog.enabled",
 		"run.api_watchdog.interval",

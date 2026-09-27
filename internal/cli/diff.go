@@ -50,6 +50,11 @@ Examples:
 			if err := applyLogLevel(); err != nil {
 				return err
 			}
+			endLog, err := beginRunLog(cmd, cfg, "diff")
+			if err != nil {
+				return exitcode.New(exitcode.ConfigError, err)
+			}
+			defer endLog()
 			return runTimed(cmd.ErrOrStderr(), "diff", cfg.Run.Color, format, func() error {
 				if err := cluster.Print(cmd.OutOrStdout(), cfg); err != nil {
 					return exitcode.New(exitcode.KubernetesError, fmt.Errorf("kubernetes target: %w", err))
