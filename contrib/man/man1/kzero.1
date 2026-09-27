@@ -1,6 +1,6 @@
 .\" kzero(1) - declarative Kubernetes workload pipelines
 .\" Manual page for kzero
-.TH KZERO 1 "2026-09-02" "kzero v1.1.1" "User Commands"
+.TH KZERO 1 "2026-09-26" "kzero v1.1.2" "User Commands"
 .SH NAME
 kzero \- declarative Kubernetes workload shutdown and startup pipelines
 .SH SYNOPSIS
@@ -208,6 +208,19 @@ Structured logging for pipeline commands (default
 Minimum log level for text output (default
 .BR info ).
 .TP
+.BR \-\-log\-dir " \fIdir\fR"
+Opt-in directory for pipeline log files
+.RI ( kzero-<cmd>-<slug>-<timestamp>.log ).
+Empty (default): no file. See also
+.BR run.log_dir
+and
+.BR KZERO_RUN_LOG_DIR .
+.TP
+.BR \-\-log\-file " \fIpath\fR"
+Opt-in path to append pipeline logs (wins over
+.BR \-\-log\-dir ).
+Empty (default): no file.
+.TP
 .BR \-\-no\-env\-passthrough
 Omit host environment from hook and subprocess env (only
 .BR KZERO_*
@@ -219,6 +232,8 @@ Variables with prefix
 override YAML when loaded (see SPEC). Examples:
 .BR KZERO_RUN_MODE ,
 .BR KZERO_RUN_KUBECONFIG ,
+.BR KZERO_RUN_LOG_DIR ,
+.BR KZERO_RUN_LOG_FILE ,
 .BR KZERO_COMMAND_KUBECTL ,
 .BR KZERO_COMMAND_HELM .
 .SH FILES

@@ -142,5 +142,8 @@ run:
   color: "auto"   # elapsed-time line: auto | always | never (NO_COLOR disables)
   verify: false   # when true, run kzero verify after successful up / reset
   probe_cache_dir: ""   # default: OS user cache dir (kzero/probe); set for shared cache path
+  # Opt-in bastion log file (unset = stdout/stderr only). log_file wins over log_dir.
+  # log_dir: "./.logs"   # → kzero-<cmd>-<cluster-slug>-<YYYYMMDD-HHMMSS>.log
+  # log_file: ""         # or absolute/relative path to append
   timeout: 25m
   operation_timeout: 45s

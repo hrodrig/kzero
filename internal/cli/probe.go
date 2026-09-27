@@ -31,6 +31,11 @@ release_ready), then pipeline.down. Does not run the main pipelines.`,
 			if err := applyLogLevel(); err != nil {
 				return err
 			}
+			endLog, err := beginRunLog(cmd, cfg, "probe")
+			if err != nil {
+				return exitcode.New(exitcode.ConfigError, err)
+			}
+			defer endLog()
 			return runTimed(cmd.ErrOrStderr(), "probe", cfg.Run.Color, format, func() error {
 				if err := writeKubernetesTarget(cmd.OutOrStdout(), cfg); err != nil {
 					return err

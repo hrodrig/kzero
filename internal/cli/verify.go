@@ -28,6 +28,11 @@ node Ready status. Does not scale workloads or run Helm.`,
 			if err := applyLogLevel(); err != nil {
 				return err
 			}
+			endLog, err := beginRunLog(cmd, cfg, "verify")
+			if err != nil {
+				return exitcode.New(exitcode.ConfigError, err)
+			}
+			defer endLog()
 			return runTimed(cmd.ErrOrStderr(), "verify", cfg.Run.Color, format, func() error {
 				return runVerify(cmd, cfg, format, true)
 			})

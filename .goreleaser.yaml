@@ -211,8 +211,6 @@ homebrew_casks:
       name: homebrew-kzero
       branch: main
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    url:
-      verified: "github.com/hrodrig/kzero/"
     manpages:
       - share/man/man1/kzero.1
     caveats: |

@@ -36,7 +36,8 @@ Install tooling to `$GOBIN`: `make tools` (govulncheck, gocyclo).
 
 ## Git flow
 
-- **Branches:** Day-to-day work on **`develop`**. Topic branch → **PR into `develop`** (green CI, merge, delete branch). Production: **PR `develop` → `main`**, then annotated tag **`v<semver>`** on **`main`** only.
+- Work on **topic branches** opened from `develop`; merge via **PR into `develop`**. **Never** commit or push directly to `develop` or `main`.
+- Release: **PR `develop` → `main`**, then annotated tag **`v<semver>`** on **`main`** only. After every merge into `main`, sync **`main` → `develop`** (see `.cursor/rules/git-flow.mdc` locally) so the next release PR is not **"out-of-date with the base branch"**.
 - **Never** merge to **`main`**, create/push a release tag, or run **`make release`** / trigger GoReleaser **without explicit user approval** in the current conversation — even if `release-check` is green.
 - **Commits:** Show the proposed commit message and wait for user approval before `git commit` (see `.cursor/rules/commit-message-review.mdc` locally).
 - **Language:** English only for code, comments, commit messages, docs, and UI strings.
@@ -55,7 +56,7 @@ Do the **VERSION bump as a dedicated change on `develop`** after feature work la
 | 6 | **BSD ports** | `make port-freebsd-sync` and/or `make port-openbsd-sync` |
 | 7 | **`docs/ROADMAP.md`** | **Last reviewed** date; shipped highlights; tick completed bands |
 | 8 | **Gate** | `make release-check` — run only after user asks |
-| 9 | **Ship** | Merge `develop` → `main`, annotated tag `v<semver>`, push tag — **only after user explicitly approves** |
+| 9 | **Ship** | Open **PR `develop` → `main`**, merge on GitHub, annotated tag `v<semver>`, push tag — **only after user explicitly approves**. Then sync **`main` → `develop`**. |
 
 **Follow-ups (other repos, after GitHub Release is green):** pin app version in **[kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted)**; marketing/install sites on GitLab (`kzero-hermesrodriguez-com`, `get-kzero-hermesrodriguez-com`) if they hard-code a release.
 

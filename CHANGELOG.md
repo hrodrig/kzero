@@ -13,6 +13,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [↑ Back to top](#top)
 
+## [1.1.2] - 2026-09-26
+
+### Added
+
+- Opt-in bastion pipeline log file: `run.log_dir` / `run.log_file`, env `KZERO_RUN_LOG_*`, flags `--log-dir` / `--log-file` (#10). Unset = stdout/stderr only.
+
+### Security
+
+- Bump indirect **`google.golang.org/grpc`** `v1.82.1` → **`v1.83.1`** (Dependabot [#9](https://github.com/hrodrig/kzero/security/dependabot/9)–[#11](https://github.com/hrodrig/kzero/security/dependabot/11)): [CVE-2026-84304](https://github.com/advisories/GHSA-vp52-pcj8-j9qc), [CVE-2026-84445](https://github.com/advisories/GHSA-2v4p-qf9q-27wj), [CVE-2026-84303](https://github.com/advisories/GHSA-qc2q-p7wx-3px3) (#14, #15, #16).
+
+### Changed
+
+- Branch policy matches pgwd / gghstats: topic branch → PR into `develop`; no direct push to `develop` or `main`. After `develop` → `main`, sync `main` into `develop` so the next release PR is not out-of-date.
+
+### Fixed
+
+- Homebrew cask: drop deprecated `url.verified` from GoReleaser `homebrew_casks` so this tagged release republishes [homebrew-kzero](https://github.com/hrodrig/homebrew-kzero) without that warning (#9). `postflight` → `postflight_steps` still waits on upstream GoReleaser.
+
+[↑ Back to top](#top)
+
 ## [1.1.1] - 2026-09-02
 
 ### Security
@@ -480,7 +500,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 [↑ Back to top](#top)
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/hrodrig/kzero/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/hrodrig/kzero/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/hrodrig/kzero/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/hrodrig/kzero/compare/v1.0.1...v1.0.2
