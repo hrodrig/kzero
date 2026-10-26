@@ -168,6 +168,13 @@ Tap: **[hrodrig/homebrew-kzero](https://github.com/hrodrig/homebrew-kzero)** (ca
 
 Then run **`kzero --config /etc/kzero/kzero.yaml analyze`** (or follow **[Quick start](#quick-start)** to build from a clone).
 
+**macOS first run:** unsigned CLI binaries may trigger Gatekeeper (“Apple could not verify…”). The cask does not clear quarantine. Run once for each binary you use:
+
+```bash
+xattr -dr com.apple.quarantine "$(command -v kzero)"
+xattr -dr com.apple.quarantine "$(command -v kubectl-kzero)"
+```
+
 ### Shell completion
 
 ```bash
