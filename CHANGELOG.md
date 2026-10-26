@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Go toolchain:** bump minimum Go **1.26.6 → 1.27.3** (`go.mod`, `Dockerfile` builder `golang:1.27.3-alpine3.24`). README Go badge synced. CI reads the version from `go.mod`. Indirect **`golang.org/x/net`** **v0.58.0 → v0.60.0** (with it: `golang.org/x/crypto` v0.57.0, `sync` v0.23.0, `sys` v0.48.0, `term` v0.46.0, `text` v0.42.0). Clears govulncheck and Grype High on the 1.26.6 image: [GO-2026-6809](https://pkg.go.dev/vuln/GO-2026-6809) (`crypto/x509`, fixed in Go 1.27.3), and [GO-2026-6617](https://pkg.go.dev/vuln/GO-2026-6617), [GO-2026-6613](https://pkg.go.dev/vuln/GO-2026-6613), [GO-2026-6612](https://pkg.go.dev/vuln/GO-2026-6612), [GO-2026-6611](https://pkg.go.dev/vuln/GO-2026-6611), [GO-2026-6610](https://pkg.go.dev/vuln/GO-2026-6610), [GO-2026-6608](https://pkg.go.dev/vuln/GO-2026-6608), [GO-2026-6607](https://pkg.go.dev/vuln/GO-2026-6607), [GO-2026-6605](https://pkg.go.dev/vuln/GO-2026-6605), [GO-2026-6603](https://pkg.go.dev/vuln/GO-2026-6603) (stdlib fixed in Go 1.26.9 / 1.27.2; `x/net` fixed in v0.60.0).
+
 [↑ Back to top](#top)
 
 ## [1.1.3] - 2026-09-27
