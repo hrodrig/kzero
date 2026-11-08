@@ -9,7 +9,7 @@ This file is the **in-repo** source of truth for **planned** work and known gaps
 
 When a roadmap item ships, update **CHANGELOG** and tick or remove the item here (or move it to a “Completed” subsection with the release tag).
 
-**Last reviewed:** 2026-09-27 (**v1.1.3** — security patch: grpc **v1.83.2**, otel/sdk **v1.45.0** (#21); **v1.1.2** opt-in `run.log_dir`/`--log-file` #10, grpc **v1.83.1**, Homebrew `url.verified` drop; **v1.1.1** Go **1.26.6**; **v1.1.0** shipped **#59** Helm v4, **#29** job/cronjob MVP, **#58** `diff`; follow-ups **#29b** / **#57** deferred / **#55** parked; brainstorm backlog TBD)
+**Last reviewed:** 2026-11-08 (**v1.1.4** — security patch: Go **1.27.3** + **`x/net` v0.60.0** (#27), GoReleaser cask quarantine drop / pin **v2.19.0** (#26); **v1.1.3** grpc **v1.83.2**, otel/sdk **v1.45.0** (#21); **v1.1.2** opt-in `run.log_dir`/`--log-file` #10, grpc **v1.83.1**, Homebrew `url.verified` drop; **v1.1.1** Go **1.26.6**; **v1.1.0** shipped **#59** Helm v4, **#29** job/cronjob MVP, **#58** `diff`; follow-ups **#29b** / **#57** deferred / **#55** parked; brainstorm backlog TBD)
 
 ### Versioning note
 
@@ -81,6 +81,7 @@ The v1 engine runs **`deployment` / `statefulset`** steps via **`run.execution`*
 | **1.1.1** | **Security patch:** Go **1.26.6** (stdlib Grype **High**/**Medium** on **1.26.5** images). |
 | **1.1.2** | Opt-in **`run.log_dir`/`--log-file`** (#10); **`google.golang.org/grpc` v1.83.1** (Dependabot #9–#11); GoReleaser drop deprecated Homebrew **`url.verified`** (#9 partial). |
 | **1.1.3** | **Security patch:** **`google.golang.org/grpc` v1.83.2** (Dependabot #12) and **`go.opentelemetry.io/otel/sdk` v1.45.0** (Dependabot #13) (#21). |
+| **1.1.4** | **Security patch:** Go **1.27.3** + **`golang.org/x/net` v0.60.0** (#27); GoReleaser drop Homebrew cask quarantine hook / pin **v2.19.0** (#26). |
 
 ---
 
