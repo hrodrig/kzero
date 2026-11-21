@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Go toolchain:** bump minimum Go **1.27.3 → 1.27.4** (`go.mod`, `Dockerfile` builder `golang:1.27.4-alpine3.24`). README Go badge synced. CI reads the version from `go.mod`. Clears stdlib / toolchain findings fixed in [Go 1.27.4](https://go.dev/doc/devel/release#go1.27.4) (incl. [GO-2026-6854](https://pkg.go.dev/vuln/GO-2026-6854), [GO-2026-6851](https://pkg.go.dev/vuln/GO-2026-6851), and related `cmd/go` / `net/http` CVEs through CVE-2026-97054).
+
 [↑ Back to top](#top)
 
 ## [1.1.4] - 2026-11-08
