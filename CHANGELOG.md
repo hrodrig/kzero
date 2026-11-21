@@ -11,9 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+[↑ Back to top](#top)
+
+## [1.1.5] - 2026-11-21
+
 ### Security
 
-- **Go toolchain:** bump minimum Go **1.27.3 → 1.27.4** (`go.mod`, `Dockerfile` builder `golang:1.27.4-alpine3.24`). README Go badge synced. CI reads the version from `go.mod`. Clears stdlib / toolchain findings fixed in [Go 1.27.4](https://go.dev/doc/devel/release#go1.27.4) (incl. [GO-2026-6854](https://pkg.go.dev/vuln/GO-2026-6854), [GO-2026-6851](https://pkg.go.dev/vuln/GO-2026-6851), and related `cmd/go` / `net/http` CVEs through CVE-2026-97054).
+- **Go toolchain:** bump minimum Go **1.27.3 → 1.27.4** (`go.mod`, `Dockerfile` builder `golang:1.27.4-alpine3.24`). README Go badge synced. CI reads the version from `go.mod`. Clears stdlib / toolchain findings fixed in [Go 1.27.4](https://go.dev/doc/devel/release#go1.27.4) (incl. [GO-2026-6854](https://pkg.go.dev/vuln/GO-2026-6854), [GO-2026-6851](https://pkg.go.dev/vuln/GO-2026-6851), and related `cmd/go` / `net/http` CVEs through CVE-2026-97054) (#32).
 
 [↑ Back to top](#top)
 
@@ -525,7 +529,8 @@ First **pilot-ready** operator release: safe cluster identification, env overrid
 
 [↑ Back to top](#top)
 
-[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.1.4...HEAD
+[Unreleased]: https://github.com/hrodrig/kzero/compare/v1.1.5...HEAD
+[1.1.5]: https://github.com/hrodrig/kzero/compare/v1.1.4...v1.1.5
 [1.1.4]: https://github.com/hrodrig/kzero/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/hrodrig/kzero/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/hrodrig/kzero/compare/v1.1.1...v1.1.2
