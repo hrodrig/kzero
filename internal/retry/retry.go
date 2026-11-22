@@ -99,6 +99,7 @@ func retriableMessage(msg string) bool {
 		"temporarily unavailable",
 		"server timeout",
 		"timeout",
+		"database is locked",
 		"429",
 		"503",
 		"504",

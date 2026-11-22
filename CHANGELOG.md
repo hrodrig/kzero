@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Live retry:** treat apiserver / dqlite `"database is locked"` (gRPC `Unknown`) as retriable so configured `retry.attempts` apply instead of aborting a mid-pipeline `reset` / `down` / `up` (#25).
+
 [↑ Back to top](#top)
 
 ## [1.1.5] - 2026-11-21
