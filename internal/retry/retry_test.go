@@ -163,6 +163,9 @@ func TestIsRetriable_messageSubstrings(t *testing.T) {
 		"connection reset by peer",
 		"http2: client connection lost",
 		"Unexpected error when reading response body: connection lost",
+		// microk8s / dqlite apiserver datastore lock (issue #25)
+		"rpc error: code = Unknown desc = exec (try: 500): database is locked",
+		"statefulset ns/sts-d: rpc error: code = Unknown desc = exec (try: 500): database is locked",
 	} {
 		if !IsRetriable(errors.New(msg)) {
 			t.Fatalf("expected retriable: %q", msg)
